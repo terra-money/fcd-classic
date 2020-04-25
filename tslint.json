@@ -1,0 +1,20 @@
+{
+    "extends": [
+        "tslint-config-airbnb",
+        "tslint-config-prettier"
+    ],
+    "rules": {
+        "quotemark": [true, "single", "jsx-double"],
+        "await-promise": [true, "Bluebird"],
+        "no-return-await": true,
+        "no-floating-promises": true,
+        "object-shorthand-properties-first": false,
+        "import-name": false
+    },
+    "linterOptions": {
+        "exclude": [
+            "src/typings/**",
+            "node_modules"
+        ]
+    }
+}

@@ -1,0 +1,23 @@
+# There are many ways to manage TypeORM configurations.
+# Reference: https://github.com/typeorm/typeorm/blob/master/docs/using-ormconfig.md
+export TYPEORM_CONNECTION=postgres
+export TYPEORM_HOST=localhost
+export TYPEORM_USERNAME=terra
+export TYPEORM_PASSWORD=terra
+export TYPEORM_DATABASE=terra_fcd
+export TYPEORM_PORT=5432 
+export TYPEORM_SYNCHRONIZE=false
+export TYPEORM_LOGGING=false
+export TYPEORM_ENTITIES=src/orm/*Entity.ts
+export TYPEORM_MIGRATIONS=src/orm/migration/*.ts
+
+export SERVER_PORT=3060
+export CHAIN_ID=soju-0013
+export LCD_URI=https://soju-fcd.terra.dev
+export FCD_URI=https://fcd.terra.dev
+export RPC_URI=
+export BYPASS_URI=https://soju-fcd.terra.dev
+export STATION_STATUS_JSON=https://terra.money/station/version-web.json
+export SENTRY_DSN=
+export SC_AUTH_KEY=
+#export USE_LOG_FILE=true

@@ -1,0 +1,70 @@
+name: default
+
+on: [push, pull_request]
+
+jobs:
+  # integration:
+  #   runs-on: ubuntu-latest
+
+  #   container:
+  #     image: node:10.13.0
+
+  #   services:
+  #     postgres:
+  #       image: postgres:11
+  #       env:
+  #         POSTGRES_USER: dev
+  #         POSTGRES_PASSWORD: dev
+  #         POSTGRES_DB: dev_fcd
+  #       ports:
+  #         - 5432:5432
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Install dependencies
+  #       run: yarn
+
+  #     - name: Run tests
+  #       run: |
+  #         cp dev_dbconfig.ts ormconfig.ts
+  #         yarn run test
+
+  delivery:
+    runs-on: ubuntu-latest
+
+    # needs: integration
+
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: fcd
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Logout of Amazon ECR
+        if: always()
+        run: docker logout ${{ steps.login-ecr.outputs.registry }}

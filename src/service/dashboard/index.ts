@@ -1,0 +1,6 @@
+export { default as getGeneralInfo } from './getGeneralInfo'
+export { default as getTransactionVol } from 'service/dashboard/getTransactionVol'
+export { default as getBlockRewards } from 'service/dashboard/getBlockRewards'
+export { default as getSeigniorageProceeds } from 'service/dashboard/getSeigniorageProceeds'
+export { default as getStakingReturn } from 'service/dashboard/getStakingReturn'
+export { default as getAccountGrowth } from 'service/dashboard/getAccountGrowth'

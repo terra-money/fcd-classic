@@ -1,0 +1,5 @@
+export { default as getProposal } from './getProposal'
+export { default as getProposals } from './getProposals'
+export { default as getVotes, VoteTypes } from './getVotes'
+export { default as getDeposits } from './getDeposits'
+export { ProposalStatus } from './helper'
