@@ -6,10 +6,10 @@ import { dashboardRawQuery, getPriceHistory } from './helper'
 export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
   const today = startOfDay(Date.now())
 
-  const sumRewardsQuery = `SELECT DATE(datetime) AS datetime,\
-  denom, SUM(tax) AS sum_reward FROM reward\
-  WHERE datetime < '${getQueryDateTime(today)}'
-  GROUP BY datetime, denom ORDER BY datetime`
+  const sumRewardsQuery = `SELECT DATE(datetime) AS date, \
+denom, SUM(tax) AS sum_reward FROM reward \
+WHERE datetime < '${getQueryDateTime(today)}' \
+GROUP BY date, denom ORDER BY date`
 
   const rewards = await dashboardRawQuery(sumRewardsQuery)
 
@@ -18,7 +18,7 @@ export default async function getBlockRewards(daysBefore?: number): Promise<Bloc
 
   // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
   const rewardObj = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.datetime, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
+    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
       return acc
     }
 
@@ -28,16 +28,16 @@ export default async function getBlockRewards(daysBefore?: number): Promise<Bloc
       item.denom === 'ukrw'
         ? item.sum_reward
         : item.denom === 'luna'
-        ? times(item.sum_reward, priceObj[getPriceObjKey(item.datetime, 'ukrw')])
+        ? times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')])
         : div(
-            times(item.sum_reward, priceObj[getPriceObjKey(item.datetime, 'ukrw')]),
+            times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')]),
             priceObj[getPriceObjKey(item.datetime, item.denom)]
           )
 
-    if (acc[item.datetime]) {
-      acc[item.datetime] = plus(acc[item.datetime], reward)
+    if (acc[item.date]) {
+      acc[item.date] = plus(acc[item.datetime], reward)
     } else {
-      acc[item.datetime] = reward
+      acc[item.date] = reward
     }
     return acc
   }, {})
