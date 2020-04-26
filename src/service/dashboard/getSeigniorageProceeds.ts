@@ -26,7 +26,6 @@ export default async function getSeigniorageProceeds(count: number): Promise<Sei
     .distinctOn(['date'])
     .orderBy('date', 'ASC')
 
-  console.log(qb.getQueryAndParameters())
   const result = await qb.getMany()
 
   return orderBy(result, ['datetime'], ['desc']).map((item) => ({
