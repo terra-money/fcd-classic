@@ -163,8 +163,8 @@ export default class TxController extends KoaController {
   })
   async getDelegationEvents(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -208,8 +208,8 @@ export default class TxController extends KoaController {
   })
   async claims(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -252,8 +252,8 @@ export default class TxController extends KoaController {
   })
   async delegators(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
     success(
       ctx,
       await getDelegators({

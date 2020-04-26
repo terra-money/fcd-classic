@@ -84,11 +84,10 @@ export default class TransactionController extends KoaController {
   })
   async getTxList(ctx): Promise<void> {
     const { account, action, block, order, memo, chainId } = ctx.request.query
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 10
-
-    const from = +ctx.request.query.from || undefined
-    const to = +ctx.request.query.to || undefined
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
+    const from = +ctx.request.query.from
+    const to = +ctx.request.query.to
 
     success(
       ctx,
@@ -167,10 +166,10 @@ export default class TransactionController extends KoaController {
   })
   async getMsgList(ctx): Promise<void> {
     const { account, action, order } = ctx.request.query
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 10
-    const from = +ctx.request.query.from || undefined
-    const to = +ctx.request.query.to || undefined
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
+    const from = +ctx.request.query.from
+    const to = +ctx.request.query.to
 
     success(
       ctx,

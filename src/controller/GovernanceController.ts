@@ -139,8 +139,8 @@ export default class GovernanceController extends KoaController {
   })
   async getProposalDeposits(ctx): Promise<void> {
     const { proposalId } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -189,8 +189,8 @@ export default class GovernanceController extends KoaController {
   })
   async getProposalVotes(ctx): Promise<void> {
     const { proposalId } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = ctx.request.query.page
+    const limit = ctx.request.query.limit
     const { option } = ctx.request.query
 
     success(
