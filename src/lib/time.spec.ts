@@ -2,7 +2,6 @@ import 'jest-extended'
 import { format, subDays, startOfToday, addMinutes, subMinutes, startOfMinute } from 'date-fns'
 import {
   getQueryDateRangeFrom,
-  getTargetDates,
   dateFromDateString,
   daysBeforeTs,
   getQueryDateTime,
@@ -10,19 +9,6 @@ import {
 } from './time'
 
 describe('time', () => {
-  test('getTargetDates(10)', () => {
-    const targets: Date[] = []
-    const today = startOfToday()
-
-    targets.push(today)
-
-    for (let i = 0; i < 10 - 1; i = i + 1) {
-      targets.push(subDays(today, i))
-    }
-
-    expect(getTargetDates(10)).toIncludeAllMembers(targets)
-  })
-
   test('daysBeforeTs', () => {
     const today = startOfToday()
 

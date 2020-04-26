@@ -166,7 +166,7 @@ export async function getDelegators(opertorAddress: string): Promise<Delegator[]
     }
   })
 
-  return orderBy(delegators, ['weight', 'desc'])
+  return orderBy(delegators, [(d) => Number(d.weight)], ['desc'])
 }
 
 function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) {
@@ -223,8 +223,7 @@ export async function getRawDelegationTxs(data: GetRawDelegationTxsParam) {
   data.to && qb.andWhere(`timestamp < '${data.to}'`)
 
   qb.take(10000).orderBy(`data->'timestamp'`, 'DESC')
-  const txs = await qb.getMany()
-  const totalCnt = await qb.getCount()
+  const [txs, totalCnt] = await qb.getManyAndCount()
 
   return {
     totalCnt,

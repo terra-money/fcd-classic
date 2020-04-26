@@ -63,7 +63,7 @@ async function getMyDelegations(
   return myDelegations
     ? chain(myDelegations)
         .compact()
-        .orderBy([(delegation): number => Number(delegation.amountDelegated)], ['desc'])
+        .orderBy([(d) => Number(d.amountDelegated)], ['desc'])
         .value()
     : []
 }

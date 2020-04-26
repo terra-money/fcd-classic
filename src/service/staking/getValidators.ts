@@ -39,5 +39,5 @@ export default async function getValidators(): Promise<ValidatorResponse[]> {
     )
   })
 
-  return orderBy(validators, [(validator): number => Number(validator.votingPower.weight)], ['desc'])
+  return orderBy(validators, [(v) => Number(v.votingPower.weight)], ['desc'])
 }

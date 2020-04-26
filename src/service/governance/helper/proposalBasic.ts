@@ -1,5 +1,4 @@
 import * as lcd from 'lib/lcd'
-import { errorReport } from 'lib/errorReporting'
 import { getVoteSummary } from './voteSummary'
 import { getAccountInfo } from './index'
 import * as memoizee from 'memoizee'

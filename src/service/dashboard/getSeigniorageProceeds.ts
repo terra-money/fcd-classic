@@ -1,13 +1,11 @@
-import { getRepository, MoreThanOrEqual } from 'typeorm'
+import { getRepository, Between } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
-import { flatten } from 'lodash'
-import { getTargetDates } from 'lib/time'
+import { orderBy } from 'lodash'
+import { getQueryDateRangeFrom } from 'lib/time'
 
-export interface GetSeigniorageParam {}
 /**
  * Seigniorage on specific date
  */
-
 interface SeigniorageInfo {
   datetime: number // date in unix
   seigniorageProceeds: string // bigint seigniorage amount
@@ -18,32 +16,20 @@ interface SeigniorageInfo {
  * @param count number of previous days from today for seigniorage history
  */
 export default async function getSeigniorageProceeds(count: number): Promise<SeigniorageInfo[]> {
-  const targetDates = getTargetDates(count)
+  const queryDateRange = getQueryDateRangeFrom(count)
 
-  const result = flatten(
-    await Promise.all(
-      targetDates.map((date: Date) => {
-        return getRepository(GeneralInfoEntity).find({
-          where: {
-            datetime: MoreThanOrEqual(date)
-          },
-          order: {
-            datetime: 'ASC'
-          },
-          skip: 0,
-          take: 1
-        })
-      })
-    )
-  )
-  return result
-    .map((item) => {
-      return {
-        datetime: item.datetime.getTime(),
-        seigniorageProceeds: item.seigniorageProceeds
-      }
-    })
-    .filter((item) => {
-      return item.seigniorageProceeds !== null
-    })
+  const qb = getRepository(GeneralInfoEntity)
+    .createQueryBuilder()
+    .addSelect('DATE(datetime)', 'date')
+    .addSelect('seigniorage_proceeds')
+    .where({ date: Between(queryDateRange.from, queryDateRange.to) })
+    .distinctOn(['date'])
+    .orderBy('date', 'ASC')
+
+  const result = await qb.getMany()
+
+  return orderBy(result, ['datetime'], ['desc']).map((item) => ({
+    datetime: item.datetime.getTime(),
+    seigniorageProceeds: item.seigniorageProceeds
+  }))
 }
