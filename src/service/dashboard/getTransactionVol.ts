@@ -6,9 +6,9 @@ import { getQueryDateTime } from 'lib/time'
 
 export default async function getTransactionVol(count = 0): Promise<TxVolumeReturn> {
   const today = startOfDay(Date.now())
-  const query = `select date(datetime) as date\
-  , denom, sum(txvolume) as tx_volume from network\
-  where datetime < '${getQueryDateTime(today)}' group by 1, 2 order by 1 desc`
+  const query = `SELECT DATE(datetime) AS date\
+  , denom, SUM(txvolume) AS tx_volume FROM network\
+  WHERE datetime < '${getQueryDateTime(today)}' GROUP BY date, denom ORDER BY date DESC`
   const txs = await dashboardRawQuery(query)
 
   const txVolObj: DenomObject = txs.reduce((acc, item) => {

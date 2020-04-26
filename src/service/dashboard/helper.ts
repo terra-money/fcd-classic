@@ -20,8 +20,8 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
       }'`
     : ``
 
-  const priceQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , denom, avg(price) as avg_price from price ${whereQuery} group by 1, 2 order by 1 desc`
+  const priceQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , denom, AVG(price) AS avg_price FROM price ${whereQuery} GROUP BY date, denom ORDER BY date DESC`
   const prices = await dashboardRawQuery(priceQuery)
 
   const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
@@ -33,6 +33,6 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
 
 export function getCountBaseWhereQuery(count?: number) {
   return count
-    ? `where datetime >= '${getQueryDateRangeFrom(count).from}' and datetime < '${getQueryDateRangeFrom(count).to}'`
-    : `where datetime < '${getQueryDateRangeFrom(1).to}'`
+    ? `WHERE datetime >= '${getQueryDateRangeFrom(count).from}' AND datetime < '${getQueryDateRangeFrom(count).to}'`
+    : `WHERE datetime < '${getQueryDateRangeFrom(1).to}'`
 }

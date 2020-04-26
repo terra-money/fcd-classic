@@ -28,14 +28,9 @@ async function getSpread(denom: string, price: string) {
 }
 
 async function getSwapSpread(prices) {
-  const spreads = await Promise.all(
-    Object.keys(prices).map((denom) => {
-      return getSpread(denom, prices[denom])
-    })
-  )
-  return compact(spreads).reduce((acc, curr) => {
-    return { ...acc, [curr.denom]: curr.spread }
-  }, {})
+  const spreads = await Promise.all(Object.keys(prices).map((denom) => getSpread(denom, prices[denom])))
+
+  return compact(spreads).reduce((acc, curr) => ({ ...acc, [curr.denom]: curr.spread }), {})
 }
 
 const getSwapCoinFromLog = (log) => {

@@ -1,7 +1,8 @@
+import * as memoizee from 'memoizee'
 import { plus, div, times } from 'lib/math'
 import { dateFromDateString } from 'lib/time'
+import * as lcd from 'lib/lcd'
 import { getCountBaseWhereQuery, dashboardRawQuery, getPriceHistory } from './helper'
-import * as memoizee from 'memoizee'
 
 export interface GetStakingReturnParam {
   count?: number
@@ -14,28 +15,27 @@ interface StakingDailyReturn {
 }
 
 export async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
-  const totalIssued = 780323810831865 + 219456662015307
+  const { issuance } = await lcd.getIssuanceByDenom('uluna')
 
-  const rewardQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , denom, sum(tax) as tax_sum, sum(gas) as gas_sum, sum(oracle) as oracle_sum, sum(sum) as reward_sum, sum(commission) as commission_sum from reward \
-  ${getCountBaseWhereQuery(count)} group by 1, 2 order by 1 desc`
+  const rewardQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , denom, SUM(tax) AS tax_sum, SUM(gas) AS gas_sum, SUM(oracle) AS oracle_sum, SUM(sum) AS reward_sum, SUM(commission) AS commission_sum FROM reward \
+  ${getCountBaseWhereQuery(count)} GROUP BY date, denom ORDER BY date DESC`
   const rewards = await dashboardRawQuery(rewardQuery)
 
   const priceObj = await getPriceHistory(count)
   const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
 
-  const bondedTokensQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , avg(staking_ratio) as avg_staking_ratio, avg(bonded_tokens) as avg_bonded_tokens from general_info \
-  ${getCountBaseWhereQuery(count)} group by 1 order by 1 desc`
+  const bondedTokensQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , AVG(staking_ratio) AS avg_staking_ratio, AVG(bonded_tokens) AS avg_bonded_tokens FROM general_info \
+  ${getCountBaseWhereQuery(count)} GROUP BY date ORDER BY date DESC`
 
   const bondedTokens = await dashboardRawQuery(bondedTokensQuery)
   const bondedTokensObj = bondedTokens.reduce((acc, item) => {
-    acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(totalIssued, item.avg_staking_ratio)
+    acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(issuance, item.avg_staking_ratio)
     return acc
   }, {})
 
   const rewardObj = rewards.reduce((acc, item) => {
-    console.log(item.date)
     if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna') {
       return acc
     }

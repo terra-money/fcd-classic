@@ -6,24 +6,24 @@ import { dashboardRawQuery, getPriceHistory } from './helper'
 export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
   const today = startOfDay(Date.now())
 
-  const sumRewardsQuery = `select date(datetime) as datetime,\
-  denom, sum(tax) as sum_reward from reward\
-  where datetime < '${getQueryDateTime(today)}'
-  group by 1, 2 order by 1`
+  const sumRewardsQuery = `SELECT DATE(datetime) AS datetime,\
+  denom, SUM(tax) AS sum_reward FROM reward\
+  WHERE datetime < '${getQueryDateTime(today)}'
+  GROUP BY datetime, denom ORDER BY datetime`
 
   const rewards = await dashboardRawQuery(sumRewardsQuery)
 
   const priceObj = await getPriceHistory()
   const getPriceObjKey = (date: Date, denom: string) => `${format(date, 'YYYY-MM-DD')}${denom}`
 
+  // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
   const rewardObj = rewards.reduce((acc, item) => {
     if (!priceObj[getPriceObjKey(item.datetime, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
       return acc
     }
 
-    // krw의 경우는 그냥 저장
-    // luna의 경우는 luna/krt의 가격으로 곱해서 krt 밸류로 환산 후 저장
-    // 그외의 경우는 luna/krt의 가격으로 곱한 후 luna/{denom}의 가격으로 나눠서 krt 밸류로 환산 후 저장
+    // TODO: why are we using KRT as unit? it should be calculated on client side
+    // Convert each coin value as KRT
     const reward =
       item.denom === 'ukrw'
         ? item.sum_reward

@@ -14,15 +14,17 @@ interface RawAccountCount {
 }
 
 async function getAccountHistory(daysBefore?: number): Promise<RawAccountCount[]> {
-  const baseQuery = `select date(datetime) as datetime, max(total_account_count) as total_account_count, max(active_account_count) as active_account_count from general_info `
+  const baseQuery = `SELECT DATE(datetime) AS datetime, \
+MAX(total_account_count) AS total_account_count, \
+MAX(active_account_count) AS active_account_count FROM general_info `
   const today = startOfDay(Date.now())
-  let dateQuery = `where datetime < '${getQueryDateTime(today)}'`
+  let dateQuery = `WHERE datetime < '${getQueryDateTime(today)}'`
 
   if (daysBefore) {
-    dateQuery = `${dateQuery} and datetime >= '${getQueryDateTime(subDays(today, Math.max(1, daysBefore)))}'`
+    dateQuery = `${dateQuery} AND datetime >= '${getQueryDateTime(subDays(today, Math.max(1, daysBefore)))}'`
   }
 
-  return dashboardRawQuery(`${baseQuery}${dateQuery} group by date(datetime) order by date(datetime) asc`)
+  return dashboardRawQuery(`${baseQuery}${dateQuery} GROUP BY DATE(datetime) ORDER BY datetime ASC`)
 }
 
 export default async function getAccountGrowth(count?: number): Promise<AccountGrowthReturn> {
