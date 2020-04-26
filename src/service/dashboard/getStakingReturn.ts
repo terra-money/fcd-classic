@@ -53,21 +53,16 @@ export async function getStakingReturnUncached(count?: number): Promise<StakingD
     const reward =
       item.denom === 'uluna' ? item.reward_sum : div(item.reward_sum, priceObj[getPriceObjKey(item.date, item.denom)])
 
-    if (acc[item.date]) {
-      acc[item.date].tax = plus(acc[item.date].tax, tax)
-      acc[item.date].gas = plus(acc[item.date].gas, gas)
-      acc[item.date].oracle = plus(acc[item.date].oracle, oracle)
-      acc[item.date].commission = plus(acc[item.date].commission, commission)
-      acc[item.date].reward = plus(acc[item.date].reward, reward)
-    } else {
-      acc[item.date] = {
-        tax,
-        gas,
-        oracle,
-        commission,
-        reward
-      }
+    const prev = acc[item.date] || {}
+
+    acc[item.date] = {
+      tax: plus(prev.tax, tax),
+      gas: plus(prev.gas, gas),
+      oracle: plus(prev.oracle, oracle),
+      commission: plus(prev.commission, commission),
+      reward: plus(prev.reward, reward)
     }
+
     return acc
   }, {})
 

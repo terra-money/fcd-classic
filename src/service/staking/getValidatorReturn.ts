@@ -77,7 +77,7 @@ export default async function getValidatorReturn(
   }, '0')
 
   const rewardNet = minus(reward, commission)
-  return rewardNet === '0' ? '0' : times(div(rewardNet, votingPower), '365') || '0'
+  return rewardNet === '0' ? '0' : times(div(rewardNet, votingPower), 365) || '0'
 }
 
 export async function getValidatorAnnualAvgReturn(operatorAddress: string): Promise<ValidatorAnnualReturn> {

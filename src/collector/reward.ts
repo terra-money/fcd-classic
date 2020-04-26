@@ -30,14 +30,14 @@ function getFee(tx) {
           if (taxes) {
             taxes.split(',').forEach((tax) => {
               const { amount, denom } = splitDenomAndAmount(tax)
-              acc.tax[denom] = plus(acc.tax[denom] || '0', amount)
+              acc.tax[denom] = plus(acc.tax[denom], amount)
             })
           }
           if (swapfee) {
             const { amount, denom } = splitDenomAndAmount(swapfee)
 
             if (isNumeric(amount)) {
-              acc.swapfee[denom] = plus(acc.swapfee[denom] || '0', amount)
+              acc.swapfee[denom] = plus(acc.swapfee[denom], amount)
             }
           }
           return acc

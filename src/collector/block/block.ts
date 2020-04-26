@@ -65,7 +65,7 @@ function getBlockEntity(
 type DenomMapByValidator = { [validator: string]: DenomMap }
 
 const totalRewardReducer = (acc: DenomMap, item: Coin): DenomMap => {
-  acc[item.denom] = plus(acc[item.denom] || '0', item.amount)
+  acc[item.denom] = plus(acc[item.denom], item.amount)
   return acc
 }
 
@@ -74,7 +74,7 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
     acc[item.validator] = {}
   }
 
-  acc[item.validator][item.denom] = plus(acc[item.validator][item.denom] || '0', item.amount)
+  acc[item.validator][item.denom] = plus(acc[item.validator][item.denom], item.amount)
   return acc
 }
 
