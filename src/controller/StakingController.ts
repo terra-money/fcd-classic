@@ -2,10 +2,9 @@ import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
 import { success } from 'lib/response'
-
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX } from 'lib/constant'
-
+import { daysBeforeTs } from 'lib/time'
 import {
   getStaking,
   getValidators,
@@ -14,8 +13,7 @@ import {
   getClaims,
   getDelegators,
   getValidatorAnnualAvgReturn,
-  getTotalStakingReturn,
-  thirtyDaysBeforeTs
+  getTotalStakingReturn
 } from 'service/staking'
 
 const Joi = Validator.Joi
@@ -276,7 +274,7 @@ export default class TxController extends KoaController {
    */
   @Get('/return')
   async getTotalStakingReturn(ctx): Promise<void> {
-    const { fromTs, toTs } = thirtyDaysBeforeTs()
+    const { fromTs, toTs } = daysBeforeTs(30)
     success(ctx, await getTotalStakingReturn(fromTs, toTs))
   }
 
@@ -373,9 +371,9 @@ export default class TxController extends KoaController {
    */
   @Get('/')
   async getStakingForAll(ctx): Promise<void> {
-    const { account } = ctx.params
-
-    success(ctx, await getStaking(account))
+    success(ctx, {
+      validators: await getValidators()
+    })
   }
 
   /**
@@ -395,7 +393,7 @@ export default class TxController extends KoaController {
     },
     failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
   })
-  async getStakingReturn(ctx): Promise<void> {
+  async getStakingReturnOfValidator(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
     const { stakingReturn } = await getValidatorAnnualAvgReturn(operatorAddr)
     success(ctx, stakingReturn)

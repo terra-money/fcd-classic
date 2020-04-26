@@ -4,10 +4,9 @@ import { get } from 'lodash'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
-import { saveLatestBlock } from './block'
-import { setPrices } from './price'
-import { setGeneral } from './general'
-import cacheStakingReward from './cacheStakingReward'
+import { collectBlock } from './block'
+import { collectPrice } from './price'
+import { collectorGeneral } from './general'
 import Semaphore from './Semaphore'
 
 process.on('unhandledRejection', (err) => {
@@ -18,27 +17,22 @@ process.on('unhandledRejection', (err) => {
   })
 })
 
-const blockExplorer = new Semaphore('BlockExplorer', saveLatestBlock, logger)
-const priceExplorer = new Semaphore('PriceExplorer', setPrices, logger)
-const genInfoExplorer = new Semaphore('GenInfoExplorer', setGeneral, logger)
-const cacheManager = new Semaphore('CachingManager', cacheStakingReward, logger)
+const blockCollector = new Semaphore('BlockCollector', collectBlock, logger)
+const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
+const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
 
 const jobs = [
   {
-    method: blockExplorer.run.bind(blockExplorer),
+    method: blockCollector.run.bind(blockCollector),
     cron: '*/1 * * * * *'
   },
   {
-    method: priceExplorer.run.bind(priceExplorer),
+    method: priceCollector.run.bind(priceCollector),
     cron: '50 * * * * *'
   },
   {
-    method: genInfoExplorer.run.bind(genInfoExplorer),
+    method: generalCollector.run.bind(generalCollector),
     cron: '1 * * * * *'
-  },
-  {
-    method: cacheManager.run.bind(cacheManager),
-    cron: '*/30 * * * *'
   }
 ]
 

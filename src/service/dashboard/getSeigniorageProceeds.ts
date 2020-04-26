@@ -1,12 +1,9 @@
 import { getRepository, MoreThanOrEqual } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
-import * as moment from 'moment'
-import { getTargetDates } from './helper'
 import { flatten } from 'lodash'
+import { getTargetDates } from 'lib/time'
 
-export interface GetSeigniorageParam {
-  count: number //  number of previous days from today for seigniorage history
-}
+export interface GetSeigniorageParam {}
 /**
  * Seigniorage on specific date
  */
@@ -16,9 +13,11 @@ interface SeigniorageInfo {
   seigniorageProceeds: string // bigint seigniorage amount
 }
 
-export default async function getSeigniorageProceeds(option: GetSeigniorageParam): Promise<SeigniorageInfo[]> {
-  const { count } = option
-
+/**
+ *
+ * @param count number of previous days from today for seigniorage history
+ */
+export default async function getSeigniorageProceeds(count: number): Promise<SeigniorageInfo[]> {
   const targetDates = getTargetDates(count)
 
   const result = flatten(
@@ -40,7 +39,7 @@ export default async function getSeigniorageProceeds(option: GetSeigniorageParam
   return result
     .map((item) => {
       return {
-        datetime: moment(item.datetime).valueOf(),
+        datetime: item.datetime.getTime(),
         seigniorageProceeds: item.seigniorageProceeds
       }
     })

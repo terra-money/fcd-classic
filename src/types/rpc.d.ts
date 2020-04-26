@@ -141,7 +141,6 @@ interface ValidatorAnnualReturn {
 
 interface GetValidatorDetailParams {
   operatorAddr: string
-  validatorInfo: LcdValidator
   userAddr?: string
   votingPowerInfo?: { [key: string]: any }
   priceObjInfo?: CoinByDenoms

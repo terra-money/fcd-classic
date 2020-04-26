@@ -1,4 +1,5 @@
-import { filter, chain, keyBy } from 'lodash'
+import * as memoizee from 'memoizee'
+import { find, chain, keyBy } from 'lodash'
 import * as lcd from 'lib/lcd'
 import getDelegations from 'lib/getDelegations'
 import { plus, div } from 'lib/math'
@@ -93,7 +94,7 @@ function joinValidatorsWithMyDelegation(
       myDelegationsObj &&
       myDelegationsObj[validator.operatorAddress] &&
       myDelegationsObj[validator.operatorAddress].amountDelegated
-    const myUndelegation = filter(myUndelegations, { validatorAddress: validator.operatorAddress })
+    const myUndelegation = myUndelegations.filter((d) => d.validatorAddress === validator.operatorAddress)
 
     return Object.assign(validator, myDelegation && { myDelegation }, myUndelegation && { myUndelegation })
   })
@@ -111,13 +112,8 @@ interface GetStakingReturn {
   availableLuna?: string // available user luna
 }
 
-export default async function getStaking(address: string): Promise<GetStakingReturn> {
-  if (!address) {
-    const validators = await getValidators()
-    return { validators }
-  }
-
-  // Base Data 수집
+export async function getStakingUncached(address: string): Promise<GetStakingReturn> {
+  // Fetch data
   const [delegations, validators, prices, allRewards, balance] = await Promise.all([
     getDelegations(address),
     getValidators(),
@@ -130,10 +126,9 @@ export default async function getStaking(address: string): Promise<GetStakingRet
   // balance
   const delegationTotal = delegations ? getDelegationTotal(delegations) : '0'
   const myUndelegations = balance.unbondings ? getUndelegateSchedule(balance.unbondings, validatorObj) : []
-  const delegatable =
-    filter(balance.balance, { denom: 'uluna' }).length > 0
-      ? filter(balance.balance, { denom: 'uluna' })[0].delegatable
-      : '0'
+
+  const lunaBalance = find(balance.balance, { denom: 'uluna' })
+  const delegatable = lunaBalance ? lunaBalance.delegatable : '0'
 
   // rewards
   const totalReward = allRewards ? getTotalRewardsAdjustedToLuna(allRewards, prices) : '0'
@@ -153,3 +148,5 @@ export default async function getStaking(address: string): Promise<GetStakingRet
     availableLuna: delegatable
   }
 }
+
+export default memoizee(getStakingUncached, { promise: true, maxAge: 10 * 1000 })

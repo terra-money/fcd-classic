@@ -76,7 +76,7 @@ export default class TransactionController extends KoaController {
       memo: Joi.string().description('Tx memo'),
       chainId: Joi.string().valid(config.CHAIN_ID),
       from: Joi.number().description('From timestamp unix time'),
-      to: Joi.number().description('to timestamp unix time'),
+      to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).description('Items per page')
     },

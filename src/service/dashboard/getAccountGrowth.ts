@@ -1,6 +1,7 @@
 import { dashboardRawQuery } from './helper'
 import { compact } from 'lodash'
-import { startOfDay, format, subDays, getTime } from 'date-fns'
+import { startOfDay, subDays, getTime } from 'date-fns'
+import { getQueryDateTime } from 'lib/time'
 
 export interface GetAccountGrowthParam {
   count?: number
@@ -12,18 +13,19 @@ interface RawAccountCount {
   datetime: string
 }
 
-async function getAccountHistory(count?: number): Promise<RawAccountCount[]> {
+async function getAccountHistory(daysBefore?: number): Promise<RawAccountCount[]> {
   const baseQuery = `select date(datetime) as datetime, max(total_account_count) as total_account_count, max(active_account_count) as active_account_count from general_info `
-  const today = startOfDay(new Date())
-  let dateQuery = `where datetime < '${format(today, 'YYYY-MM-DD HH:mm:ss')}'`
-  if (count) dateQuery = `${dateQuery} and datetime >= '${format(subDays(today, count + 1), 'YYYY-MM-DD HH:mm:ss')}'`
+  const today = startOfDay(Date.now())
+  let dateQuery = `where datetime < '${getQueryDateTime(today)}'`
+
+  if (daysBefore) {
+    dateQuery = `${dateQuery} and datetime >= '${getQueryDateTime(subDays(today, Math.max(1, daysBefore)))}'`
+  }
 
   return dashboardRawQuery(`${baseQuery}${dateQuery} group by date(datetime) order by date(datetime) asc`)
 }
 
-export default async function getAccountGrowth(option: GetAccountGrowthParam): Promise<AccountGrowthReturn> {
-  const { count } = option
-
+export default async function getAccountGrowth(count?: number): Promise<AccountGrowthReturn> {
   const accountHistory = await getAccountHistory(count)
 
   const cumulative = accountHistory.map((item) => {

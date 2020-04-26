@@ -1,31 +1,9 @@
-import * as moment from 'moment'
-import * as memoizee from 'memoizee'
 import { getConnection } from 'typeorm'
+import { getQueryDateRangeFrom } from 'lib/time'
 
-export function getTargetDatetimeRange(count: number): DateRange {
-  const today = moment().startOf('day')
-  return {
-    to: today.format('YYYY-MM-DD'),
-    from: today.subtract(count, 'day').format('YYYY-MM-DD')
-  }
-}
-
-export function getTargetDates(count: number): Date[] {
-  const targets: Date[] = []
-  const today = moment().startOf('day')
-
-  targets.push(today.toDate())
-  for (let i = 0; i < count - 1; i = i + 1) {
-    targets.push(today.subtract(1, 'day').toDate())
-  }
-  return targets
-}
-
-async function dashboardRawQueryUncached(query: string): Promise<object | object[]> {
+export async function dashboardRawQuery(query: string): Promise<any> {
   return getConnection().query(query)
 }
-
-export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: true, maxAge: 3600000 })
 
 /**
  *
@@ -37,8 +15,8 @@ export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: 
 
 export async function getPriceHistory(dayCount?: number): Promise<{ [key: string]: string }> {
   const whereQuery = dayCount
-    ? `where datetime >= '${getTargetDatetimeRange(dayCount).from}' and datetime < '${
-        getTargetDatetimeRange(dayCount).to
+    ? `where datetime >= '${getQueryDateRangeFrom(dayCount).from}' and datetime < '${
+        getQueryDateRangeFrom(dayCount).to
       }'`
     : ``
 
@@ -55,6 +33,6 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
 
 export function getCountBaseWhereQuery(count?: number) {
   return count
-    ? `where datetime >= '${getTargetDatetimeRange(count).from}' and datetime < '${getTargetDatetimeRange(count).to}'`
-    : `where datetime < '${getTargetDatetimeRange(1).to}'`
+    ? `where datetime >= '${getQueryDateRangeFrom(count).from}' and datetime < '${getQueryDateRangeFrom(count).to}'`
+    : `where datetime < '${getQueryDateRangeFrom(1).to}'`
 }

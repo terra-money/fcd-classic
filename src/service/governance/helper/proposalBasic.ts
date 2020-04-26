@@ -56,16 +56,8 @@ export async function getProposalBasicUncached(
   proposal: LcdProposal,
   depositParams: LcdProposalDepositParams,
   isSummary = false
-): Promise<ProposalBasic | undefined> {
-  const proposer = await lcd.getProposalProposer(proposal.id).catch((e) => {
-    errorReport(e)
-    return
-  })
-
-  if (!proposer) {
-    return
-  }
-
+): Promise<ProposalBasic> {
+  const proposer = await lcd.getProposalProposer(proposal.id)
   const { id, content, submit_time: submitTime, proposal_status: status } = proposal
 
   const renamedStatus = renameStatus(status)
@@ -74,6 +66,7 @@ export async function getProposalBasicUncached(
   const { title, description } = contentValues
 
   let voteSummary
+
   if (renamedStatus !== 'Rejected' || !isSummary) {
     voteSummary = await getVoteSummary(proposal)
   }
@@ -94,4 +87,7 @@ export async function getProposalBasicUncached(
   return result
 }
 
-export const getProposalBasic = memoizee(getProposalBasicUncached, { promise: true, maxAge: 5 * 60 * 1000 })
+export const getProposalBasic = memoizee(getProposalBasicUncached, {
+  promise: true,
+  maxAge: 300 * 1000 /* 5 minutes */
+})

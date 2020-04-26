@@ -402,28 +402,6 @@ export async function getAvgVotingPowerUncached(
 
 export const getAvgVotingPower = memoizee(getAvgVotingPowerUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
-export function oneDayBeforeTs(): { fromTs: number; toTs: number } {
-  const to = format(new Date(), 'YYYY-MM-DD 00:00:00')
-  const toTs = new Date(to).getTime()
-  const oneDayMs = 60000 * 60 * 24
-  const fromTs = toTs - oneDayMs
-  return {
-    fromTs,
-    toTs
-  }
-}
-
-export function thirtyDaysBeforeTs(): { fromTs: number; toTs: number } {
-  const to = format(new Date(), 'YYYY-MM-DD 00:00:00')
-  const toTs = new Date(to).getTime()
-  const thirtyDaysMs = 60000 * 60 * 24 * 30
-  const fromTs = toTs - thirtyDaysMs
-  return {
-    fromTs,
-    toTs
-  }
-}
-
 export async function getAvgPrice(fromTs: number, toTs: number): Promise<CoinByDenoms> {
   const fromStr = format(new Date(fromTs), 'YYYY-MM-DD')
   const toStr = format(new Date(toTs), 'YYYY-MM-DD')

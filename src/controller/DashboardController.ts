@@ -73,8 +73,7 @@ export default class TxController extends KoaController {
     }
   })
   async getTxVolume(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-    success(ctx, await getTransactionVol(count))
+    success(ctx, await getTransactionVol(+ctx.request.query.count))
   }
 
   /**
@@ -99,15 +98,9 @@ export default class TxController extends KoaController {
     }
   })
   async getBlockRewards(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getBlockRewards({
-        count
-      })
-    )
+    success(ctx, await getBlockRewards(+ctx.request.query.count))
   }
+
   /**
    * @api {get} /dashboard/seigniorage_proceeds Get the amount of seigniorage in the start of the day
    * @apiName getSeigniorageProc
@@ -126,14 +119,7 @@ export default class TxController extends KoaController {
     }
   })
   async getSeigniorageProc(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getSeigniorageProceeds({
-        count
-      })
-    )
+    success(ctx, await getSeigniorageProceeds(+ctx.request.query.count))
   }
 
   /**
@@ -156,14 +142,7 @@ export default class TxController extends KoaController {
     }
   })
   async getStakingReturn(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getStakingReturn({
-        count
-      })
-    )
+    success(ctx, await getStakingReturn(+ctx.request.query.count))
   }
 
   /**
@@ -190,13 +169,6 @@ export default class TxController extends KoaController {
     }
   })
   async getAccountGrth(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getAccountGrowth({
-        count
-      })
-    )
+    success(ctx, await getAccountGrowth(+ctx.request.query.count))
   }
 }

@@ -1,7 +1,7 @@
 import { PriceEntity } from 'orm'
 import { WhereExpression, getRepository, getConnection } from 'typeorm'
-import * as moment from 'moment'
 import { times, div } from 'lib/math'
+import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 
 export function getUSDValue(denom: string, amount: string, prices: { [key: string]: string }): string {
   let usdValue = '0'
@@ -21,10 +21,10 @@ export function getUSDValue(denom: string, amount: string, prices: { [key: strin
 }
 
 export function addDatetimeFilterToQuery(timestamp: number, qb: WhereExpression) {
-  const to = moment(timestamp - (timestamp % 60000)).format('YYYY-MM-DD HH:mm:ss')
-  const from = moment(timestamp - (timestamp % 60000) - 60000).format('YYYY-MM-DDTHH:mm:ss')
-  qb.andWhere(`timestamp >= '${from}'`)
-  qb.andWhere(`timestamp < '${to}'`)
+  const { from, to } = getDateRangeOfLastMinute(timestamp)
+
+  qb.andWhere(`timestamp >= '${getQueryDateTime(from)}'`)
+  qb.andWhere(`timestamp < '${getQueryDateTime(to)}'`)
 }
 
 export function isSuccessfulMsg(msg) {

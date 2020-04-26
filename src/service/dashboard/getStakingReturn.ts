@@ -1,7 +1,7 @@
-import * as moment from 'moment'
-
 import { plus, div, times } from 'lib/math'
+import { dateFromDateString } from 'lib/time'
 import { getCountBaseWhereQuery, dashboardRawQuery, getPriceHistory } from './helper'
+import * as memoizee from 'memoizee'
 
 export interface GetStakingReturnParam {
   count?: number
@@ -13,8 +13,7 @@ interface StakingDailyReturn {
   annualizedReturn: string
 }
 
-export default async function getStakingReturn(option: GetStakingReturnParam): Promise<StakingDailyReturn[]> {
-  const { count } = option
+export async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
   const totalIssued = 780323810831865 + 219456662015307
 
   const rewardQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
@@ -36,6 +35,7 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
   }, {})
 
   const rewardObj = rewards.reduce((acc, item) => {
+    console.log(item.date)
     if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna') {
       return acc
     }
@@ -87,7 +87,7 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
     const annualizedReturn = times(dailyReturn, 365)
 
     acc.unshift({
-      datetime: moment(date).valueOf(),
+      datetime: dateFromDateString(date).getTime(),
       dailyReturn,
       annualizedReturn
     })
@@ -97,3 +97,6 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
 
   return stakingReturns
 }
+
+// We will clear memoization at the beginning of each days
+export default memoizee(getStakingReturnUncached, { promise: true, maxAge: 86400 * 1000 /* 1 day */ })

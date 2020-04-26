@@ -1,10 +1,9 @@
+import { get, chain } from 'lodash'
 import { BlockEntity, AccountEntity } from 'orm'
 import { getRepository, getConnection } from 'typeorm'
-import * as moment from 'moment'
 import config from 'config'
-import { get, chain } from 'lodash'
+import { getQueryDateTime } from 'lib/time'
 import parseTx from './parseTx'
-import { UTC_OFFSET_OF_SEOUL_IN_MIN } from 'lib/constant'
 
 export interface GetTxListParam {
   account?: string
@@ -88,11 +87,11 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   let distinctQuery = `select distinct(hash) from account_tx where account='${data.account}'`
 
   if (data.from) {
-    distinctQuery += ` and timestamp >= '${moment(data.from).format('YYYY-MM-DD HH:mm:ss')}'`
+    distinctQuery += ` and timestamp >= '${getQueryDateTime(data.from)}'`
   }
 
   if (data.to) {
-    distinctQuery += ` and timestamp <= '${moment(data.to).format('YYYY-MM-DD HH:mm:ss')}'`
+    distinctQuery += ` and timestamp <= '${getQueryDateTime(data.to)}'`
   }
 
   if (data.action) {
@@ -124,15 +123,11 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
   }
 
   if (data.from) {
-    distinctTxQuery += ` and timestamp >= '${moment(data.from)
-      .utcOffset(UTC_OFFSET_OF_SEOUL_IN_MIN)
-      .format('YYYY-MM-DD HH:mm:ss')}'`
+    distinctTxQuery += ` and timestamp >= '${getQueryDateTime(data.from)}'`
   }
 
   if (data.to) {
-    distinctTxQuery += ` and timestamp <= '${moment(data.to)
-      .utcOffset(UTC_OFFSET_OF_SEOUL_IN_MIN)
-      .format('YYYY-MM-DD HH:mm:ss')}'`
+    distinctTxQuery += ` and timestamp <= '${getQueryDateTime(data.to)}'`
   }
 
   const subQuery = `select tx_id from (${distinctTxQuery}${orderAndPageClause}) a `

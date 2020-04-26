@@ -1,12 +1,11 @@
-import { format } from 'date-fns'
 import config from 'config'
-import * as moment from 'moment'
 import { TxEntity, RewardEntity, BlockEntity } from 'orm'
 import { getRepository, EntityManager } from 'typeorm'
 import * as lcd from 'lib/lcd'
 import logger from 'lib/logger'
 import { plus, minus } from 'lib/math'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
+import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 import { get, mergeWith } from 'lodash'
 import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
 
@@ -90,13 +89,12 @@ interface Rewards {
 
 export async function getRewards(timestamp: number): Promise<Rewards> {
   const result: Rewards = { reward: {}, commission: {} }
-  const to = moment(timestamp - (timestamp % 60000)).format('YYYY-MM-DD HH:mm:ss')
-  const from = moment(timestamp - (timestamp % 60000) - 60000).format('YYYY-MM-DDTHH:mm:ss')
+  const { from, to } = getDateRangeOfLastMinute(timestamp)
   const qb = getRepository(BlockEntity)
     .createQueryBuilder('block')
     .leftJoinAndSelect('block.reward', 'reward')
-    .andWhere(`block.timestamp >= '${from}'`)
-    .andWhere(`block.timestamp < '${to}'`)
+    .andWhere(`block.timestamp >= '${getQueryDateTime(from)}'`)
+    .andWhere(`block.timestamp < '${getQueryDateTime(to)}'`)
 
   const blocks: BlockEntity[] = await qb.getMany()
 
@@ -152,8 +150,7 @@ export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> 
 }
 
 export async function setReward(transactionEntityManager: EntityManager, timestamp: number) {
-  const target = format(timestamp - (timestamp % 60000) - 60000, 'YYYY/MM/DD HH:mm:ss')
   const rewardEntity = await getRewardDocs(timestamp)
   await transactionEntityManager.save(rewardEntity)
-  logger.info(`Save reward / ${target} - success.`)
+  logger.info(`Save reward ${getDateRangeOfLastMinute(timestamp).from} success.`)
 }

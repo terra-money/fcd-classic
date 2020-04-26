@@ -169,7 +169,7 @@ export async function getLastestBlockInfo(): Promise<NewBlockInfo> {
   }
 }
 
-export async function saveLatestBlock(): Promise<void> {
+export async function collectBlock(): Promise<void> {
   let hasNextBlocks = true
 
   while (hasNextBlocks) {

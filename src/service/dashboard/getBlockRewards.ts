@@ -1,18 +1,14 @@
-import { startOfDay, format, getTime } from 'date-fns'
+import { startOfDay, format } from 'date-fns'
 import { div, plus, times } from 'lib/math'
+import { getQueryDateTime } from 'lib/time'
 import { dashboardRawQuery, getPriceHistory } from './helper'
 
-export interface GetTaxParam {
-  count?: number
-}
-
-export default async function getBlockRewards(option: GetTaxParam): Promise<BlockRewardsReturn> {
-  const { count } = option
-  const today = startOfDay(new Date())
+export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
+  const today = startOfDay(Date.now())
 
   const sumRewardsQuery = `select date(datetime) as datetime,\
   denom, sum(tax) as sum_reward from reward\
-  where datetime < '${format(today, 'YYYY-MM-DD HH:mm:ss')}'
+  where datetime < '${getQueryDateTime(today)}'
   group by 1, 2 order by 1`
 
   const rewards = await dashboardRawQuery(sumRewardsQuery)
@@ -48,18 +44,18 @@ export default async function getBlockRewards(option: GetTaxParam): Promise<Bloc
 
   const rewardArr = Object.keys(rewardObj).map((key) => {
     return {
-      datetime: getTime(new Date(key)),
+      datetime: new Date(key).getTime(),
       blockReward: rewardObj[key]
     }
   })
 
   let cum = '0'
-  const sliceCnt = count ? -count : 0
+  const sliceCnt = daysBefore ? -daysBefore : 0
   const cumArray: BlockRewardSumInfo[] = Object.keys(rewardObj)
     .reduce((acc: BlockRewardSumInfo[], key) => {
       cum = plus(cum, rewardObj[key])
       acc.push({
-        datetime: getTime(new Date(key)),
+        datetime: new Date(key).getTime(),
         blockReward: cum
       })
       return acc

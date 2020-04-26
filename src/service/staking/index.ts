@@ -7,7 +7,6 @@ export { default as getDelegators } from './getDelegators'
 export {
   default as getValidatorReturn,
   getValidatorAnnualAvgReturn,
-  getBlockRewardsUncached,
-  getYesterdayBlockRewards
+  getBlockRewards
 } from 'service/staking/getValidatorReturn'
 export * from './helper'

@@ -1,23 +1,24 @@
 import { getRepository, getConnection } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
-import * as moment from 'moment'
+import { subDays } from 'date-fns'
 
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
+import { getQueryDateTime } from 'lib/time'
 
 export async function getTotalAccount(timestamp?: number) {
   const now = timestamp || Date.now()
-  const targetDate = moment(now).format('YYYY-MM-DD HH:mm:ss')
+  const targetDate = getQueryDateTime(now)
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}') as temp;`
   return getConnection().query(query)
 }
 
 export async function getActiveAccount(timestamp?: number) {
   const now = timestamp || Date.now()
-  const targetDate = moment(now).format('YYYY-MM-DD HH:mm:ss')
-  const onedayBefore = moment(now).subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss')
+  const targetDate = getQueryDateTime(now)
+  const onedayBefore = getQueryDateTime(subDays(now, 1))
 
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}' and timestamp >= '${onedayBefore}') as temp;`
   return getConnection().query(query)
@@ -52,7 +53,7 @@ export async function saveGeneral() {
   })
 }
 
-export async function setGeneral() {
+export async function collectorGeneral() {
   await saveGeneral()
     .then(() => {
       logger.info(`Save general - success.`)

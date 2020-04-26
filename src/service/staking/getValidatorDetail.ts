@@ -114,5 +114,8 @@ export async function getValidatorDetailUncached(
   return result
 }
 
-export const getValidatorDetail = memoizee(getValidatorDetailUncached, { promise: true, maxAge: 5 * 60 * 1000 })
+export const getValidatorDetail = memoizee(getValidatorDetailUncached, {
+  promise: true,
+  maxAge: 300 * 1000 /* 5 minutes */
+})
 export default getValidatorDetail
