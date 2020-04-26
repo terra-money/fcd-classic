@@ -77,7 +77,7 @@ export default class TxController extends KoaController {
       operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
     },
     query: {
-      account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account address')
+      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account address')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -85,7 +85,7 @@ export default class TxController extends KoaController {
     const { operatorAddr } = ctx.params
     const { account } = ctx.request.query
 
-    success(ctx, await getValidatorDetail({ operatorAddr, userAddr: account }))
+    success(ctx, await getValidatorDetail(operatorAddr, account))
   }
 
   /**
@@ -389,7 +389,7 @@ export default class TxController extends KoaController {
   @Get('/return/:operatorAddr')
   @Validate({
     params: {
-      operatorAddr: Joi.string().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
     },
     failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
   })

@@ -56,9 +56,9 @@ async function getValidatorInfo(operatorAddr: string): Promise<ValidatorResponse
 }
 
 export async function getValidatorDetailUncached(
-  params: GetValidatorDetailParams
+  operatorAddr: string,
+  account?: string
 ): Promise<ValidatorDetailsReturn | undefined> {
-  const { operatorAddr, userAddr, priceObjInfo } = params
   const validator = await getValidatorInfo(operatorAddr)
 
   if (!validator) {
@@ -69,11 +69,11 @@ export async function getValidatorDetailUncached(
     ...validator
   }
 
-  if (userAddr) {
-    const priceObj = priceObjInfo ? priceObjInfo : await lcd.getActiveOraclePrices()
+  if (account) {
+    const priceObj = await lcd.getActiveOraclePrices()
     const commissions: Coin[] = await getCommissions(operatorAddr)
-    const myDelegation = await getMyDelegation(userAddr, validator)
-    const myBalance = await getBalance(userAddr)
+    const myDelegation = await getMyDelegation(account, validator)
+    const myBalance = await getBalance(account)
     const ulunaBalance = filter(myBalance.balance, { denom: 'uluna' })[0]
     const myUndelegation =
       myBalance.unbondings &&
@@ -84,7 +84,7 @@ export async function getValidatorDetailUncached(
     let myRewards
 
     if (myDelegation) {
-      const rewards = await lcd.getRewards(userAddr, operatorAddr)
+      const rewards = await lcd.getRewards(account, operatorAddr)
 
       let total = '0'
       const denoms = rewards.map(({ denom, amount }) => {
