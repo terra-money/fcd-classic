@@ -2,7 +2,7 @@ import { get, orderBy, flatten } from 'lodash'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
 import * as memoizee from 'memoizee'
-import { format } from 'date-fns'
+import { startOfDay } from 'date-fns'
 
 import { APIError, ErrorTypes } from 'lib/error'
 import * as lcd from 'lib/lcd'
@@ -10,6 +10,7 @@ import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
 import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
 import getAvatar from 'lib/keybase'
+import { getQueryDateTime } from 'lib/time'
 import getDelegationTxs from './getDelegationTxs'
 import { GetClaimsParam } from './getClaims'
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
@@ -332,8 +333,8 @@ export async function getAvgVotingPowerUncached(
 
   const { voting_power: votingPowerNow } = votingPowerInfo
 
-  const fromStr = format(fromTs, 'YYYY-MM-DD HH:mm:ss')
-  const toStr = format(toTs, 'YYYY-MM-DD HH:mm:ss')
+  const fromStr = getQueryDateTime(fromTs)
+  const toStr = getQueryDateTime(toTs)
 
   const { events: delegationBetweenRange } = await getDelegationTxs({
     operatorAddr,
@@ -403,8 +404,8 @@ export async function getAvgVotingPowerUncached(
 export const getAvgVotingPower = memoizee(getAvgVotingPowerUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
 export async function getAvgPrice(fromTs: number, toTs: number): Promise<CoinByDenoms> {
-  const fromStr = format(new Date(fromTs), 'YYYY-MM-DD')
-  const toStr = format(new Date(toTs), 'YYYY-MM-DD')
+  const fromStr = getQueryDateTime(startOfDay(fromTs))
+  const toStr = getQueryDateTime(startOfDay(toTs))
 
   const query = `select denom, avg(price) as avg_price from price \
   where datetime >= '${fromStr}' and datetime < '${toStr}' group by denom`
@@ -417,8 +418,8 @@ export async function getAvgPrice(fromTs: number, toTs: number): Promise<CoinByD
 }
 
 export async function getTotalStakingReturnCached(fromTs: number, toTs: number): Promise<string> {
-  const toStr = format(toTs, 'YYYY-MM-DD HH:mm:ss')
-  const fromStr = format(fromTs, 'YYYY-MM-DD HH:mm:ss')
+  const toStr = getQueryDateTime(toTs)
+  const fromStr = getQueryDateTime(fromTs)
   const rewardQuery = `select denom, sum(sum) as reward_sum from reward \
   where datetime >= '${fromStr}' and datetime < '${toStr}' group by denom`
   const rewards = await getConnection().query(rewardQuery)
@@ -502,7 +503,7 @@ export function generateValidatorResponse(
       rate: commissionRate,
       maxRate: maxCommissionRate,
       maxChangeRate: maxCommissionChangeRate,
-      updateTime: format(commissionChangeDate, 'YYYY-MM-DD HH:mm:ss')
+      updateTime: commissionChangeDate.toJSON()
     },
     rewardsPool: {
       total: rewardPoolTotal,
