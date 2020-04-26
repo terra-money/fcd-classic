@@ -22,10 +22,11 @@ export default async function getSeigniorageProceeds(count: number): Promise<Sei
     .createQueryBuilder()
     .addSelect('DATE(datetime)', 'date')
     .addSelect('seigniorage_proceeds')
-    .where({ date: Between(queryDateRange.from, queryDateRange.to) })
+    .where({ datetime: Between(queryDateRange.from, queryDateRange.to) })
     .distinctOn(['date'])
     .orderBy('date', 'ASC')
 
+  console.log(qb.getQueryAndParameters())
   const result = await qb.getMany()
 
   return orderBy(result, ['datetime'], ['desc']).map((item) => ({
