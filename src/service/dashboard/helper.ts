@@ -1,9 +1,12 @@
+import * as memoizee from 'memoizee'
 import { getConnection } from 'typeorm'
 import { getQueryDateRangeFrom } from 'lib/time'
 
-export async function dashboardRawQuery(query: string): Promise<any> {
+async function dashboardRawQueryUncached(query: string): Promise<any> {
   return getConnection().query(query)
 }
+
+export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: true, maxAge: 3600000 })
 
 /**
  *
