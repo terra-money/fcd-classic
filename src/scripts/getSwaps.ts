@@ -1,7 +1,7 @@
 import { init as initORM, AccountTxEntity } from 'orm'
 import { getRepository } from 'typeorm'
 import { get } from 'lodash'
-import * as moment from 'moment'
+import { getQueryDateTime } from 'lib/time'
 
 function getSwapResult(data) {
   const logs = get(data, 'logs')
@@ -31,7 +31,7 @@ function getSwapResult(data) {
 
     const offerAmount = Number(offerCoin.amount) / 1000000
     const offerDenom = offerCoin.denom.slice(1)
-    const timeStr = moment(data.timestamp).format('YYYY-MM-DD HH:mm:ss')
+    const timeStr = getQueryDateTime(data.timestamp)
 
     console.log(
       `${timeStr},${trader},${data.txhash},${offerAmount},${offerDenom},${askAmount},${askDenom},${swapFeeAmount},${askDenom}`

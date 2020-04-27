@@ -1,7 +1,7 @@
 import { getRepository, getConnection, LessThan } from 'typeorm'
-import * as moment from 'moment'
-import { format } from 'date-fns'
+import { subDays } from 'date-fns'
 import { init as initORM, GeneralInfoEntity } from 'orm'
+import { getQueryDateTime } from 'lib/time'
 
 async function getTotalAccount(now) {
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${now}') as temp;`
@@ -9,15 +9,14 @@ async function getTotalAccount(now) {
 }
 
 async function getActiveAccount(now) {
-  const onedayBefore = moment(now).subtract(1, 'day').format('YYYY-MM-DD HH:mm:ss')
+  const onedayBefore = getQueryDateTime(subDays(now, 1).getTime())
 
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${now}' and timestamp >= '${onedayBefore}') as temp;`
   return getConnection().query(query)
 }
 
 async function setDistinctAccount(data: GeneralInfoEntity) {
-  const now = format(data.datetime, 'YYYY-MM-DD HH:mm:ss')
-
+  const now = getQueryDateTime(data.datetime)
   const [total, active] = await Promise.all([getTotalAccount(now), getActiveAccount(now)])
 
   await getRepository(GeneralInfoEntity).update(data.id, {

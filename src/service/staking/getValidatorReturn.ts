@@ -1,12 +1,10 @@
-import { startOfYesterday, startOfToday, format } from 'date-fns'
 import config from 'config'
-import * as memoizee from 'memoizee'
-
 import { mergeWith } from 'lodash'
 import { BlockRewardEntity } from 'orm'
 import { getRepository, getConnection } from 'typeorm'
 import { div, plus, minus, times } from 'lib/math'
 import { getAvgPrice } from './helper'
+import { getQueryDateTime } from 'lib/time'
 
 interface BlockReward {
   reward_per_val: object
@@ -15,11 +13,11 @@ interface BlockReward {
   timestamp: Date
 }
 
-export async function getBlockRewardsUncached(fromTs: number, toTs: number): Promise<BlockReward[]> {
-  const fromStr = format(fromTs, 'YYYY-MM-DD HH:mm:ss')
-  const toStr = format(toTs, 'YYYY-MM-DD HH:mm:ss')
+export async function getBlockRewards(fromTs: number, toTs: number): Promise<BlockReward[]> {
+  const fromStr = getQueryDateTime(fromTs)
+  const toStr = getQueryDateTime(toTs)
 
-  const query = `SELECT * FROM blockreward WHERE timestamp >= '${fromStr}' AND timestamp < '${toStr}' AND chain_id='${config.CHAIN_ID}' AND block_id is not null`
+  const query = `SELECT * FROM blockreward WHERE timestamp >= '${fromStr}' AND timestamp < '${toStr}' AND chain_id='${config.CHAIN_ID}' AND block_id IS NOT NULL`
 
   const blockrewards = await getConnection().query(query)
 
@@ -44,13 +42,7 @@ export async function getBlockRewardsUncached(fromTs: number, toTs: number): Pro
   return blockrewards
 }
 
-const getBlockRewards = memoizee(getBlockRewardsUncached, { promise: true, maxAge: 3600000 * 12 /* 12 hours */ })
-
-export async function getYesterdayBlockRewards(): Promise<BlockReward[]> {
-  return getBlockRewards(startOfYesterday().getTime(), startOfToday().getTime())
-}
-
-async function getValidatorReturnUncached(
+export default async function getValidatorReturn(
   operatorAddress: string,
   votingPower: string,
   fromTs: number,
@@ -85,10 +77,8 @@ async function getValidatorReturnUncached(
   }, '0')
 
   const rewardNet = minus(reward, commission)
-  return rewardNet === '0' ? '0' : times(div(rewardNet, votingPower), '365') || '0'
+  return rewardNet === '0' ? '0' : times(div(rewardNet, votingPower), 365) || '0'
 }
-
-export default memoizee(getValidatorReturnUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
 export async function getValidatorAnnualAvgReturn(operatorAddress: string): Promise<ValidatorAnnualReturn> {
   const rawQuery = `select operator_address,

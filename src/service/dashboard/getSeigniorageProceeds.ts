@@ -1,50 +1,35 @@
-import { getRepository, MoreThanOrEqual } from 'typeorm'
+import { getRepository, Between } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
-import * as moment from 'moment'
-import { getTargetDates } from './helper'
-import { flatten } from 'lodash'
+import { orderBy } from 'lodash'
+import { getQueryDateRangeFrom } from 'lib/time'
 
-export interface GetSeigniorageParam {
-  count: number //  number of previous days from today for seigniorage history
-}
 /**
  * Seigniorage on specific date
  */
-
 interface SeigniorageInfo {
   datetime: number // date in unix
   seigniorageProceeds: string // bigint seigniorage amount
 }
 
-export default async function getSeigniorageProceeds(option: GetSeigniorageParam): Promise<SeigniorageInfo[]> {
-  const { count } = option
+/**
+ *
+ * @param count number of previous days from today for seigniorage history
+ */
+export default async function getSeigniorageProceeds(count: number): Promise<SeigniorageInfo[]> {
+  const queryDateRange = getQueryDateRangeFrom(count)
 
-  const targetDates = getTargetDates(count)
+  const qb = getRepository(GeneralInfoEntity)
+    .createQueryBuilder()
+    .addSelect('DATE(datetime)', 'date')
+    .addSelect('seigniorage_proceeds')
+    .where({ datetime: Between(queryDateRange.from, queryDateRange.to) })
+    .distinctOn(['date'])
+    .orderBy('date', 'ASC')
 
-  const result = flatten(
-    await Promise.all(
-      targetDates.map((date: Date) => {
-        return getRepository(GeneralInfoEntity).find({
-          where: {
-            datetime: MoreThanOrEqual(date)
-          },
-          order: {
-            datetime: 'ASC'
-          },
-          skip: 0,
-          take: 1
-        })
-      })
-    )
-  )
-  return result
-    .map((item) => {
-      return {
-        datetime: moment(item.datetime).valueOf(),
-        seigniorageProceeds: item.seigniorageProceeds
-      }
-    })
-    .filter((item) => {
-      return item.seigniorageProceeds !== null
-    })
+  const result = await qb.getMany()
+
+  return orderBy(result, ['datetime'], ['desc']).map((item) => ({
+    datetime: item.datetime.getTime(),
+    seigniorageProceeds: item.seigniorageProceeds
+  }))
 }

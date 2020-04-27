@@ -32,4 +32,4 @@ async function getAccountInfoUncached(
   return result
 }
 
-export const getAccountInfo = memoizee(getAccountInfoUncached, { promise: true, maxAge: 60 * 60000 })
+export const getAccountInfo = memoizee(getAccountInfoUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })

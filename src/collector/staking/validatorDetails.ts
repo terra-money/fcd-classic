@@ -45,7 +45,7 @@ async function getDelegators(opertorAddress: string): Promise<Delegator[]> {
     }
   })
 
-  return orderBy(delegators, ['weight', 'desc'])
+  return orderBy(delegators, [(d) => Number(d.weight)], ['desc'])
 }
 
 function getUptime(signingInfo: LcdValidatorSigningInfo): number {

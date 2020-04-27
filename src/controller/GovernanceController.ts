@@ -45,7 +45,9 @@ export default class GovernanceController extends KoaController {
   @Get('/proposals')
   @Validate({
     query: {
-      status: Joi.string().valid(Object.values(ProposalStatus)).description('Proposal status')
+      status: Joi.string()
+        .valid(['', Object.values(ProposalStatus)])
+        .description('Proposal status')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -90,7 +92,7 @@ export default class GovernanceController extends KoaController {
       proposalId: Joi.number().min(1).required().description('Proposal id')
     },
     query: {
-      account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account')
+      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -137,8 +139,8 @@ export default class GovernanceController extends KoaController {
   })
   async getProposalDeposits(ctx): Promise<void> {
     const { proposalId } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -179,14 +181,16 @@ export default class GovernanceController extends KoaController {
     query: {
       page: Joi.number().min(1).default(1).description('Page number'),
       limit: Joi.number().min(1).default(5).description('Item count per page'),
-      option: Joi.string().valid(Object.values(VoteTypes)).description('Votes types')
+      option: Joi.string()
+        .valid(['', Object.values(VoteTypes)])
+        .description('Votes types')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getProposalVotes(ctx): Promise<void> {
     const { proposalId } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = ctx.request.query.page
+    const limit = ctx.request.query.limit
     const { option } = ctx.request.query
 
     success(

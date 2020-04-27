@@ -1,65 +1,61 @@
-import { startOfDay, format, getTime } from 'date-fns'
+import { startOfDay, format } from 'date-fns'
 import { div, plus, times } from 'lib/math'
+import { getQueryDateTime } from 'lib/time'
 import { dashboardRawQuery, getPriceHistory } from './helper'
 
-export interface GetTaxParam {
-  count?: number
-}
+export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
+  const today = startOfDay(Date.now())
 
-export default async function getBlockRewards(option: GetTaxParam): Promise<BlockRewardsReturn> {
-  const { count } = option
-  const today = startOfDay(new Date())
-
-  const sumRewardsQuery = `select date(datetime) as datetime,\
-  denom, sum(tax) as sum_reward from reward\
-  where datetime < '${format(today, 'YYYY-MM-DD HH:mm:ss')}'
-  group by 1, 2 order by 1`
+  const sumRewardsQuery = `SELECT DATE(datetime) AS date, \
+denom, SUM(tax) AS sum_reward FROM reward \
+WHERE datetime < '${getQueryDateTime(today)}' \
+GROUP BY date, denom ORDER BY date`
 
   const rewards = await dashboardRawQuery(sumRewardsQuery)
 
   const priceObj = await getPriceHistory()
   const getPriceObjKey = (date: Date, denom: string) => `${format(date, 'YYYY-MM-DD')}${denom}`
 
+  // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
   const rewardObj = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.datetime, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
+    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
       return acc
     }
 
-    // krw의 경우는 그냥 저장
-    // luna의 경우는 luna/krt의 가격으로 곱해서 krt 밸류로 환산 후 저장
-    // 그외의 경우는 luna/krt의 가격으로 곱한 후 luna/{denom}의 가격으로 나눠서 krt 밸류로 환산 후 저장
+    // TODO: why are we using KRT as unit? it should be calculated on client side
+    // Convert each coin value as KRT
     const reward =
       item.denom === 'ukrw'
         ? item.sum_reward
         : item.denom === 'luna'
-        ? times(item.sum_reward, priceObj[getPriceObjKey(item.datetime, 'ukrw')])
+        ? times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')])
         : div(
-            times(item.sum_reward, priceObj[getPriceObjKey(item.datetime, 'ukrw')]),
+            times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')]),
             priceObj[getPriceObjKey(item.datetime, item.denom)]
           )
 
-    if (acc[item.datetime]) {
-      acc[item.datetime] = plus(acc[item.datetime], reward)
+    if (acc[item.date]) {
+      acc[item.date] = plus(acc[item.datetime], reward)
     } else {
-      acc[item.datetime] = reward
+      acc[item.date] = reward
     }
     return acc
   }, {})
 
   const rewardArr = Object.keys(rewardObj).map((key) => {
     return {
-      datetime: getTime(new Date(key)),
+      datetime: new Date(key).getTime(),
       blockReward: rewardObj[key]
     }
   })
 
   let cum = '0'
-  const sliceCnt = count ? -count : 0
+  const sliceCnt = daysBefore ? -daysBefore : 0
   const cumArray: BlockRewardSumInfo[] = Object.keys(rewardObj)
     .reduce((acc: BlockRewardSumInfo[], key) => {
       cum = plus(cum, rewardObj[key])
       acc.push({
-        datetime: getTime(new Date(key)),
+        datetime: new Date(key).getTime(),
         blockReward: cum
       })
       return acc

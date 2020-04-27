@@ -1,6 +1,3 @@
-import * as moment from 'moment'
-import { get } from 'lodash'
-
 import calculate from './calculate'
 import getVesting from './getVesting'
 import normalizeAccount from './normalizeAccount'
@@ -16,11 +13,6 @@ interface AccountDetails {
   unbondings?: LcdUnbonding[]
 }
 
-function getTimestampFromBlock(block): number {
-  const blockTimestampStr = get(block, 'block_meta.header.time', NaN)
-  return blockTimestampStr && moment(blockTimestampStr).valueOf()
-}
-
 export default async (address: string): Promise<AccountDetails> => {
   const [accounts, unbondings, latestBlock, delegations] = await Promise.all([
     getAccount(address),
@@ -30,7 +22,7 @@ export default async (address: string): Promise<AccountDetails> => {
   ])
 
   const account = normalizeAccount(accounts)
-  const latestBlockTimestamp = getTimestampFromBlock(latestBlock)
+  const latestBlockTimestamp = new Date(latestBlock.block_meta.header.time).getTime()
   const balance = accounts && calculate({ account, delegations, unbondings, latestBlockTimestamp })
   const vesting = accounts && getVesting({ account, latestBlockTimestamp })
 

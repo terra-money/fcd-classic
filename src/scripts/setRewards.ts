@@ -1,7 +1,6 @@
 import { init as initORM, RewardEntity } from 'orm'
 import { getRepository } from 'typeorm'
 import { getRewardDocs } from 'collector/reward'
-import * as moment from 'moment'
 
 async function upsert(doc: RewardEntity) {
   const isExists = await getRepository(RewardEntity).findOne({
@@ -24,23 +23,26 @@ async function upsert(doc: RewardEntity) {
 async function main() {
   await initORM()
 
-  const genesisStart = moment('2019-11-24 16:43:00').valueOf()
-  for (let i = 0; i < 39; i = i + 1) {
-    const datetime = moment(genesisStart).add(i, 'days')
-    const end = datetime.valueOf() + 86400000
+  const genesisTs = new Date('2019-11-24 16:43:00').getTime()
 
-    // if (i === 0) datetime.add(15,'hours')
-    datetime.add(1, 'minute')
-    while (datetime.valueOf() < end) {
-      const docs = await getRewardDocs(datetime.valueOf())
+  for (let i = 0; i < 39; i = i + 1) {
+    let curTs = genesisTs + 86400000 * i
+    const endTs = curTs + 86400000
+
+    curTs += 60000
+
+    while (curTs < endTs) {
+      const docs = await getRewardDocs(curTs)
+
       docs.map((doc) => {
         if (doc.tax !== '0' || doc.gas !== '0' || doc.oracle !== '0') {
           console.log(doc)
         }
       })
+
       // await Promise.all(docs.map(upsert));
       // console.log(`Set reward completed. ${datetime.format('YYYY-MM-DD HH:mm:ss')}`);
-      datetime.add(1, 'minute')
+      curTs += 60000
     }
   }
 }

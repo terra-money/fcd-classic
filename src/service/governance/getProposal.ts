@@ -24,6 +24,7 @@ interface GetProposalResponse extends ProposalBasic {
   }
   tallyingParameters?: LcdProposalTallyingParams
   content?: ProposalContent[]
+  validatorsNotVoted?: ValidatorResponse[]
 }
 
 function makeContentArray(contentObj: { [key: string]: string | ProposalPramsModuleSpace[] }): ProposalContent[] {
@@ -64,6 +65,7 @@ export default async function getProposal(
     if (!account) {
       return proposalDetails
     }
+
     const delegations = await lcd.getDelegations(account)
 
     if (!delegations || delegations.length === 0) {
@@ -72,6 +74,7 @@ export default async function getProposal(
         validatorsNotVoted: []
       }
     }
+
     const delegatedOperatorList: string[] = delegations.reduce((acc: string[], validator) => {
       acc.push(validator.validator_address)
       return acc
@@ -86,15 +89,16 @@ export default async function getProposal(
       (validator) => !(proposalBasic.vote && proposalBasic.vote.voters[validator.accountAddress])
     )
 
-    const validatorNotVoteObj = validatorNotVoted.reduce((acc, validator) => {
+    const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {
       acc.push(generateValidatorResponse(validator, { stakingReturn: '0', isNewValidator: false }))
       return acc
     }, [] as ValidatorResponse[])
 
     return {
       ...proposalDetails,
-      validatorsNotVoted: validatorNotVoteObj
+      validatorsNotVoted
     }
   }
+
   return { ...proposalBasic, content: makeContentArray(content), deposit }
 }

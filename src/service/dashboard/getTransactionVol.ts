@@ -1,27 +1,28 @@
 import { dashboardRawQuery } from './helper'
 import { denomObjectToArray, sortDenoms } from 'lib/common'
 import { plus } from 'lib/math'
-import { startOfDay, format, getTime } from 'date-fns'
+import { startOfDay } from 'date-fns'
+import { getQueryDateTime } from 'lib/time'
 
 export default async function getTransactionVol(count = 0): Promise<TxVolumeReturn> {
-  const today = startOfDay(new Date())
-  const query = `select date(datetime) as date\
-  , denom, sum(txvolume) as tx_volume from network\
-  where datetime < '${format(today, 'YYYY-MM-DD HH:mm:ss')}' group by 1, 2 order by 1 desc`
+  const today = startOfDay(Date.now())
+  const query = `SELECT DATE(datetime) AS date\
+  , denom, SUM(txvolume) AS tx_volume FROM network\
+  WHERE datetime < '${getQueryDateTime(today)}' GROUP BY date, denom ORDER BY date DESC`
   const txs = await dashboardRawQuery(query)
 
   const txVolObj: DenomObject = txs.reduce((acc, item) => {
     if (!acc[item.denom]) {
       acc[item.denom] = [
         {
-          datetime: getTime(new Date(item.date)),
+          datetime: new Date(item.date).getTime(),
           txVolume: item.tx_volume
         }
       ]
       return acc
     }
     acc[item.denom].unshift({
-      datetime: getTime(new Date(item.date)),
+      datetime: new Date(item.date).getTime(),
       txVolume: item.tx_volume
     })
     return acc

@@ -1,6 +1,7 @@
-import * as moment from 'moment'
-
+import * as memoizee from 'memoizee'
 import { plus, div, times } from 'lib/math'
+import { dateFromDateString } from 'lib/time'
+import * as lcd from 'lib/lcd'
 import { getCountBaseWhereQuery, dashboardRawQuery, getPriceHistory } from './helper'
 
 export interface GetStakingReturnParam {
@@ -13,25 +14,24 @@ interface StakingDailyReturn {
   annualizedReturn: string
 }
 
-export default async function getStakingReturn(option: GetStakingReturnParam): Promise<StakingDailyReturn[]> {
-  const { count } = option
-  const totalIssued = 780323810831865 + 219456662015307
+export async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
+  const { issuance } = await lcd.getIssuanceByDenom('uluna')
 
-  const rewardQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , denom, sum(tax) as tax_sum, sum(gas) as gas_sum, sum(oracle) as oracle_sum, sum(sum) as reward_sum, sum(commission) as commission_sum from reward \
-  ${getCountBaseWhereQuery(count)} group by 1, 2 order by 1 desc`
+  const rewardQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , denom, SUM(tax) AS tax_sum, SUM(gas) AS gas_sum, SUM(oracle) AS oracle_sum, SUM(sum) AS reward_sum, SUM(commission) AS commission_sum FROM reward \
+  ${getCountBaseWhereQuery(count)} GROUP BY date, denom ORDER BY date DESC`
   const rewards = await dashboardRawQuery(rewardQuery)
 
   const priceObj = await getPriceHistory(count)
   const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
 
-  const bondedTokensQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , avg(staking_ratio) as avg_staking_ratio, avg(bonded_tokens) as avg_bonded_tokens from general_info \
-  ${getCountBaseWhereQuery(count)} group by 1 order by 1 desc`
+  const bondedTokensQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , AVG(staking_ratio) AS avg_staking_ratio, AVG(bonded_tokens) AS avg_bonded_tokens FROM general_info \
+  ${getCountBaseWhereQuery(count)} GROUP BY date ORDER BY date DESC`
 
   const bondedTokens = await dashboardRawQuery(bondedTokensQuery)
   const bondedTokensObj = bondedTokens.reduce((acc, item) => {
-    acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(totalIssued, item.avg_staking_ratio)
+    acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(issuance, item.avg_staking_ratio)
     return acc
   }, {})
 
@@ -53,21 +53,16 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
     const reward =
       item.denom === 'uluna' ? item.reward_sum : div(item.reward_sum, priceObj[getPriceObjKey(item.date, item.denom)])
 
-    if (acc[item.date]) {
-      acc[item.date].tax = plus(acc[item.date].tax, tax)
-      acc[item.date].gas = plus(acc[item.date].gas, gas)
-      acc[item.date].oracle = plus(acc[item.date].oracle, oracle)
-      acc[item.date].commission = plus(acc[item.date].commission, commission)
-      acc[item.date].reward = plus(acc[item.date].reward, reward)
-    } else {
-      acc[item.date] = {
-        tax,
-        gas,
-        oracle,
-        commission,
-        reward
-      }
+    const prev = acc[item.date] || {}
+
+    acc[item.date] = {
+      tax: plus(prev.tax, tax),
+      gas: plus(prev.gas, gas),
+      oracle: plus(prev.oracle, oracle),
+      commission: plus(prev.commission, commission),
+      reward: plus(prev.reward, reward)
     }
+
     return acc
   }, {})
 
@@ -87,7 +82,7 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
     const annualizedReturn = times(dailyReturn, 365)
 
     acc.unshift({
-      datetime: moment(date).valueOf(),
+      datetime: dateFromDateString(date).getTime(),
       dailyReturn,
       annualizedReturn
     })
@@ -97,3 +92,6 @@ export default async function getStakingReturn(option: GetStakingReturnParam): P
 
   return stakingReturns
 }
+
+// We will clear memoization at the beginning of each days
+export default memoizee(getStakingReturnUncached, { promise: true, maxAge: 86400 * 1000 /* 1 day */ })

@@ -1,27 +1,8 @@
-import * as moment from 'moment'
 import * as memoizee from 'memoizee'
 import { getConnection } from 'typeorm'
+import { getQueryDateRangeFrom } from 'lib/time'
 
-export function getTargetDatetimeRange(count: number): DateRange {
-  const today = moment().startOf('day')
-  return {
-    to: today.format('YYYY-MM-DD'),
-    from: today.subtract(count, 'day').format('YYYY-MM-DD')
-  }
-}
-
-export function getTargetDates(count: number): Date[] {
-  const targets: Date[] = []
-  const today = moment().startOf('day')
-
-  targets.push(today.toDate())
-  for (let i = 0; i < count - 1; i = i + 1) {
-    targets.push(today.subtract(1, 'day').toDate())
-  }
-  return targets
-}
-
-async function dashboardRawQueryUncached(query: string): Promise<object | object[]> {
+async function dashboardRawQueryUncached(query: string): Promise<any> {
   return getConnection().query(query)
 }
 
@@ -37,13 +18,13 @@ export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: 
 
 export async function getPriceHistory(dayCount?: number): Promise<{ [key: string]: string }> {
   const whereQuery = dayCount
-    ? `where datetime >= '${getTargetDatetimeRange(dayCount).from}' and datetime < '${
-        getTargetDatetimeRange(dayCount).to
+    ? `where datetime >= '${getQueryDateRangeFrom(dayCount).from}' and datetime < '${
+        getQueryDateRangeFrom(dayCount).to
       }'`
     : ``
 
-  const priceQuery = `select to_char(date_trunc('day', datetime),'YYYY-MM-DD') as date\
-  , denom, avg(price) as avg_price from price ${whereQuery} group by 1, 2 order by 1 desc`
+  const priceQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
+  , denom, AVG(price) AS avg_price FROM price ${whereQuery} GROUP BY date, denom ORDER BY date DESC`
   const prices = await dashboardRawQuery(priceQuery)
 
   const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
@@ -55,6 +36,6 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
 
 export function getCountBaseWhereQuery(count?: number) {
   return count
-    ? `where datetime >= '${getTargetDatetimeRange(count).from}' and datetime < '${getTargetDatetimeRange(count).to}'`
-    : `where datetime < '${getTargetDatetimeRange(1).to}'`
+    ? `WHERE datetime >= '${getQueryDateRangeFrom(count).from}' AND datetime < '${getQueryDateRangeFrom(count).to}'`
+    : `WHERE datetime < '${getQueryDateRangeFrom(1).to}'`
 }

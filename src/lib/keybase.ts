@@ -28,4 +28,4 @@ async function getAvatar(keybaseId: string): Promise<string | undefined> {
   return getAvatarFromIdentity(identity)
 }
 
-export default memoizee(getAvatar, { promise: true, maxAge: 3600000 })
+export default memoizee(getAvatar, { promise: true, maxAge: 3600000 /* 6 minutes */ })

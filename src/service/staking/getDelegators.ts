@@ -18,7 +18,7 @@ export default async function delegators(data: GetDelegatorsParam): Promise<GetD
   const rawDelegators = await getDelegators(data.operatorAddr)
 
   const delegators: Delegator[] = chain(rawDelegators)
-    .orderBy([(delegator: Delegator): number => Number(delegator.weight)], ['desc'])
+    .orderBy([(d) => Number(d.weight)], ['desc'])
     .drop((data.page - 1) * data.limit)
     .take(data.limit)
     .value()

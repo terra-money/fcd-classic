@@ -18,7 +18,7 @@ async function insertPrice(denom: string, price: string) {
     })
 }
 
-export async function setPrices() {
+export async function collectPrice() {
   const prices = await lcd.getActiveOraclePrices()
   await Promise.all(Object.keys(prices).map((denom) => insertPrice(denom, prices[denom]))).catch((e) => {
     logger.error(e)

@@ -69,12 +69,11 @@ export default class TxController extends KoaController {
   @Get('/tx_volume')
   @Validate({
     query: {
-      count: Joi.number().min(0).default(0).description('Number days history')
+      count: Joi.number().min(0).description('Number days history')
     }
   })
   async getTxVolume(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-    success(ctx, await getTransactionVol(count))
+    success(ctx, await getTransactionVol(+ctx.request.query.count))
   }
 
   /**
@@ -95,19 +94,13 @@ export default class TxController extends KoaController {
   @Get('/block_rewards')
   @Validate({
     query: {
-      count: Joi.number().min(0).default(0).description('Number days history')
+      count: Joi.number().min(0).description('Number days history')
     }
   })
   async getBlockRewards(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getBlockRewards({
-        count
-      })
-    )
+    success(ctx, await getBlockRewards(+ctx.request.query.count))
   }
+
   /**
    * @api {get} /dashboard/seigniorage_proceeds Get the amount of seigniorage in the start of the day
    * @apiName getSeigniorageProc
@@ -122,18 +115,11 @@ export default class TxController extends KoaController {
   @Get('/seigniorage_proceeds')
   @Validate({
     query: {
-      count: Joi.number().min(1).default(1).description('Number days history')
+      count: Joi.number().min(0).description('Number days history')
     }
   })
   async getSeigniorageProc(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getSeigniorageProceeds({
-        count
-      })
-    )
+    success(ctx, await getSeigniorageProceeds(+ctx.request.query.count))
   }
 
   /**
@@ -152,18 +138,11 @@ export default class TxController extends KoaController {
   @Get('/staking_return')
   @Validate({
     query: {
-      count: Joi.number().min(1).default(1).description('Number days history')
+      count: Joi.number().min(0).description('Number days history')
     }
   })
   async getStakingReturn(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getStakingReturn({
-        count
-      })
-    )
+    success(ctx, await getStakingReturn(+ctx.request.query.count))
   }
 
   /**
@@ -186,17 +165,10 @@ export default class TxController extends KoaController {
   @Get('/account_growth')
   @Validate({
     query: {
-      count: Joi.number().min(1).default(1).description('Number days history')
+      count: Joi.number().min(0).description('Number days history')
     }
   })
   async getAccountGrth(ctx): Promise<void> {
-    const count = +ctx.request.query.count
-
-    success(
-      ctx,
-      await getAccountGrowth({
-        count
-      })
-    )
+    success(ctx, await getAccountGrowth(+ctx.request.query.count))
   }
 }

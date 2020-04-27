@@ -10,20 +10,21 @@ interface ProposalsReturn {
 }
 
 export default async function getProposals(status?: string): Promise<ProposalsReturn> {
-  const proposals = await lcd.getProposals()
+  const lcdProposals = await lcd.getProposals()
   const depositParmas = await lcd.getProposalDepositParams()
   const { min_deposit: minDeposit, max_deposit_period: maxDepositPeriod } = depositParmas
   const { voting_period: votingPeriod } = await lcd.getProposalVotingParams()
-  const getProposalReq = proposals.map((proposal) => {
-    return getProposalBasic(proposal, depositParmas, true)
-  })
 
-  const proposalInfo = orderBy(await Promise.all(getProposalReq), ['submitTime'], ['desc'])
+  const orderedProposals = orderBy(
+    await Promise.all(lcdProposals.map((proposal) => getProposalBasic(proposal, depositParmas, true))),
+    ['submitTime'],
+    ['desc']
+  )
 
   return {
     minDeposit,
     maxDepositPeriod,
     votingPeriod,
-    proposals: status ? filter(proposalInfo, { status }) : proposalInfo
+    proposals: status ? filter(orderedProposals, { status }) : orderedProposals
   }
 }

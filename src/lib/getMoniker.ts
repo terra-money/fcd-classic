@@ -7,4 +7,4 @@ async function getMoniker(valAddr: string): Promise<string> {
   return get(validator, 'description.moniker', '')
 }
 
-export default memoizee(getMoniker, { promise: true, maxAge: 3600000 })
+export default memoizee(getMoniker, { promise: true, maxAge: 3600000 /* 6 minutes */ })

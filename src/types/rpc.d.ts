@@ -138,11 +138,3 @@ interface ValidatorAnnualReturn {
   isNewValidator: boolean
   stakingReturn: string
 }
-
-interface GetValidatorDetailParams {
-  operatorAddr: string
-  validatorInfo: LcdValidator
-  userAddr?: string
-  votingPowerInfo?: { [key: string]: any }
-  priceObjInfo?: CoinByDenoms
-}

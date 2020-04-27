@@ -2,10 +2,9 @@ import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
 import { success } from 'lib/response'
-
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX } from 'lib/constant'
-
+import { daysBeforeTs } from 'lib/time'
 import {
   getStaking,
   getValidators,
@@ -14,8 +13,7 @@ import {
   getClaims,
   getDelegators,
   getValidatorAnnualAvgReturn,
-  getTotalStakingReturn,
-  thirtyDaysBeforeTs
+  getTotalStakingReturn
 } from 'service/staking'
 
 const Joi = Validator.Joi
@@ -79,7 +77,7 @@ export default class TxController extends KoaController {
       operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
     },
     query: {
-      account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account address')
+      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account address')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -87,7 +85,7 @@ export default class TxController extends KoaController {
     const { operatorAddr } = ctx.params
     const { account } = ctx.request.query
 
-    success(ctx, await getValidatorDetail({ operatorAddr, userAddr: account }))
+    success(ctx, await getValidatorDetail(operatorAddr, account))
   }
 
   /**
@@ -165,8 +163,8 @@ export default class TxController extends KoaController {
   })
   async getDelegationEvents(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -210,8 +208,8 @@ export default class TxController extends KoaController {
   })
   async claims(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
 
     success(
       ctx,
@@ -254,8 +252,8 @@ export default class TxController extends KoaController {
   })
   async delegators(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 5
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
     success(
       ctx,
       await getDelegators({
@@ -276,7 +274,7 @@ export default class TxController extends KoaController {
    */
   @Get('/return')
   async getTotalStakingReturn(ctx): Promise<void> {
-    const { fromTs, toTs } = thirtyDaysBeforeTs()
+    const { fromTs, toTs } = daysBeforeTs(30)
     success(ctx, await getTotalStakingReturn(fromTs, toTs))
   }
 
@@ -373,9 +371,9 @@ export default class TxController extends KoaController {
    */
   @Get('/')
   async getStakingForAll(ctx): Promise<void> {
-    const { account } = ctx.params
-
-    success(ctx, await getStaking(account))
+    success(ctx, {
+      validators: await getValidators()
+    })
   }
 
   /**
@@ -391,11 +389,11 @@ export default class TxController extends KoaController {
   @Get('/return/:operatorAddr')
   @Validate({
     params: {
-      operatorAddr: Joi.string().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
     },
     failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
   })
-  async getStakingReturn(ctx): Promise<void> {
+  async getStakingReturnOfValidator(ctx): Promise<void> {
     const { operatorAddr } = ctx.params
     const { stakingReturn } = await getValidatorAnnualAvgReturn(operatorAddr)
     success(ctx, stakingReturn)

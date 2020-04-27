@@ -32,13 +32,13 @@ export default class TxController extends KoaController {
     query: {
       interval: Joi.string().required().valid(Object.values(TimeIntervals)).description('Time interval'),
       denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denoms string'),
-      count: Joi.string().required().default(50).min(0).description('Price data points count')
+      count: Joi.string().min(0).default(50).description('Price data points count')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getDenomPrice(ctx) {
     const { interval, denom } = ctx.request.query
-    const count = +ctx.request.query.count || 50
+    const count = ctx.request.query.count
     success(ctx, await getPrice({ denom, interval, count }))
   }
 

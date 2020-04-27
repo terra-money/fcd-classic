@@ -69,14 +69,14 @@ export default class TransactionController extends KoaController {
   @Get('/txs')
   @Validate({
     query: {
-      account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().description('Tx types'),
-      block: Joi.string().regex(new RegExp('[0-9]+')),
-      order: Joi.string().valid(['ASC', 'DeSC']).description('Tx order'),
+      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
+      action: Joi.string().allow('').description('Tx types'),
+      block: Joi.string().allow('').regex(new RegExp('[0-9]+')),
+      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().valid(config.CHAIN_ID),
+      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
       from: Joi.number().description('From timestamp unix time'),
-      to: Joi.number().description('to timestamp unix time'),
+      to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).description('Items per page')
     },
@@ -84,11 +84,10 @@ export default class TransactionController extends KoaController {
   })
   async getTxList(ctx): Promise<void> {
     const { account, action, block, order, memo, chainId } = ctx.request.query
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 10
-
-    const from = +ctx.request.query.from || undefined
-    const to = +ctx.request.query.to || undefined
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
+    const from = +ctx.request.query.from
+    const to = +ctx.request.query.to
 
     success(
       ctx,
@@ -156,8 +155,8 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().description('Tx types'),
-      order: Joi.string().valid(['ASC', 'DeSC']).description('Tx order'),
+      action: Joi.string().allow('').description('Tx types'),
+      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -167,10 +166,10 @@ export default class TransactionController extends KoaController {
   })
   async getMsgList(ctx): Promise<void> {
     const { account, action, order } = ctx.request.query
-    const page = +ctx.request.query.page || 1
-    const limit = +ctx.request.query.limit || 10
-    const from = +ctx.request.query.from || undefined
-    const to = +ctx.request.query.to || undefined
+    const page = +ctx.request.query.page
+    const limit = +ctx.request.query.limit
+    const from = +ctx.request.query.from
+    const to = +ctx.request.query.to
 
     success(
       ctx,
