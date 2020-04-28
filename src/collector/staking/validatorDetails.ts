@@ -10,6 +10,8 @@ import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { vsLogger as logger } from 'lib/logger'
 
+const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
+
 function getSelfDelegation(
   delegators: Delegator[],
   accountAddr: string
@@ -76,15 +78,13 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 }
 
-export async function saveValidatorDetail({
-  lcdValidator,
-  activePrices,
-  votingPower
-}: {
+type SaveValidatorParams = {
   lcdValidator: LcdValidator
   activePrices: CoinByDenoms
   votingPower: lcd.LcdVotingPower
-}) {
+}
+
+export async function saveValidatorDetail({ lcdValidator, activePrices, votingPower }: SaveValidatorParams) {
   if (!lcdValidator) {
     throw new APIError(ErrorTypes.VALIDATOR_DOES_NOT_EXISTS)
   }
@@ -95,7 +95,6 @@ export async function saveValidatorDetail({
 
   const delegators = await getDelegators(operatorAddress).catch(() => [])
   const selfDelegation = getSelfDelegation(delegators, accountAddr)
-  // const commissions = await getCommissions(operatorAddress).catch(() => [])
 
   const keyBaseId = lcdValidator.description?.identity
   const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
@@ -131,7 +130,7 @@ export async function saveValidatorDetail({
     jailed: lcdValidator.jailed,
     missedOracleVote: +missedVote,
     upTime,
-    votingPower: times(votingPowerByPubKey[consensusPubkey], '1000000'),
+    votingPower: times(votingPowerByPubKey[consensusPubkey], TOKEN_MICRO_UNIT_MULTIPLICAND),
     votingPowerWeight: div(votingPowerByPubKey[consensusPubkey], totalVotingPower),
     commissionRate: lcdValidator.commission.commission_rates.rate,
     maxCommissionRate: lcdValidator.commission.commission_rates.max_rate,

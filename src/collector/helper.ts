@@ -3,7 +3,7 @@ import { WhereExpression, getRepository, getConnection } from 'typeorm'
 import { times, div } from 'lib/math'
 import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 
-export function getUSDValue(denom: string, amount: string, prices: { [key: string]: string }): string {
+export function getUSDValue(denom: string, amount: string, prices: { [denom: string]: string }): string {
   let usdValue = '0'
   if ((denom === 'uluna' || prices[denom]) && prices['uusd']) {
     switch (denom) {
@@ -36,6 +36,7 @@ export function bulkSave(docs) {
 }
 
 export async function getAllActivePrices(timestamp: number): Promise<{ [denom: string]: string }> {
+  // TODO: Need to fix the query because of exact time matching might fail
   const prices = await getRepository(PriceEntity).find({
     datetime: new Date(timestamp)
   })

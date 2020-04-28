@@ -6,7 +6,7 @@ import { UnvestedEntity } from 'orm'
 import { collectorLogger as logger } from 'lib/logger'
 import { bulkSave } from './helper'
 
-function unvestedMapper(unvested: Coin) {
+function unvestedMapper(unvested: Coin): UnvestedEntity {
   const item = new UnvestedEntity()
 
   item.datetime = new Date()
@@ -15,7 +15,7 @@ function unvestedMapper(unvested: Coin) {
   return item
 }
 
-async function getUnvested() {
+async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
   const paths = await globby([`/tmp/vesting-*`])
   const recentFile = reverse(orderBy(paths))[0]
 
