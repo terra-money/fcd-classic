@@ -63,7 +63,13 @@ const getSwapCoinFromLog = (log) => {
   }
 }
 
-function getSwapValues(tx) {
+type SwapValueDetails = {
+  in?: DenomMap
+  out?: DenomMap
+  fee?: DenomMap
+}
+
+function getSwapValues(tx): SwapValueDetails {
   const logs = get(tx, 'data.logs')
   const msgs = get(tx, 'data.tx.value.msg')
 
@@ -104,7 +110,19 @@ function getSwapValues(tx) {
     : {}
 }
 
-function getAllUSDValue(swapValues, prices) {
+function getAllUSDValue(
+  swapValues,
+  prices
+): {
+  [denom: string]: {
+    in: string
+    inUsd: string
+    out: string
+    outUsd: string
+    fee: string
+    feeUsd: string
+  }
+} {
   // SWAP IN
   const ins = Object.keys(swapValues.in).reduce((acc, denom) => {
     acc[denom] = {
@@ -152,7 +170,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
     })
   }
 
-  const swapValues = txs.reduce((acc, tx) => mergeWith(acc, getSwapValues(tx), rewardMerger), {
+  const swapValues: SwapValueDetails = txs.reduce((acc, tx) => mergeWith(acc, getSwapValues(tx), rewardMerger), {
     in: {},
     out: {},
     fee: {}

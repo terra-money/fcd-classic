@@ -26,7 +26,7 @@ function accountAmountMapper(denom: string, total: string) {
   }
 }
 
-async function getRichList(denom: string) {
+async function getRichList(denom: string): Promise<RichListEntity[] | undefined> {
   const totalSupply = await getTotalSupply(denom)
   const paths = await globby([`/tmp/tracking-${denom}-*`])
   const recentFile = reverse(orderBy(paths))[0]

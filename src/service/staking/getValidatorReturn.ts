@@ -6,13 +6,6 @@ import { div, plus, minus, times } from 'lib/math'
 import { getAvgPrice } from './helper'
 import { getQueryDateTime } from 'lib/time'
 
-interface BlockReward {
-  reward_per_val: object
-  commission_per_val: object
-  height: number
-  timestamp: Date
-}
-
 export async function getBlockRewards(fromTs: number, toTs: number): Promise<BlockReward[]> {
   const fromStr = getQueryDateTime(fromTs)
   const toStr = getQueryDateTime(toTs)
@@ -21,7 +14,7 @@ export async function getBlockRewards(fromTs: number, toTs: number): Promise<Blo
 
   const blockrewards = await getConnection().query(query)
 
-  // TO FIX: if blockrewards.lengt == 0 blockrewards[blockrewards.length - 1].height won't work.
+  // TODO FIX: if blockrewards.lengt == 0 blockrewards[blockrewards.length - 1].height won't work.
 
   if (blockrewards.length > 0) {
     const lastBlockreward = await getRepository(BlockRewardEntity).findOne({

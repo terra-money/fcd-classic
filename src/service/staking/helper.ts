@@ -402,7 +402,7 @@ export async function getAvgVotingPowerUncached(
 
 export const getAvgVotingPower = memoizee(getAvgVotingPowerUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
-export async function getAvgPrice(fromTs: number, toTs: number): Promise<CoinByDenoms> {
+export async function getAvgPrice(fromTs: number, toTs: number): Promise<DenomMap> {
   const fromStr = getQueryDateTime(startOfDay(fromTs))
   const toStr = getQueryDateTime(startOfDay(toTs))
 

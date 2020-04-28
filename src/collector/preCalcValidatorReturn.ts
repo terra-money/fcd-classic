@@ -7,7 +7,14 @@ import { plus, div } from 'lib/math'
 import { vsLogger as logger } from 'lib/logger'
 import { getBlockRewards, getAvgVotingPower, getAvgPrice } from 'service/staking'
 
-async function getValidatorReturnSum(operatorAddress: string, blockRewards: any, priceObj: any) {
+async function getValidatorReturnSum(
+  operatorAddress: string,
+  blockRewards: BlockReward[],
+  priceObj: DenomMap
+): Promise<{
+  reward: string
+  commission: string
+}> {
   const rewardMerger = (obj, src) => {
     return mergeWith(obj, src, (o, s) => {
       return plus(o, s)
@@ -20,7 +27,7 @@ async function getValidatorReturnSum(operatorAddress: string, blockRewards: any,
       const commission = block.commission_per_val[operatorAddress] || {}
       return mergeWith(acc, { ...{ reward }, commission }, rewardMerger)
     },
-    { reward: {}, commission: {} }
+    { reward: {} as DenomMap, commission: {} as DenomMap }
   )
 
   const reward = Object.keys(rewardObj).reduce((acc, denom) => {

@@ -8,20 +8,22 @@ import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
 import { getQueryDateTime } from 'lib/time'
 
-export async function getTotalAccount(timestamp?: number) {
+export async function getTotalAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}') as temp;`
-  return getConnection().query(query)
+  const res = await getConnection().query(query)
+  return res && res.length ? res[0].count : 0
 }
 
-export async function getActiveAccount(timestamp?: number) {
+export async function getActiveAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
   const onedayBefore = getQueryDateTime(subDays(now, 1))
 
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}' and timestamp >= '${onedayBefore}') as temp;`
-  return getConnection().query(query)
+  const res = await getConnection().query(query)
+  return res && res.length ? res[0].count : 0
 }
 
 export async function saveGeneral() {
@@ -48,8 +50,8 @@ export async function saveGeneral() {
     seigniorageProceeds,
     bondedTokens,
     notBondedTokens,
-    totalAccountCount: total[0].count,
-    activeAccountCount: active[0].count
+    totalAccountCount: total,
+    activeAccountCount: active
   })
 }
 

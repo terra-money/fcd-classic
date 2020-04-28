@@ -44,3 +44,5 @@ interface UndeligationSchedule {
   validatorStatus: string // validator status
   creationHeight: string // height undelegation created
 }
+
+type DenomMapByValidator = { [validator: string]: DenomMap }
