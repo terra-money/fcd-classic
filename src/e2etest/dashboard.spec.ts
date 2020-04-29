@@ -3,6 +3,8 @@ import { setupAgent, terminateAPITest } from './lib/agent'
 
 jest.mock('request-promise-native')
 
+const DATA_POINT_COUNT = 4
+
 describe('Dashboard Test', () => {
   let agent: SuperTest<Test>
   let connection
@@ -66,17 +68,17 @@ describe('Dashboard Test', () => {
   })
 
   test('Test get account growth count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/account_growth?count=7`).expect(200)
+    const { body } = await agent.get(`/v1/dashboard/account_growth?count=${DATA_POINT_COUNT}`).expect(200)
 
     expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(7)
+    expect(body.cumulative.length).toBe(DATA_POINT_COUNT - 1)
     expect(body.cumulative[0]).toBeDefined()
     expect(body.cumulative[0].datetime).toBeDefined()
     expect(body.cumulative[0].totalAccountCount).toBeDefined()
     expect(body.cumulative[0].activeAccountCount).toBeDefined()
 
     expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(7)
+    expect(body.periodic.length).toBe(DATA_POINT_COUNT - 1)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].datetime).toBeDefined()
     expect(body.periodic[0].totalAccountCount).toBeDefined()
@@ -100,21 +102,21 @@ describe('Dashboard Test', () => {
   })
 
   test('Test get tx volumes with count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/tx_volume?count=7`).expect(200)
+    const { body } = await agent.get(`/v1/dashboard/tx_volume?count=${DATA_POINT_COUNT}`).expect(200)
 
     expect(body.cumulative).toBeDefined()
     expect(body.cumulative.length).toBe(5)
     expect(body.cumulative[0]).toBeDefined()
     expect(body.cumulative[0].denom).toBeDefined()
     expect(body.cumulative[0].data).toBeDefined()
-    expect(body.cumulative[0].data.length).toBe(7)
+    expect(body.cumulative[0].data.length).toBe(DATA_POINT_COUNT)
 
     expect(body.periodic).toBeDefined()
     expect(body.periodic.length).toBe(5)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].denom).toBeDefined()
     expect(body.periodic[0].data).toBeDefined()
-    expect(body.periodic[0].data.length).toBe(7)
+    expect(body.periodic[0].data.length).toBe(DATA_POINT_COUNT)
   })
 
   test('Test get block rewards', async () => {
@@ -134,17 +136,17 @@ describe('Dashboard Test', () => {
   })
 
   test('Test get block rewards with count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/block_rewards?count=7`).expect(200)
+    const { body } = await agent.get(`/v1/dashboard/block_rewards?count=${DATA_POINT_COUNT}`).expect(200)
 
     expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(7)
+    expect(body.cumulative.length).toBe(DATA_POINT_COUNT)
     expect(body.cumulative[0]).toBeDefined()
     expect(body.cumulative[0].datetime).toBeDefined()
     expect(body.cumulative[0].blockReward).toBeDefined()
 
     expect(body).toBeDefined()
     expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(7)
+    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].datetime).toBeDefined()
     expect(body.periodic[0].blockReward).toBeDefined()
@@ -178,10 +180,10 @@ describe('Dashboard Test', () => {
   })
 
   test('Test get staking return with count', async () => {
-    const { body } = await agent.get(`/v1/dashboard/staking_return?count=7`).expect(200)
+    const { body } = await agent.get(`/v1/dashboard/staking_return?count=${DATA_POINT_COUNT}`).expect(200)
 
     expect(body).toBeInstanceOf(Array)
-    expect(body.length).toBe(7)
+    expect(body.length).toBe(DATA_POINT_COUNT)
 
     expect(body[0]).toBeDefined()
     expect(body[0].datetime).toBeDefined()

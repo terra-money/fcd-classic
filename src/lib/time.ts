@@ -15,7 +15,6 @@ export function getQueryDateTime(timestamp: number | Date): string {
 
 export function getQueryDateRangeFrom(daysBefore: number): DateRange {
   const today = startOfToday()
-
   return {
     from: format(subDays(today, daysBefore), 'YYYY-MM-DD'),
     to: format(today, 'YYYY-MM-DD')

@@ -21,7 +21,7 @@ const config = {
   CHAIN_ID: CHAIN_ID || 'soju-0014',
   LCD_URI: LCD_URI || 'https://soju-lcd.terra.dev',
   FCD_URI: FCD_URI || 'https://soju-fcd.terra.dev',
-  RPC_URI: RPC_URI || 'http://13.125.229.200:26657',
+  RPC_URI: RPC_URI || 'http://15.164.46.6:26657',
   BYPASS_URI: BYPASS_URI || 'https://soju-lcd.terra.dev',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   SENTRY_DSN,
