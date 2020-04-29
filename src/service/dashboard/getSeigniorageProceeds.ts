@@ -17,7 +17,6 @@ interface SeigniorageInfo {
  */
 export default async function getSeigniorageProceeds(count: number): Promise<SeigniorageInfo[]> {
   const queryDateRange = getQueryDateRangeFrom(count)
-
   const qb = getRepository(GeneralInfoEntity)
     .createQueryBuilder()
     .addSelect('DATE(datetime)', 'date')

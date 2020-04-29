@@ -9,7 +9,7 @@ import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 import { get, mergeWith } from 'lodash'
 import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
 
-function getGas(tx): CoinByDenoms {
+function getGas(tx): DenomMap {
   const gasInfo = get(tx, 'data.tx.value.fee.amount')
 
   return gasInfo
@@ -21,8 +21,8 @@ function getGas(tx): CoinByDenoms {
 }
 
 type TxFee = {
-  swapfee?: CoinByDenoms
-  tax?: CoinByDenoms
+  swapfee?: DenomMap
+  tax?: DenomMap
 }
 
 function getFee(tx): TxFee {
@@ -55,9 +55,9 @@ function getFee(tx): TxFee {
 async function getFees(
   timestamp: number
 ): Promise<{
-  swapfee: CoinByDenoms
-  tax: CoinByDenoms
-  gas: CoinByDenoms
+  swapfee: DenomMap
+  tax: DenomMap
+  gas: DenomMap
 }> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx').select(`tx.data`)
   addDatetimeFilterToQuery(timestamp, qb)
@@ -84,12 +84,8 @@ async function getFees(
 }
 
 interface Rewards {
-  reward: {
-    [denom: string]: string
-  }
-  commission: {
-    [denom: string]: string
-  }
+  reward: DenomMap
+  commission: DenomMap
 }
 
 export async function getRewards(timestamp: number): Promise<Rewards> {

@@ -69,7 +69,7 @@ export default class TxController extends KoaController {
   @Get('/tx_volume')
   @Validate({
     query: {
-      count: Joi.number().min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
   async getTxVolume(ctx): Promise<void> {
@@ -94,7 +94,7 @@ export default class TxController extends KoaController {
   @Get('/block_rewards')
   @Validate({
     query: {
-      count: Joi.number().min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
   async getBlockRewards(ctx): Promise<void> {
@@ -115,7 +115,7 @@ export default class TxController extends KoaController {
   @Get('/seigniorage_proceeds')
   @Validate({
     query: {
-      count: Joi.number().min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
   async getSeigniorageProc(ctx): Promise<void> {
@@ -138,7 +138,7 @@ export default class TxController extends KoaController {
   @Get('/staking_return')
   @Validate({
     query: {
-      count: Joi.number().min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
   async getStakingReturn(ctx): Promise<void> {
@@ -165,7 +165,7 @@ export default class TxController extends KoaController {
   @Get('/account_growth')
   @Validate({
     query: {
-      count: Joi.number().min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
   async getAccountGrth(ctx): Promise<void> {
