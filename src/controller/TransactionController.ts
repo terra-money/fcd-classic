@@ -70,9 +70,9 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().allow('').description('Tx types'),
+      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
       block: Joi.string().allow('').regex(new RegExp('[0-9]+')),
-      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
+      order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
       chainId: Joi.string().allow('').valid(config.CHAIN_ID),
       from: Joi.number().description('From timestamp unix time'),
@@ -155,8 +155,8 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().allow('').description('Tx types'),
-      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
+      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
+      order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),

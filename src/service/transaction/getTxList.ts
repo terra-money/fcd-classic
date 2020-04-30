@@ -178,16 +178,16 @@ interface GetMsgListReturn {
   txs: ParsedTxInfo[]
 }
 
-export async function getTxList(data: GetTxListParam): Promise<GetTxListReturn> {
+export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn> {
   let txList
-  if (data.account) {
-    txList = await getTxFromAccount(data, false)
-  } else if (data.block) {
-    txList = await getTxFromBlock(data)
-  } else if (data.memo) {
-    txList = await getTxFromMemo(data)
+  if (param.account) {
+    txList = await getTxFromAccount(param, false)
+  } else if (param.block) {
+    txList = await getTxFromBlock(param)
+  } else if (param.memo) {
+    txList = await getTxFromMemo(param)
   } else {
-    txList = await getTxs(data)
+    txList = await getTxs(param)
   }
   return {
     totalCnt: txList.totalCnt,
@@ -197,8 +197,8 @@ export async function getTxList(data: GetTxListParam): Promise<GetTxListReturn> 
   }
 }
 
-export async function getMsgList(data: GetTxListParam): Promise<GetMsgListReturn> {
-  const parsedTxs = await getTxFromAccount(data, true)
+export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
+  const parsedTxs = await getTxFromAccount(param, true)
   return {
     totalCnt: parsedTxs.totalCnt,
     page: parsedTxs.page,
