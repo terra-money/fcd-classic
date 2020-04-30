@@ -75,7 +75,7 @@ export default class TransactionController extends KoaController {
         .regex(/\d{1,16}/),
       order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').valid(TERRA_CHAIN_REGEX),
+      chainId: Joi.string().allow('').regex(TERRA_CHAIN_REGEX),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
