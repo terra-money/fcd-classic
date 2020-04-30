@@ -1,6 +1,6 @@
 import { get, chain } from 'lodash'
 import { BlockEntity, AccountEntity } from 'orm'
-import { getRepository, getConnection } from 'typeorm'
+import { getRepository, getConnection, FindConditions } from 'typeorm'
 import config from 'config'
 import { getQueryDateTime } from 'lib/time'
 import parseTx from './parseTx'
@@ -43,11 +43,15 @@ order by data->'timestamp' ${order}`
   }
 }
 
-export async function getTxFromBlock(data: GetTxListParam): Promise<GetTxsReturn> {
-  const where = { height: data.block }
+export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
+  const where: FindConditions<BlockEntity> = {}
 
-  if (data.chainId) {
-    where['chainId'] = data.chainId
+  if (param.block) {
+    where.height = +param.block
+  }
+
+  if (param.chainId) {
+    where.chainId = param.chainId
   }
 
   const blocksWithTxs = await getRepository(BlockEntity).find({
@@ -62,13 +66,13 @@ export async function getTxFromBlock(data: GetTxListParam): Promise<GetTxsReturn
   const txs: Transaction.LcdTransaction[] = blockWithTxs
     ? blockWithTxs.txs.map((item) => item.data as Transaction.LcdTransaction)
     : []
-  const offset = data.limit * (data.page - 1)
+  const offset = param.limit * (param.page - 1)
 
   return {
     totalCnt: txs.length,
-    page: data.page,
-    limit: data.limit,
-    txs: chain(txs).drop(offset).take(data.limit).value()
+    page: param.page,
+    limit: param.limit,
+    txs: chain(txs).drop(offset).take(param.limit).value()
   }
 }
 

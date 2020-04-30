@@ -74,10 +74,10 @@ export default class TxController extends KoaController {
   @Get('/validators/:operatorAddr')
   @Validate({
     params: {
-      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
-      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account address')
+      account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User account address')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -153,7 +153,7 @@ export default class TxController extends KoaController {
   @Get('/validators/:operatorAddr/delegations')
   @Validate({
     params: {
-      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -198,7 +198,7 @@ export default class TxController extends KoaController {
   @Get('/validators/:operatorAddr/claims')
   @Validate({
     params: {
-      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -242,7 +242,7 @@ export default class TxController extends KoaController {
   @Get('/validators/:operatorAddr/delegators')
   @Validate({
     params: {
-      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -320,7 +320,7 @@ export default class TxController extends KoaController {
   @Get('/:account')
   @Validate({
     params: {
-      account: Joi.string().required().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User account')
+      account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
     },
     failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
   })
@@ -389,7 +389,7 @@ export default class TxController extends KoaController {
   @Get('/return/:operatorAddr')
   @Validate({
     params: {
-      operatorAddr: Joi.string().required().regex(new RegExp(TERRA_OPERATOR_ADD_REGEX)).description('Operator address')
+      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
   })
