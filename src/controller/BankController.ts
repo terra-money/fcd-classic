@@ -48,7 +48,7 @@ export default class BankController extends KoaController {
   @Get('/:account')
   @Validate({
     params: {
-      account: Joi.string().alphanum().regex(new RegExp(TERRA_ACCOUNT_REGEX))
+      account: Joi.string().regex(TERRA_ACCOUNT_REGEX)
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

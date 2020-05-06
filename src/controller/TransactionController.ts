@@ -2,8 +2,7 @@ import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-j
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
-import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
-import config from 'config'
+import { TERRA_ACCOUNT_REGEX, TERRA_CHAIN_REGEX } from 'lib/constant'
 
 const Joi = Validator.Joi
 
@@ -69,12 +68,14 @@ export default class TransactionController extends KoaController {
   @Get('/txs')
   @Validate({
     query: {
-      account: Joi.string().allow('').regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().allow('').description('Tx types'),
-      block: Joi.string().allow('').regex(new RegExp('[0-9]+')),
-      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
+      account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address'),
+      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
+      block: Joi.string()
+        .allow('')
+        .regex(/\d{1,16}/),
+      order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
+      chainId: Joi.string().allow('').regex(TERRA_CHAIN_REGEX),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -154,9 +155,9 @@ export default class TransactionController extends KoaController {
   @Get('/msgs')
   @Validate({
     query: {
-      account: Joi.string().regex(new RegExp(TERRA_ACCOUNT_REGEX)).description('User address'),
-      action: Joi.string().allow('').description('Tx types'),
-      order: Joi.string().allow('').valid(['ASC', 'DeSC']).description('Tx order'),
+      account: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('User address'),
+      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
+      order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),

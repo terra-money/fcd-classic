@@ -11,7 +11,11 @@ denom, SUM(tax) AS sum_reward FROM reward \
 WHERE datetime < '${getQueryDateTime(today)}' \
 GROUP BY date, denom ORDER BY date`
 
-  const rewards = await dashboardRawQuery(sumRewardsQuery)
+  const rewards: {
+    date: Date
+    denom: string
+    sum_reward: string
+  }[] = await dashboardRawQuery(sumRewardsQuery)
 
   const priceObj = await getPriceHistory()
   const getPriceObjKey = (date: Date, denom: string) => `${format(date, 'YYYY-MM-DD')}${denom}`
@@ -31,13 +35,15 @@ GROUP BY date, denom ORDER BY date`
         ? times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')])
         : div(
             times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')]),
-            priceObj[getPriceObjKey(item.datetime, item.denom)]
+            priceObj[getPriceObjKey(item.date, item.denom)]
           )
 
-    if (acc[item.date]) {
-      acc[item.date] = plus(acc[item.datetime], reward)
+    const key = format(item.date, 'YYYY-MM-DD')
+
+    if (acc[key]) {
+      acc[key] = plus(acc[key], reward)
     } else {
-      acc[item.date] = reward
+      acc[key] = reward
     }
     return acc
   }, {})

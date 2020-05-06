@@ -1,6 +1,6 @@
 import { get, chain } from 'lodash'
 import { BlockEntity, AccountEntity } from 'orm'
-import { getRepository, getConnection } from 'typeorm'
+import { getRepository, getConnection, FindConditions } from 'typeorm'
 import config from 'config'
 import { getQueryDateTime } from 'lib/time'
 import parseTx from './parseTx'
@@ -43,11 +43,15 @@ order by data->'timestamp' ${order}`
   }
 }
 
-export async function getTxFromBlock(data: GetTxListParam): Promise<GetTxsReturn> {
-  const where = { height: data.block }
+export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
+  const where: FindConditions<BlockEntity> = {}
 
-  if (data.chainId) {
-    where['chainId'] = data.chainId
+  if (param.block) {
+    where.height = +param.block
+  }
+
+  if (param.chainId) {
+    where.chainId = param.chainId
   }
 
   const blocksWithTxs = await getRepository(BlockEntity).find({
@@ -62,13 +66,13 @@ export async function getTxFromBlock(data: GetTxListParam): Promise<GetTxsReturn
   const txs: Transaction.LcdTransaction[] = blockWithTxs
     ? blockWithTxs.txs.map((item) => item.data as Transaction.LcdTransaction)
     : []
-  const offset = data.limit * (data.page - 1)
+  const offset = param.limit * (param.page - 1)
 
   return {
     totalCnt: txs.length,
-    page: data.page,
-    limit: data.limit,
-    txs: chain(txs).drop(offset).take(data.limit).value()
+    page: param.page,
+    limit: param.limit,
+    txs: chain(txs).drop(offset).take(param.limit).value()
   }
 }
 
@@ -178,16 +182,16 @@ interface GetMsgListReturn {
   txs: ParsedTxInfo[]
 }
 
-export async function getTxList(data: GetTxListParam): Promise<GetTxListReturn> {
+export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn> {
   let txList
-  if (data.account) {
-    txList = await getTxFromAccount(data, false)
-  } else if (data.block) {
-    txList = await getTxFromBlock(data)
-  } else if (data.memo) {
-    txList = await getTxFromMemo(data)
+  if (param.account) {
+    txList = await getTxFromAccount(param, false)
+  } else if (param.block) {
+    txList = await getTxFromBlock(param)
+  } else if (param.memo) {
+    txList = await getTxFromMemo(param)
   } else {
-    txList = await getTxs(data)
+    txList = await getTxs(param)
   }
   return {
     totalCnt: txList.totalCnt,
@@ -197,8 +201,8 @@ export async function getTxList(data: GetTxListParam): Promise<GetTxListReturn> 
   }
 }
 
-export async function getMsgList(data: GetTxListParam): Promise<GetMsgListReturn> {
-  const parsedTxs = await getTxFromAccount(data, true)
+export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
+  const parsedTxs = await getTxFromAccount(param, true)
   return {
     totalCnt: parsedTxs.totalCnt,
     page: parsedTxs.page,
