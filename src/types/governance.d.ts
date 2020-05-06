@@ -3,20 +3,28 @@ interface LcdProposalProposer {
   proposer: string
 }
 
-interface LcdProposal {
-  content: {
-    type: string
-    value: {
-      title: string
-      description: string
-      tax_rate?: string
-      changes?: {
-        subspace: string
-        key: string
-        value: string
-      }[]
-    }
+interface Deposit {
+  depositEndTime: string
+  totalDeposit: Coin[]
+  minDeposit: Coin[]
+}
+
+interface Content {
+  type: string
+  value: {
+    title: string
+    description: string
+    tax_rate?: string
+    changes?: {
+      subspace: string
+      key: string
+      value: string
+    }[]
   }
+}
+
+interface LcdProposal {
+  content: Content
   id: string
   proposal_status: string
   final_tally_result: LcdProposalTallyingParams
@@ -93,10 +101,6 @@ interface ProposalBasic {
   title: string
   description: string
   status: string
-  deposit?: {
-    depositEndTime: string
-    totalDeposit: Coin[]
-    minDeposit: Coin[]
-  }
+  deposit?: Deposit
   vote?: VoteSummary
 }

@@ -51,6 +51,9 @@ export * from './ValidatorReturnInfoEntity'
 import ValidatorInfoEntity from './ValidatorInfoEntity'
 export * from './ValidatorInfoEntity'
 
+import ProposalEntity from './ProposalEntity'
+export * from './ProposalEntity'
+
 export {
   BlockEntity,
   TxEntity,
@@ -66,7 +69,8 @@ export {
   BlockRewardEntity,
   AccountEntity,
   ValidatorReturnInfoEntity,
-  ValidatorInfoEntity
+  ValidatorInfoEntity,
+  ProposalEntity
 }
 
 export const staticOptions = {
@@ -87,7 +91,8 @@ export const staticOptions = {
     BlockRewardEntity,
     AccountEntity,
     ValidatorReturnInfoEntity,
-    ValidatorInfoEntity
+    ValidatorInfoEntity,
+    ProposalEntity
   ]
 }
 
