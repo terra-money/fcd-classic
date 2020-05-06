@@ -7,6 +7,7 @@ import { initializeSentry } from 'lib/errorReporting'
 import Semaphore from './Semaphore'
 import { saveValidatorInfo } from './staking/ValidatorScraper'
 import { calculateValidatorsReturn } from './preCalcValidatorReturn'
+import { scrapeAndSaveProposalsInfo } from './gov/govScrapper'
 
 process.on('unhandledRejection', (err) => {
   logger.error({
@@ -18,6 +19,7 @@ process.on('unhandledRejection', (err) => {
 
 const validatorScrapper = new Semaphore('ValidatorScrapper', saveValidatorInfo, logger)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
+const proposalScrapper = new Semaphore('ProposalScrapper', scrapeAndSaveProposalsInfo, logger)
 
 const jobs = [
   {
@@ -26,6 +28,10 @@ const jobs = [
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
+    cron: '1 * * * * *'
+  },
+  {
+    method: proposalScrapper.run.bind(proposalScrapper),
     cron: '1 * * * * *'
   }
 ]

@@ -4,14 +4,6 @@ interface Voters {
   [operatorAddr: string]: string
 }
 
-export enum ProposalStatus {
-  DEPOSIT = 'DepositPeriod',
-  VOTING = 'VotingPeriod',
-  PASSED = 'Passed',
-  REJECTED = 'Rejected',
-  FAILED = 'Failed'
-}
-
 @Entity('proposal')
 @Index('pi_index_prop_id_chain_id', ['chainId', 'proposalId'], { unique: true })
 export default class ProposalEntity {
@@ -39,7 +31,7 @@ export default class ProposalEntity {
 
   @Index('pi_status')
   @Column()
-  status: ProposalStatus
+  status: string
 
   @Index('pi_submit_time')
   @Column()
@@ -79,7 +71,10 @@ export default class ProposalEntity {
   public tallyingParameters: LcdProposalTallyingParams
 
   @Column({ type: 'jsonb' })
-  public deposit: Deposit
+  public depositParams: LcdProposalDepositParams
+
+  @Column({ type: 'jsonb' })
+  public totalDeposit: Coin[]
 
   @Column({ type: 'jsonb' })
   public voteTxs: Transaction.LcdTransactions
