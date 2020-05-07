@@ -4,12 +4,13 @@ import * as Router from 'koa-router'
 import * as morgan from 'koa-morgan'
 import * as cors from '@koa/cors'
 import * as helmet from 'koa-helmet'
+import * as serve from 'koa-static'
+import * as path from 'path'
 import config from 'config'
 import { errorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 import proxy from 'lib/bypass'
 import controllers from 'controller'
-
 import { configureRoutes } from 'koa-joi-controllers'
 
 const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}terra\.(?:money|dev)(?::\d{4,5})?(?:\/|$)/
@@ -22,6 +23,14 @@ export default async (): Promise<Koa> => {
   app.proxy = true
 
   app
+    .use(morgan('common'))
+    .use(helmet())
+    .use(errorHandler(error))
+    .use(
+      serve(path.resolve(__dirname, '..', 'apidoc'), {
+        maxage: 86400 * 1000
+      })
+    )
     .use(async (ctx, next) => {
       await next()
 
@@ -29,9 +38,6 @@ export default async (): Promise<Koa> => {
       ctx.set('Pragma', 'no-cache')
       ctx.set('Expires', '0')
     })
-    .use(morgan('common'))
-    .use(helmet())
-    .use(errorHandler(error))
     .use(
       cors({
         origin: (ctx) => {
