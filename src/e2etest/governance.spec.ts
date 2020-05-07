@@ -30,7 +30,12 @@ function testBasicProposal(proposal) {
       depositEndTime: expect.any(String),
       totalDeposit: expect.arrayContaining([coinObject]),
       minDeposit: expect.arrayContaining([coinObject])
-    },
+    }
+  })
+}
+
+function testProposalVoteCountAndDistribution(proposal) {
+  expect(proposal).toMatchObject({
     vote: {
       distribution: {
         Yes: expect.any(String),
@@ -110,6 +115,7 @@ describe('Governance', () => {
     const { body: proposal } = await agent.get(`/v1/gov/proposals/${TEST_PROPOSAL_ID}`).expect(200)
 
     testBasicProposal(proposal)
+    testProposalVoteCountAndDistribution(proposal)
   })
 
   test('Test get proposal detail with invalid proposal id', async () => {
