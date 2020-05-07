@@ -2,6 +2,8 @@ import * as memoizee from 'memoizee'
 import { getConnection } from 'typeorm'
 import { getQueryDateRangeFrom } from 'lib/time'
 
+export const getPriceObjKey = (date: string, denom: string): string => `${date}${denom}`
+
 async function dashboardRawQueryUncached(query: string): Promise<any> {
   return getConnection().query(query)
 }
@@ -27,7 +29,6 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
   , denom, AVG(price) AS avg_price FROM price ${whereQuery} GROUP BY date, denom ORDER BY date DESC`
   const prices = await dashboardRawQuery(priceQuery)
 
-  const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
   return prices.reduce((acc, item) => {
     acc[getPriceObjKey(item.date, item.denom)] = item.avg_price
     return acc
