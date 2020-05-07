@@ -202,12 +202,15 @@ describe('Dashboard Test', () => {
     expect(body[0].dailyReturn).toBeDefined()
     expect(body[0].annualizedReturn).toBeDefined()
 
-    for (let i = MOVING_AVG_WINDOW_IN_DAYS - 1; i < body.length; i = i + 1) {
+    for (let i = 0; i < body.length; i = i + 1) {
       let cummulativeSum = '0'
-      for (let j = 0; j < MOVING_AVG_WINDOW_IN_DAYS; j = j + 1) {
+      let dataCount = 0
+      for (let j = 0; j < MOVING_AVG_WINDOW_IN_DAYS && i - j >= 0; j = j + 1) {
         cummulativeSum = plus(cummulativeSum, body[i - j].dailyReturn)
+        dataCount = dataCount + 1
       }
-      expect(times(div(cummulativeSum, MOVING_AVG_WINDOW_IN_DAYS), DAYS_IN_YEAR)).toBe(body[i].annualizedReturn)
+
+      expect(times(div(cummulativeSum, dataCount), DAYS_IN_YEAR)).toBe(body[i].annualizedReturn)
     }
   })
 })
