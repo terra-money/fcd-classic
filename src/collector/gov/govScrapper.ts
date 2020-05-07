@@ -19,7 +19,8 @@ async function saveProposalDetails(
   proposalDepositParams: LcdProposalDepositParams
 ) {
   const cachedProposal = await getRepository(ProposalEntity).findOne({
-    proposalId: proposal.id
+    proposalId: proposal.id,
+    chainId: config.CHAIN_ID
   })
 
   if (cachedProposal && !shouldUpdateProposal(cachedProposal.status)) {
