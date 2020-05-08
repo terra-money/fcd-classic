@@ -1,11 +1,10 @@
 import { getRepository } from 'typeorm'
 
 import { ProposalEntity } from 'orm'
-import * as lcd from 'lib/lcd'
-import { errorReport } from 'lib/errorReporting'
 import { chain, flatten, get, compact, reverse, filter } from 'lodash'
 import { getAccountInfo } from './helper'
 import config from 'config'
+import { APIError, ErrorTypes } from 'lib/error'
 
 export enum VoteTypes {
   YES = 'Yes',
@@ -82,12 +81,16 @@ export default async function getProposalVotes(
 ): Promise<GetProposalVotesReturn | undefined> {
   const { proposalId, page, limit, option } = input
 
-  const proposal = await getRepository(ProposalEntity).findOneOrFail({
+  const proposal = await getRepository(ProposalEntity).findOne({
     proposalId,
     chainId: config.CHAIN_ID
   })
 
-  if (!proposal.voteTxs || !proposal.voteTxs.txs) {
+  if (!proposal) {
+    throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
+  }
+
+  if (!proposal || !proposal.voteTxs || !proposal.voteTxs.txs) {
     return {
       totalCnt: 0,
       page,

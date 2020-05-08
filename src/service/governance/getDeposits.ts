@@ -6,6 +6,7 @@ import { errorReport } from 'lib/errorReporting'
 import { get, chain, flatten, compact } from 'lodash'
 import { getAccountInfo } from './helper'
 import config from 'config'
+import { APIError, ErrorTypes, ErrorCodes } from 'lib/error'
 
 interface GetProposalDepositsInput {
   proposalId: string
@@ -62,10 +63,14 @@ async function getDepositFromTx(tx): Promise<Deposit[]> {
 
 export default async function getProposalDeposits(input: GetProposalDepositsInput): Promise<GetProposalDepositsReturn> {
   const { proposalId, page, limit } = input
-  const proposal = await getRepository(ProposalEntity).findOneOrFail({
+  const proposal = await getRepository(ProposalEntity).findOne({
     proposalId,
     chainId: config.CHAIN_ID
   })
+
+  if (!proposal) {
+    throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
+  }
 
   if (!proposal.depositTxs || !proposal.depositTxs.txs) {
     return {
