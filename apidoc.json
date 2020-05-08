@@ -1,7 +1,7 @@
 {
   "name": "Terra FCD",
   "version": "1.0.0",
-  "description": "Documentation of Terra FCD Server",
-  "title": "Terra FCD Documentation",
+  "description": "Terra FCD API Docs",
+  "title": "Terra FCD API Docs",
   "url" : "https://fcd.terra.dev/v1"
 }
