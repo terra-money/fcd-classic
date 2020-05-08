@@ -1,8 +1,11 @@
 import * as memoizee from 'memoizee'
-import { plus, div, times } from 'lib/math'
+import { chain } from 'lodash'
+
+import { plus, div, times, minus } from 'lib/math'
 import { dateFromDateString } from 'lib/time'
 import * as lcd from 'lib/lcd'
-import { getCountBaseWhereQuery, dashboardRawQuery, getPriceHistory } from './helper'
+import { getCountBaseWhereQuery, dashboardRawQuery, getPriceHistory, getPriceObjKey } from './helper'
+import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
 
 export interface GetStakingReturnParam {
   count?: number
@@ -15,19 +18,23 @@ interface StakingDailyReturn {
 }
 
 export async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
+  let requiredPrevDaysHistory
+
+  if (count) {
+    requiredPrevDaysHistory = count + MOVING_AVG_WINDOW_IN_DAYS
+  }
   const { issuance } = await lcd.getIssuanceByDenom('uluna')
 
   const rewardQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
   , denom, SUM(tax) AS tax_sum, SUM(gas) AS gas_sum, SUM(oracle) AS oracle_sum, SUM(sum) AS reward_sum, SUM(commission) AS commission_sum FROM reward \
-  ${getCountBaseWhereQuery(count)} GROUP BY date, denom ORDER BY date DESC`
+  ${getCountBaseWhereQuery(requiredPrevDaysHistory)} GROUP BY date, denom ORDER BY date ASC`
   const rewards = await dashboardRawQuery(rewardQuery)
 
-  const priceObj = await getPriceHistory(count)
-  const getPriceObjKey = (date: string, denom: string) => `${date}${denom}`
+  const priceObj = await getPriceHistory(requiredPrevDaysHistory)
 
   const bondedTokensQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
   , AVG(staking_ratio) AS avg_staking_ratio, AVG(bonded_tokens) AS avg_bonded_tokens FROM general_info \
-  ${getCountBaseWhereQuery(count)} GROUP BY date ORDER BY date DESC`
+  ${getCountBaseWhereQuery(requiredPrevDaysHistory)} GROUP BY date ORDER BY date ASC`
 
   const bondedTokens = await dashboardRawQuery(bondedTokensQuery)
   const bondedTokensObj = bondedTokens.reduce((acc, item) => {
@@ -66,6 +73,8 @@ export async function getStakingReturnUncached(count?: number): Promise<StakingD
     return acc
   }, {})
 
+  let cummulativeReturnOfMovingAvgWindow = '0'
+
   const stakingReturns = Object.keys(rewardObj).reduce((acc: StakingDailyReturn[], date) => {
     const staked = bondedTokensObj[date]
 
@@ -79,9 +88,20 @@ export async function getStakingReturnUncached(count?: number): Promise<StakingD
         : rewardObj[date].reward
 
     const dailyReturn = div(rewardSum, staked)
-    const annualizedReturn = times(dailyReturn, 365)
+    cummulativeReturnOfMovingAvgWindow = plus(cummulativeReturnOfMovingAvgWindow, dailyReturn)
+    if (acc.length >= MOVING_AVG_WINDOW_IN_DAYS) {
+      cummulativeReturnOfMovingAvgWindow = minus(
+        cummulativeReturnOfMovingAvgWindow,
+        acc[acc.length - MOVING_AVG_WINDOW_IN_DAYS].dailyReturn
+      )
+    }
+    const avgReturn = div(
+      cummulativeReturnOfMovingAvgWindow,
+      acc.length >= MOVING_AVG_WINDOW_IN_DAYS ? MOVING_AVG_WINDOW_IN_DAYS : acc.length + 1
+    )
+    const annualizedReturn = times(avgReturn, DAYS_IN_YEAR)
 
-    acc.unshift({
+    acc.push({
       datetime: dateFromDateString(date).getTime(),
       dailyReturn,
       annualizedReturn
@@ -90,7 +110,11 @@ export async function getStakingReturnUncached(count?: number): Promise<StakingD
     return acc
   }, [])
 
-  return stakingReturns
+  return count
+    ? chain(stakingReturns)
+        .drop(stakingReturns.length - count)
+        .value()
+    : stakingReturns
 }
 
 // We will clear memoization at the beginning of each days

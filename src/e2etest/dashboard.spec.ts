@@ -1,6 +1,8 @@
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 
+import { plus, div, times } from 'lib/math'
+import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
 jest.mock('request-promise-native')
 
 const DATA_POINT_COUNT = 4
@@ -189,5 +191,26 @@ describe('Dashboard Test', () => {
     expect(body[0].datetime).toBeDefined()
     expect(body[0].dailyReturn).toBeDefined()
     expect(body[0].annualizedReturn).toBeDefined()
+  })
+
+  test('Test get check annual staking return with moving avg', async () => {
+    const { body } = await agent.get(`/v1/dashboard/staking_return`).expect(200)
+
+    expect(body).toBeInstanceOf(Array)
+    expect(body[0]).toBeDefined()
+    expect(body[0].datetime).toBeDefined()
+    expect(body[0].dailyReturn).toBeDefined()
+    expect(body[0].annualizedReturn).toBeDefined()
+
+    for (let i = 0; i < body.length; i = i + 1) {
+      let cummulativeSum = '0'
+      let dataCount = 0
+      for (let j = 0; j < MOVING_AVG_WINDOW_IN_DAYS && i - j >= 0; j = j + 1) {
+        cummulativeSum = plus(cummulativeSum, body[i - j].dailyReturn)
+        dataCount = dataCount + 1
+      }
+
+      expect(times(div(cummulativeSum, dataCount), DAYS_IN_YEAR)).toBe(body[i].annualizedReturn)
+    }
   })
 })

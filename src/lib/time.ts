@@ -28,7 +28,7 @@ export function getDateRangeOfLastMinute(timestamp: number): { from: Date; to: D
   return { from, to }
 }
 
-const YYYY_MM_DD_REGEX = /(\d{4})-(\d{2})-(\d{2})/
+const YYYY_MM_DD_REGEX = /^(\d{4})-(\d{2})-(\d{2})/
 
 export function dateFromDateString(dateString: string) {
   const dateArray: string[] = YYYY_MM_DD_REGEX.exec(dateString) || []
