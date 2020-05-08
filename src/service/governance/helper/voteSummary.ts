@@ -87,16 +87,6 @@ async function getLunaStaked() {
   return stakingPool && stakingPool.bonded_tokens
 }
 
-export interface VoteSummary {
-  id: string // vote id
-  distribution: VoteDistribution // vote distribution
-  count: VoteCount // vote count
-  total: string // total amount of luna voted
-  votingEndTime: string // proposal vote ending time in unix
-  stakedLuna: string // total staked luna amount
-  voters?: { [key: string]: string } //
-}
-
 async function getVoteDistributionAndTotal(proposal: LcdProposal, votes: LcdProposalVote[]) {
   if (proposal.proposal_status === 'VotingPeriod') {
     const { distribution, total } = tallying(votes)

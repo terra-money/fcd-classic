@@ -1,7 +1,11 @@
+import { getRepository } from 'typeorm'
+
+import { ProposalEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
 import { chain, flatten, get, compact, reverse, filter } from 'lodash'
 import { getAccountInfo } from './helper'
+import config from 'config'
 
 export enum VoteTypes {
   YES = 'Yes',
@@ -77,11 +81,13 @@ export default async function getProposalVotes(
   input: GetProposalVotesInput
 ): Promise<GetProposalVotesReturn | undefined> {
   const { proposalId, page, limit, option } = input
-  const votes = await lcd.getProposalVoteTxs(proposalId).catch((e) => {
-    errorReport(e)
+
+  const proposal = await getRepository(ProposalEntity).findOneOrFail({
+    proposalId,
+    chainId: config.CHAIN_ID
   })
 
-  if (!votes || !votes['txs']) {
+  if (!proposal.voteTxs || !proposal.voteTxs.txs) {
     return {
       totalCnt: 0,
       page,
@@ -90,7 +96,7 @@ export default async function getProposalVotes(
     }
   }
 
-  const voteTxs = flatten(await Promise.all(votes.txs.map(getVoteFromTx)))
+  const voteTxs = flatten(await Promise.all(proposal.voteTxs.txs.map(getVoteFromTx)))
   const uniqueVoteTxs = getUniqueVote(voteTxs, option)
 
   return {

@@ -1,7 +1,11 @@
+import { getRepository } from 'typeorm'
+
+import { ProposalEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
 import { get, chain, flatten, compact } from 'lodash'
 import { getAccountInfo } from './helper'
+import config from 'config'
 
 interface GetProposalDepositsInput {
   proposalId: string
@@ -58,11 +62,12 @@ async function getDepositFromTx(tx): Promise<Deposit[]> {
 
 export default async function getProposalDeposits(input: GetProposalDepositsInput): Promise<GetProposalDepositsReturn> {
   const { proposalId, page, limit } = input
-  const deposits = await lcd.getProposalDeposits(proposalId).catch((e) => {
-    errorReport(e)
+  const proposal = await getRepository(ProposalEntity).findOneOrFail({
+    proposalId,
+    chainId: config.CHAIN_ID
   })
 
-  if (!deposits || !deposits.txs) {
+  if (!proposal.depositTxs || !proposal.depositTxs.txs) {
     return {
       totalCnt: 0,
       page,
@@ -71,7 +76,7 @@ export default async function getProposalDeposits(input: GetProposalDepositsInpu
     }
   }
 
-  const depositTxs = await Promise.all(deposits.txs.map((tx) => getDepositFromTx(tx)))
+  const depositTxs = await Promise.all(proposal.depositTxs.txs.map((tx) => getDepositFromTx(tx)))
   const txsExceptZeroDeposit = flatten(depositTxs).filter((tx) => tx.deposit.length > 0)
 
   return {

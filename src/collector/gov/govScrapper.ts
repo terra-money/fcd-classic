@@ -65,11 +65,11 @@ async function saveProposalDetails(
   }
 
   if (!cachedProposal) {
-    logger.info(`Saving proposal ${proposal.id}`)
     await getRepository(ProposalEntity).save(proposalEntityObject)
+    logger.info(`Saved proposal ${proposal.id}`)
   } else {
-    logger.info(`Updating proposal ${proposal.id}`)
     await getRepository(ProposalEntity).update(cachedProposal.id, proposalEntityObject)
+    logger.info(`Updated proposal ${proposal.id}`)
   }
 }
 

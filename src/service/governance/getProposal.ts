@@ -1,9 +1,12 @@
-import * as lcd from 'lib/lcd'
 import { get } from 'lodash'
-import { getProposalBasic, getDepositInfo, ProposalStatus } from './helper'
-import { ValidatorInfoEntity } from 'orm'
 import { getRepository } from 'typeorm'
+
+import * as lcd from 'lib/lcd'
+import { getProposalBasic, ProposalStatus } from './helper'
+import { ValidatorInfoEntity, ProposalEntity } from 'orm'
 import { generateValidatorResponse } from 'service/staking/helper'
+import { getValidatorsReturn } from 'service/staking/getValidators'
+import config from 'config'
 
 interface ProposalPramsModuleSpace {
   subspace: string // module
@@ -17,17 +20,12 @@ interface ProposalContent {
 }
 
 interface GetProposalResponse extends ProposalBasic {
-  deposit: {
-    depositEndTime: string
-    totalDeposit: Coin[]
-    minDeposit: Coin[]
-  }
   tallyingParameters?: LcdProposalTallyingParams
   content?: ProposalContent[]
   validatorsNotVoted?: ValidatorResponse[]
 }
 
-function makeContentArray(contentObj: { [key: string]: string | ProposalPramsModuleSpace[] }): ProposalContent[] {
+function makeContentArray(contentObj: ProposalContentValue): ProposalContent[] {
   delete contentObj['title']
   delete contentObj['description']
   return Object.keys(contentObj).map((key) => {
@@ -38,67 +36,65 @@ function makeContentArray(contentObj: { [key: string]: string | ProposalPramsMod
   })
 }
 
-export default async function getProposal(
-  proposalId: string,
-  account?: string
-): Promise<GetProposalResponse | undefined> {
-  const proposal = await lcd.getProposal(proposalId)
+async function getDelegatedValidatorWhoDidNotVoted(
+  account: string,
+  voters: { [operatorAddr: string]: string }
+): Promise<ValidatorResponse[]> {
+  const delegations = await lcd.getDelegations(account)
 
-  if (!proposal) {
-    return
+  if (!delegations || delegations.length === 0) {
+    return []
   }
 
-  const depositParmas = await lcd.getProposalDepositParams()
-  const proposalBasic = await getProposalBasic(proposal, depositParmas)
+  const delegatedOperatorList: string[] = delegations.map((validator: LcdDelegation) => {
+    return validator.validator_address
+  })
+  const delegatedValidator = await getRepository(ValidatorInfoEntity)
+    .createQueryBuilder('validator')
+    .where('validator.operator_address IN (:...ids)', { ids: delegatedOperatorList })
+    .andWhere('validator.status = (:status)', { status: 'active' })
+    .getMany()
 
-  if (!proposalBasic) {
-    return
-  }
+  const validatorNotVoted = delegatedValidator.filter((validator) => !voters[validator.accountAddress])
 
-  const content = get(proposal, 'content.value')
-  const deposit = getDepositInfo(proposal, depositParmas)
+  const validatorsReturn = getValidatorsReturn()
 
-  if (proposalBasic.status === ProposalStatus.VOTING) {
-    const tallyingParameters = await lcd.getProposalTallyingParams()
-    const proposalDetails = { ...proposalBasic, content: makeContentArray(content), deposit, tallyingParameters }
-
-    if (!account) {
-      return proposalDetails
-    }
-
-    const delegations = await lcd.getDelegations(account)
-
-    if (!delegations || delegations.length === 0) {
-      return {
-        ...proposalDetails,
-        validatorsNotVoted: []
-      }
-    }
-
-    const delegatedOperatorList: string[] = delegations.reduce((acc: string[], validator) => {
-      acc.push(validator.validator_address)
-      return acc
-    }, [])
-    const delegatedValidator = await getRepository(ValidatorInfoEntity)
-      .createQueryBuilder('validator')
-      .where('validator.operator_address IN (:...ids)', { ids: delegatedOperatorList })
-      .andWhere('validator.status = (:status)', { status: 'active' })
-      .getMany()
-
-    const validatorNotVoted = delegatedValidator.filter(
-      (validator) => !(proposalBasic.vote && proposalBasic.vote.voters[validator.accountAddress])
+  const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {
+    acc.push(
+      generateValidatorResponse(
+        validator,
+        validatorsReturn[validator.operatorAddress] || { stakingReturn: '0', isNewValidator: false }
+      )
     )
+    return acc
+  }, [] as ValidatorResponse[])
+  return validatorsNotVoted
+}
 
-    const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {
-      acc.push(generateValidatorResponse(validator, { stakingReturn: '0', isNewValidator: false }))
-      return acc
-    }, [] as ValidatorResponse[])
+export default async function getProposal(proposalId: string, account?: string): Promise<GetProposalResponse> {
+  const proposal = await getRepository(ProposalEntity).findOneOrFail({
+    proposalId,
+    chainId: config.CHAIN_ID
+  })
 
-    return {
-      ...proposalDetails,
-      validatorsNotVoted
-    }
+  const proposalBasic: ProposalBasic = await getProposalBasic(proposal)
+
+  const content = makeContentArray(proposal.content.value)
+
+  const tallyingParameters = proposal.tallyingParameters
+
+  const proposalDetails = {
+    ...proposalBasic,
+    content,
+    tallyingParameters
   }
 
-  return { ...proposalBasic, content: makeContentArray(content), deposit }
+  if (!account || proposalBasic.status !== ProposalStatus.VOTING) {
+    return proposalDetails
+  }
+
+  return {
+    ...proposalDetails,
+    validatorsNotVoted: await getDelegatedValidatorWhoDidNotVoted(account, proposalBasic.vote?.voters || {})
+  }
 }

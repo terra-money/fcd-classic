@@ -1,6 +1,10 @@
+import { getRepository } from 'typeorm'
+
+import { ProposalEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { getProposalBasic } from './helper'
 import { filter, orderBy } from 'lodash'
+import config from 'config'
 
 interface ProposalsReturn {
   minDeposit: Coins // proposal min deposit
@@ -10,13 +14,16 @@ interface ProposalsReturn {
 }
 
 export default async function getProposals(status?: string): Promise<ProposalsReturn> {
-  const lcdProposals = await lcd.getProposals()
+  const proposals = await getRepository(ProposalEntity).find({
+    chainId: config.CHAIN_ID
+  })
+
   const depositParmas = await lcd.getProposalDepositParams()
   const { min_deposit: minDeposit, max_deposit_period: maxDepositPeriod } = depositParmas
   const { voting_period: votingPeriod } = await lcd.getProposalVotingParams()
 
   const orderedProposals = orderBy(
-    await Promise.all(lcdProposals.map((proposal) => getProposalBasic(proposal, depositParmas, true))),
+    await Promise.all(proposals.map((proposal) => getProposalBasic(proposal))),
     ['submitTime'],
     ['desc']
   )
