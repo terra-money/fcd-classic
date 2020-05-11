@@ -1,10 +1,9 @@
 import { getRepository } from 'typeorm'
-
 import { ProposalEntity } from 'orm'
 import { chain, flatten, get, compact, reverse, filter } from 'lodash'
-import { getAccountInfo } from './helper'
 import config from 'config'
 import { APIError, ErrorTypes } from 'lib/error'
+import getAccountInfo from './helper/getAccountInfo'
 
 export enum VoteTypes {
   YES = 'Yes',

@@ -1,12 +1,9 @@
 import { getRepository } from 'typeorm'
-
 import { ProposalEntity } from 'orm'
-import * as lcd from 'lib/lcd'
-import { errorReport } from 'lib/errorReporting'
 import { get, chain, flatten, compact } from 'lodash'
-import { getAccountInfo } from './helper'
 import config from 'config'
-import { APIError, ErrorTypes, ErrorCodes } from 'lib/error'
+import { APIError, ErrorTypes } from 'lib/error'
+import getAccountInfo from './helper/getAccountInfo'
 
 interface GetProposalDepositsInput {
   proposalId: string

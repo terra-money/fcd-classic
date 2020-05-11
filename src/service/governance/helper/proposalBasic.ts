@@ -1,10 +1,6 @@
 import * as memoizee from 'memoizee'
 import { ProposalEntity } from 'orm'
-import { format } from 'date-fns'
-
-import * as lcd from 'lib/lcd'
-import { getVoteSummary } from './voteSummary'
-import { getAccountInfo } from './index'
+import getAccountInfo from './getAccountInfo'
 
 export enum ProposalStatus {
   DEPOSIT = 'Deposit',
@@ -14,7 +10,7 @@ export enum ProposalStatus {
   FAILED = 'Failed'
 }
 
-function renameStatus(status: string): string {
+function transformStatus(status: string): string {
   if (status === 'VotingPeriod') {
     return 'Voting'
   }
@@ -25,25 +21,7 @@ function renameStatus(status: string): string {
   return status
 }
 
-export function getDepositInfo(
-  proposal: LcdProposal,
-  depositParams: LcdProposalDepositParams
-): {
-  depositEndTime: string
-  totalDeposit: Coin[]
-  minDeposit: Coin[]
-} {
-  const { total_deposit: totalDeposit, deposit_end_time: depositEndTime } = proposal
-  const { min_deposit: minDeposit } = depositParams
-
-  return {
-    depositEndTime,
-    totalDeposit,
-    minDeposit
-  }
-}
-
-function proposalTypeTranslator(proposalType: string): string {
+function transformProposalType(proposalType: string): string {
   const typeToTypestr = {
     'gov/TextProposal': 'Text Proposal',
     'treasury/TaxRateUpdateProposal': 'Tax-rate Update',
@@ -82,8 +60,8 @@ async function getProposalBasicUncached(proposal: ProposalEntity): Promise<Propo
   return {
     id: proposalId,
     proposer: await getAccountInfo(proposal.proposer),
-    type: proposalTypeTranslator(proposal.type),
-    status: renameStatus(proposal.status),
+    type: transformProposalType(proposal.type),
+    status: transformStatus(proposal.status),
     submitTime: proposal.submitTime.toISOString(),
     title: proposal.title,
     description: proposal.content.value.description,
