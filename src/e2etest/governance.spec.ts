@@ -1,7 +1,6 @@
 import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
-import { getDepositInfo } from 'service/governance/helper'
 import { ErrorCodes } from 'lib/error'
 
 jest.mock('request-promise-native')

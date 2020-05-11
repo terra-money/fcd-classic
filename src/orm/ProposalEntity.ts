@@ -5,47 +5,38 @@ interface Voters {
 }
 
 @Entity('proposal')
-@Index('pi_index_prop_id_chain_id', ['chainId', 'proposalId'], { unique: true })
+@Index('UQ_proposal', ['chainId', 'proposalId'], { unique: true })
 export default class ProposalEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Index('pi_prop_id')
   @Column()
   proposalId: string
 
-  @Index('pi_chain_id')
   @Column()
   chainId: string
 
-  @Index('pi_proposer')
   @Column()
   proposer: string
 
   @Column()
   title: string
 
-  @Index('pi_type')
   @Column()
   type: string
 
-  @Index('pi_status')
   @Column()
   status: string
 
-  @Index('pi_submit_time')
   @Column()
   submitTime: Date
 
-  @Index('pi_deposit_end_time')
   @Column()
   depositEndTime: Date
 
-  @Index('pi_voting_start_time')
   @Column()
   votingStartTime: Date
 
-  @Index('pi_voting_end_time')
   @Column()
   votingEndTime: Date
 
