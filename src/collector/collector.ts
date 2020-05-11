@@ -7,6 +7,9 @@ import { initializeSentry } from 'lib/errorReporting'
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'
+import { saveValidatorInfo } from './staking/ValidatorScraper'
+import { calculateValidatorsReturn } from './preCalcValidatorReturn'
+import { scrapeAndSaveProposalsInfo } from './gov/govScrapper'
 import Semaphore from './Semaphore'
 
 process.on('unhandledRejection', (err) => {
@@ -20,6 +23,9 @@ process.on('unhandledRejection', (err) => {
 const blockCollector = new Semaphore('BlockCollector', collectBlock, logger)
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
+const validatorScrapper = new Semaphore('ValidatorScrapper', saveValidatorInfo, logger)
+const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
+const proposalScrapper = new Semaphore('ProposalScrapper', scrapeAndSaveProposalsInfo, logger)
 
 const jobs = [
   {
@@ -32,6 +38,18 @@ const jobs = [
   },
   {
     method: generalCollector.run.bind(generalCollector),
+    cron: '1 * * * * *'
+  },
+  {
+    method: validatorScrapper.run.bind(validatorScrapper),
+    cron: '1 * * * * *'
+  },
+  {
+    method: returnCalculator.run.bind(returnCalculator),
+    cron: '1 * * * * *'
+  },
+  {
+    method: proposalScrapper.run.bind(proposalScrapper),
     cron: '1 * * * * *'
   }
 ]

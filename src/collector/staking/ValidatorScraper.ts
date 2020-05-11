@@ -1,5 +1,5 @@
 import * as lcd from 'lib/lcd'
-import { vsLogger as logger } from 'lib/logger'
+import { collectorLogger as logger } from 'lib/logger'
 import { saveValidatorDetail } from './validatorDetails'
 
 export async function saveValidatorInfo() {

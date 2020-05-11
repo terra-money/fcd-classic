@@ -4,7 +4,7 @@ import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 import { getRepository } from 'typeorm'
 import { getValidators } from 'lib/lcd'
 import { plus, div } from 'lib/math'
-import { vsLogger as logger } from 'lib/logger'
+import { collectorLogger as logger } from 'lib/logger'
 import { getBlockRewards, getAvgVotingPower, getAvgPrice } from 'service/staking'
 
 async function getValidatorReturnSum(
