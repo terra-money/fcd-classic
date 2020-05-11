@@ -322,7 +322,7 @@ export default class TxController extends KoaController {
     params: {
       account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
     },
-    failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingForAccount(ctx): Promise<void> {
     const { account } = ctx.params
@@ -391,7 +391,7 @@ export default class TxController extends KoaController {
     params: {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
-    failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
     const { operatorAddr } = ctx.params

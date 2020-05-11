@@ -8,7 +8,7 @@ import { div, plus, times } from 'lib/math'
 import { APIError, ErrorTypes } from 'lib/error'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
-import { vsLogger as logger } from 'lib/logger'
+import { collectorLogger as logger } from 'lib/logger'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 

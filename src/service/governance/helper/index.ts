@@ -1,11 +1,10 @@
 export * from './proposalBasic'
 export * from './voteSummary'
 
-import { get } from 'lodash'
 import * as memoizee from 'memoizee'
+import { getRepository } from 'typeorm'
 
-import * as lcd from 'lib/lcd'
-import { convertAccAddressToValAddress } from 'lib/common'
+import { ValidatorInfoEntity } from 'orm'
 
 async function getAccountInfoUncached(
   accAddress: string
@@ -14,8 +13,9 @@ async function getAccountInfoUncached(
   operatorAddress?: string
   moniker?: string
 }> {
-  const valAddr = convertAccAddressToValAddress(accAddress)
-  const validator = await lcd.getValidator(valAddr)
+  const validator = await getRepository(ValidatorInfoEntity).findOne({
+    accountAddress: accAddress
+  })
 
   const result = {
     accountAddress: accAddress
@@ -24,8 +24,8 @@ async function getAccountInfoUncached(
   if (validator) {
     return {
       ...result,
-      operatorAddress: valAddr,
-      moniker: get(validator, 'description.moniker')
+      operatorAddress: validator.operatorAddress,
+      moniker: validator.moniker
     }
   }
 

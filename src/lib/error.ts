@@ -11,7 +11,7 @@ export enum ErrorTypes {
   // 403 Forbidden
   FORBIDDEN = 'FORBIDDEN',
   // 404
-  INVALID_ACCOUNT_ADDRESS = 'INVALID_ACCOUNT_ADDRESS',
+  NOT_FOUND_ERROR = 'NOT_FOUND_ERROR',
   VALIDATOR_DOES_NOT_EXISTS = 'VALIDATOR_DOES_NOT_EXISTS',
   // 408
   TIMEOUT = 'TIMEOUT',
@@ -32,7 +32,7 @@ export enum ErrorCodes {
   // 403 Forbidden
   FORBIDDEN = 403,
   // 404
-  INVALID_ACCOUNT_ADDRESS = 404,
+  NOT_FOUND_ERROR = 404,
   // 408
   TIMEOUT = 408,
   // 429 Too Many Requests

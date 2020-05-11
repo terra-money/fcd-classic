@@ -2,6 +2,7 @@ import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 import { getDepositInfo } from 'service/governance/helper'
+import { ErrorCodes } from 'lib/error'
 
 jest.mock('request-promise-native')
 
@@ -122,6 +123,10 @@ describe('Governance', () => {
     await agent.get(`/v1/gov/proposals/abcd`).expect(400)
   })
 
+  test('Test get proposal detail with not found proposal id', async () => {
+    await agent.get(`/v1/gov/proposals/9999999`).expect(ErrorCodes.NOT_FOUND_ERROR)
+  })
+
   test('Test get proposal detail with invalid accounts', async () => {
     await agent.get(`/v1/gov/proposals/${TEST_PROPOSAL_ID}?account=3443`).expect(400)
   })
@@ -156,9 +161,8 @@ describe('Governance', () => {
   })
 
   test('Test get no vote proposal', async () => {
-    const { body } = await agent.get(`/v1/gov/proposals/${NO_VOTE_PROPOSAL_ID}/votes`).expect(200)
-
-    expect(body.totalCnt).toBe(0)
-    expect(body.votes).toBeArrayOfSize(0)
+    const { body } = await agent
+      .get(`/v1/gov/proposals/${NO_VOTE_PROPOSAL_ID}/votes`)
+      .expect(ErrorCodes.NOT_FOUND_ERROR)
   })
 })

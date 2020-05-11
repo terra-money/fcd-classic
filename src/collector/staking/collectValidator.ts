@@ -1,9 +1,9 @@
 import * as lcd from 'lib/lcd'
-import { vsLogger as logger } from 'lib/logger'
+import { collectorLogger as logger } from 'lib/logger'
 import { saveValidatorDetail } from './validatorDetails'
 
-export async function saveValidatorInfo() {
-  logger.info('Updating validator info....')
+export async function collectValidator() {
+  logger.info('Validator collector started.')
   const validatorList = await lcd.getValidators()
   logger.info(`Got a list of ${validatorList.length} validators`)
   const votingPower = await lcd.getVotingPower()
@@ -21,5 +21,5 @@ export async function saveValidatorInfo() {
     }
   }
 
-  logger.info('Scraping validator info complete')
+  logger.info('Validator collector completed.')
 }

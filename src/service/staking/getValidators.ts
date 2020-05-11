@@ -4,7 +4,7 @@ import config from 'config'
 import { generateValidatorResponse } from './helper'
 import { ValidatorInfoEntity } from 'orm'
 
-async function getValidatorsReturn(): Promise<{ [operatorAddress: string]: ValidatorAnnualReturn }> {
+export async function getValidatorsReturn(): Promise<{ [operatorAddress: string]: ValidatorAnnualReturn }> {
   const rawQuery = `select operator_address,
     sum((reward - commission)/(avg_voting_power)) * 365 / count(*) as annual_return, count(*) as data_point_count from validator_return_info
     where timestamp >= DATE(now() - Interval '30 day') and avg_voting_power > 0 group by operator_address`

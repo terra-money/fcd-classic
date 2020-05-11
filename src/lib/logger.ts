@@ -55,6 +55,5 @@ function createLogger(name: string) {
 
 export const apiLogger = createLogger('api')
 export const collectorLogger = createLogger('collector')
-export const vsLogger = createLogger('v_scrapper')
 
 export default apiLogger
