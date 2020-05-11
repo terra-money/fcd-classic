@@ -7,9 +7,8 @@ import { initializeSentry } from 'lib/errorReporting'
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'
-import { saveValidatorInfo } from './staking/ValidatorScraper'
-import { calculateValidatorsReturn } from './preCalcValidatorReturn'
-import { scrapeAndSaveProposalsInfo } from './gov/govScrapper'
+import { collectValidator, calculateValidatorsReturn } from './staking'
+import { collectProposal } from './gov'
 import Semaphore from './Semaphore'
 
 process.on('unhandledRejection', (err) => {
@@ -23,9 +22,9 @@ process.on('unhandledRejection', (err) => {
 const blockCollector = new Semaphore('BlockCollector', collectBlock, logger)
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
-const validatorScrapper = new Semaphore('ValidatorScrapper', saveValidatorInfo, logger)
+const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
-const proposalScrapper = new Semaphore('ProposalScrapper', scrapeAndSaveProposalsInfo, logger)
+const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
 
 const jobs = [
   {
@@ -38,19 +37,19 @@ const jobs = [
   },
   {
     method: generalCollector.run.bind(generalCollector),
-    cron: '1 * * * * *'
+    cron: '0 * * * * *'
   },
   {
-    method: validatorScrapper.run.bind(validatorScrapper),
-    cron: '1 * * * * *'
+    method: validatorCollector.run.bind(validatorCollector),
+    cron: '10 * * * * *'
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
-    cron: '1 * * * * *'
+    cron: '20 * * * * *'
   },
   {
-    method: proposalScrapper.run.bind(proposalScrapper),
-    cron: '1 * * * * *'
+    method: proposalCollector.run.bind(proposalCollector),
+    cron: '30 * * * * *'
   }
 ]
 

@@ -73,12 +73,13 @@ async function saveProposalDetails(
   }
 }
 
-export async function scrapeAndSaveProposalsInfo() {
-  logger.info(`Starting proposal scrapper`)
+export async function collectProposal() {
+  logger.info('Proposal collector started.')
   const proposals: LcdProposal[] = await lcd.getProposals()
   const proposalTallyingParams = await lcd.getProposalTallyingParams()
   const proposalDepositParams = await lcd.getProposalDepositParams()
   logger.info(`Got a list of ${proposals.length} proposals`)
+
   for (const proposal of proposals) {
     try {
       logger.info(`Saving proposal ${proposal.id}`)
@@ -88,5 +89,7 @@ export async function scrapeAndSaveProposalsInfo() {
       logger.error(error)
     }
   }
+
+  logger.info('Proposal collector completed.')
   return
 }

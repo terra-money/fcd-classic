@@ -44,7 +44,7 @@ async function getValidatorReturnSum(
 }
 
 export async function calculateValidatorsReturn() {
-  logger.info('Return calculator started.')
+  logger.info('Validator return calculator started.')
 
   const latestBlock = await getRepository(BlockEntity)
     .createQueryBuilder('block')
@@ -124,5 +124,5 @@ export async function calculateValidatorsReturn() {
     logger.info(`Calculated return for day of ${timestamp}`)
   }
 
-  logger.info('Calculated last 30 days return')
+  logger.info('Validator return calculator completed.')
 }
