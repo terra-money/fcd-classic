@@ -1,6 +1,11 @@
 name: default
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+      - develop
 
 jobs:
   integration:
@@ -20,7 +25,7 @@ jobs:
 
     needs: integration
 
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v2
