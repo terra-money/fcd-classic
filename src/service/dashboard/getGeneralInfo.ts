@@ -17,11 +17,6 @@ interface StakingPoolInfo {
   notBondedTokens: string // bigint value
 }
 
-interface DenomTaxCap {
-  denom: string // denom name
-  taxCap: string // tax cap for denom
-}
-
 interface GeneralInfoReturn {
   prices: CoinByDenoms
   issuances: CoinByDenoms

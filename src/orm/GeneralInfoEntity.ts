@@ -21,6 +21,15 @@ export default class GeneralInfoEntity {
   @Column({ type: 'jsonb', nullable: true })
   taxProceeds: Coins
 
+  @Column({ type: 'jsonb', nullable: true })
+  issuances: DenomMap
+
+  @Column({ type: 'jsonb', nullable: true })
+  communityPool: DenomMap
+
+  @Column({ type: 'jsonb', nullable: true })
+  taxCaps: DenomTaxCap[]
+
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
   seigniorageProceeds: string
 

@@ -31,6 +31,22 @@ export async function saveGeneral() {
   const stakingPool = await lcd.getStakingPool()
   const taxProceeds = await lcd.getTaxProceeds()
   const seigniorageProceeds = await lcd.getSeigniorageProceeds()
+  const communityPoolList = await lcd.getCommunityPool()
+
+  const communityPool: DenomMap = communityPoolList.reduce((acc, { denom, amount }) => {
+    acc[denom] = amount
+    return acc
+  }, {})
+
+  const activeDenoms = await lcd.getOracleActives()
+  const taxCaps: DenomTaxCap[] = await Promise.all(
+    activeDenoms.map(async (denom: string) => {
+      return {
+        denom,
+        taxCap: await lcd.getTaxCap(denom)
+      }
+    })
+  )
 
   const { bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens } = stakingPool
   const issuances = await lcd.getAllActiveIssuance()
@@ -51,7 +67,10 @@ export async function saveGeneral() {
     bondedTokens,
     notBondedTokens,
     totalAccountCount: total,
-    activeAccountCount: active
+    activeAccountCount: active,
+    issuances,
+    taxCaps,
+    communityPool
   })
 }
 
