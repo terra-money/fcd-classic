@@ -1,8 +1,8 @@
-import { startOfDay, subDays, format } from 'date-fns'
-import { getConnection } from 'typeorm'
+import { subDays, startOfToday } from 'date-fns'
+import { getRepository } from 'typeorm'
 
-import { getCountBaseWhereQuery } from 'service/dashboard'
-import { getDateFromDateTime } from './helpers'
+import { getDateFromDateTime, convertDbTimestampToDate } from './helpers'
+import { GeneralInfoEntity } from 'orm'
 
 export interface AccountCountInfo {
   totalAccount: number
@@ -10,20 +10,27 @@ export interface AccountCountInfo {
 }
 
 export async function getAccountCountByDay(daysBefore?: number): Promise<{ [date: string]: AccountCountInfo }> {
-  const baseQuery = `SELECT DATE(datetime) AS datetime, \
-MAX(total_account_count) AS total_account, \
-MAX(active_account_count) AS active_account FROM general_info `
+  const queryBuilder = getRepository(GeneralInfoEntity)
+    .createQueryBuilder()
+    .select(convertDbTimestampToDate('datetime'), 'date')
+    .addSelect('MAX(total_account_count)', 'total_account')
+    .addSelect('MAX(active_account_count)', 'active_account')
+    .groupBy('date')
+    .orderBy('date', 'DESC')
+    .where('datetime < :today ', { today: startOfToday() })
+
+  if (daysBefore) {
+    queryBuilder.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+  }
 
   const result: {
     total_account: number
     active_account: number
-    datetime: string
-  }[] = await getConnection().query(
-    `${baseQuery}${getCountBaseWhereQuery(daysBefore)} GROUP BY DATE(datetime) ORDER BY datetime ASC`
-  )
+    date: string
+  }[] = await queryBuilder.getRawMany()
 
   return result.reduce((acc, item) => {
-    acc[getDateFromDateTime(new Date(item.datetime))] = {
+    acc[getDateFromDateTime(new Date(item.date))] = {
       totalAccount: item.total_account,
       activeAccount: item.active_account
     }

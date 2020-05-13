@@ -1,21 +1,34 @@
-import { getConnection } from 'typeorm'
+import { getRepository } from 'typeorm'
 
-import { getDateFromDateTime } from './helpers'
-import { getCountBaseWhereQuery } from 'service/dashboard'
+import { getDateFromDateTime, convertDbTimestampToDate } from './helpers'
+import { NetworkEntity } from 'orm'
+import { startOfToday, subDays } from 'date-fns'
 
 interface TxVolumeByDateDenom {
   [date: string]: DenomMap
 }
 
 export async function getTxVolumeByDay(daysBefore?: number): Promise<TxVolumeByDateDenom> {
-  const query = `SELECT DATE(datetime) AS date\
-  , denom, SUM(txvolume) AS tx_volume FROM network\
-  ${getCountBaseWhereQuery(daysBefore)} GROUP BY date, denom ORDER BY date DESC`
+  const queryBuilder = getRepository(NetworkEntity)
+    .createQueryBuilder()
+    .select(convertDbTimestampToDate('datetime'), 'date')
+    .addSelect('denom', 'denom')
+    .addSelect('SUM(txvolume)', 'tx_volume')
+    .where('datetime < :today', { today: startOfToday() })
+    .groupBy('date')
+    .addGroupBy('denom')
+    .orderBy('date', 'DESC')
+
+  if (daysBefore) {
+    queryBuilder.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+  }
+
   const txs: {
     date: string
     denom: string
     tx_volume: string
-  }[] = await getConnection().query(query)
+  }[] = await queryBuilder.getRawMany()
+
   const txVolObj: TxVolumeByDateDenom = txs.reduce((acc, item) => {
     const dateKey = getDateFromDateTime(new Date(item.date))
     if (!acc[dateKey]) {

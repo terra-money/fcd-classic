@@ -1,8 +1,10 @@
-import { getConnection } from 'typeorm'
+import { getRepository } from 'typeorm'
 
 import { times, div, plus } from 'lib/math'
-import { getPriceHistory, getCountBaseWhereQuery } from 'service/dashboard'
-import { getDateFromDateTime, getPriceObjKey } from './helpers'
+import { getPriceHistory } from 'service/dashboard'
+import { getDateFromDateTime, getPriceObjKey, convertDbTimestampToDate } from './helpers'
+import { RewardEntity } from 'orm'
+import { startOfToday, subDays } from 'date-fns'
 
 // key: date in format YYYY-MM-DD
 // value: big int string format
@@ -11,16 +13,25 @@ interface RewardByDateMap {
 }
 
 export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
-  const sumRewardsQuery = `SELECT DATE(datetime) AS date, \
-denom, SUM(tax) AS sum_reward FROM reward \
-${getCountBaseWhereQuery(daysBefore)} \
-GROUP BY date, denom ORDER BY date`
+  const queryBuilder = getRepository(RewardEntity)
+    .createQueryBuilder()
+    .select(convertDbTimestampToDate('datetime'), 'date')
+    .addSelect('denom', 'denom')
+    .addSelect('SUM(tax)', 'sum_reward')
+    .groupBy('date')
+    .addGroupBy('denom')
+    .orderBy('date', 'ASC')
+    .where('datetime < :today', { today: startOfToday() })
+
+  if (daysBefore) {
+    queryBuilder.where('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+  }
 
   const rewards: {
     date: Date
     denom: string
     sum_reward: string
-  }[] = await getConnection().query(sumRewardsQuery)
+  }[] = await queryBuilder.getRawMany()
 
   const priceObj = await getPriceHistory(daysBefore)
 

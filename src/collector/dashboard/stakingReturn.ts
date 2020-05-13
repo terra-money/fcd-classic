@@ -1,11 +1,11 @@
-import { getConnection } from 'typeorm'
-import { chain } from 'lodash'
+import { getRepository } from 'typeorm'
 
-import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
-import { getCountBaseWhereQuery, getPriceHistory, getPriceObjKey } from 'service/dashboard'
+import { getPriceHistory, getPriceObjKey } from 'service/dashboard'
 import * as lcd from 'lib/lcd'
-import { times, div, plus, minus } from 'lib/math'
-import { dateFromDateString } from 'lib/time'
+import { times, div, plus } from 'lib/math'
+import { RewardEntity, GeneralInfoEntity } from 'orm'
+import { startOfToday, subDays } from 'date-fns'
+import { getDateFromDateTime, convertDbTimestampToDate } from './helpers'
 
 interface DailyReturnInfo {
   tax: string
@@ -23,18 +23,42 @@ interface DailyStakingInfo {
 export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
   const { issuance } = await lcd.getIssuanceByDenom('uluna')
 
-  const rewardQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
-  , denom, SUM(tax) AS tax_sum, SUM(gas) AS gas_sum, SUM(oracle) AS oracle_sum, SUM(sum) AS reward_sum, SUM(commission) AS commission_sum FROM reward \
-  ${getCountBaseWhereQuery(daysBefore)} GROUP BY date, denom ORDER BY date ASC`
-  const rewards = await getConnection().query(rewardQuery)
+  const rewardQb = getRepository(RewardEntity)
+    .createQueryBuilder()
+    .select(convertDbTimestampToDate('datetime'), 'date')
+    .addSelect('denom', 'denom')
+    .addSelect('SUM(tax)', 'tax_sum')
+    .addSelect('SUM(gas)', 'gas_sum')
+    .addSelect('SUM(oracle)', 'oracle_sum')
+    .addSelect('SUM(sum)', 'reward_sum')
+    .addSelect('SUM(commission)', 'commission_sum')
+    .groupBy('date')
+    .addGroupBy('denom')
+    .orderBy('date', 'ASC')
+    .where('datetime < :today', { today: startOfToday() })
+
+  if (daysBefore) {
+    rewardQb.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+  }
+
+  const rewards = await rewardQb.getRawMany()
 
   const priceObj = await getPriceHistory(daysBefore)
 
-  const bondedTokensQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
-  , AVG(staking_ratio) AS avg_staking_ratio, AVG(bonded_tokens) AS avg_bonded_tokens FROM general_info \
-  ${getCountBaseWhereQuery(daysBefore)} GROUP BY date ORDER BY date ASC`
+  const stakingQb = getRepository(GeneralInfoEntity)
+    .createQueryBuilder()
+    .select(convertDbTimestampToDate('datetime'), 'date')
+    .addSelect('AVG(staking_ratio)', 'avg_staking_ratio')
+    .addSelect('AVG(bonded_tokens)', 'avg_bonded_tokens')
+    .groupBy('date')
+    .orderBy('date', 'DESC')
+    .where('datetime < :today', { today: startOfToday() })
 
-  const bondedTokens = await getConnection().query(bondedTokensQuery)
+  if (daysBefore) {
+    stakingQb.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+  }
+
+  const bondedTokens = await stakingQb.getRawMany()
 
   const bondedTokensObj = bondedTokens.reduce((acc, item) => {
     acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(issuance, item.avg_staking_ratio)
@@ -85,7 +109,7 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
         ? plus(plus(rewardObj[date].tax, rewardObj[date].gas), rewardObj[date].oracle)
         : rewardObj[date].reward
     // TODO: Need to add a failsafe for not found staked
-    acc[date] = {
+    acc[getDateFromDateTime(new Date(date))] = {
       reward: rewardSum,
       avgStaking: staked
     }
