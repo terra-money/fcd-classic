@@ -22,7 +22,6 @@ interface DailyStakingInfo {
 
 export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
   const { issuance } = await lcd.getIssuanceByDenom('uluna')
-  const { bonded_tokens } = await lcd.getStakingPool()
 
   const rewardQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
   , denom, SUM(tax) AS tax_sum, SUM(gas) AS gas_sum, SUM(oracle) AS oracle_sum, SUM(sum) AS reward_sum, SUM(commission) AS commission_sum FROM reward \
@@ -85,10 +84,10 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
       rewardObj[date].reward === '0' && rewardObj[date].commission === '0'
         ? plus(plus(rewardObj[date].tax, rewardObj[date].gas), rewardObj[date].oracle)
         : rewardObj[date].reward
-
+    // TODO: Need to add a failsafe for not found staked
     acc[date] = {
       reward: rewardSum,
-      avgStaking: staked ? staked : bonded_tokens
+      avgStaking: staked
     }
     return acc
   }, {})
