@@ -1,8 +1,8 @@
-import { startOfDay, format } from 'date-fns'
 import { getConnection } from 'typeorm'
 
 import { times, div, plus } from 'lib/math'
 import { getPriceHistory, getCountBaseWhereQuery } from 'service/dashboard'
+import { getDateFromDateTime, getPriceObjKey } from './helpers'
 
 // key: date in format YYYY-MM-DD
 // value: big int string format
@@ -11,8 +11,6 @@ interface RewardByDateMap {
 }
 
 export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
-  const today = startOfDay(Date.now())
-
   const sumRewardsQuery = `SELECT DATE(datetime) AS date, \
 denom, SUM(tax) AS sum_reward FROM reward \
 ${getCountBaseWhereQuery(daysBefore)} \
@@ -25,8 +23,6 @@ GROUP BY date, denom ORDER BY date`
   }[] = await getConnection().query(sumRewardsQuery)
 
   const priceObj = await getPriceHistory(daysBefore)
-
-  const getPriceObjKey = (date: Date, denom: string) => `${format(date, 'YYYY-MM-DD')}${denom}`
 
   // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
   const rewardObj: RewardByDateMap = rewards.reduce((acc, item) => {
@@ -46,7 +42,7 @@ GROUP BY date, denom ORDER BY date`
             priceObj[getPriceObjKey(item.date, item.denom)]
           )
 
-    const key = format(item.date, 'YYYY-MM-DD')
+    const key = getDateFromDateTime(item.date)
 
     if (acc[key]) {
       acc[key] = plus(acc[key], reward)

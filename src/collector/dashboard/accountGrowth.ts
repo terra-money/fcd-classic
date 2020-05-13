@@ -2,6 +2,7 @@ import { startOfDay, subDays, format } from 'date-fns'
 import { getConnection } from 'typeorm'
 
 import { getCountBaseWhereQuery } from 'service/dashboard'
+import { getDateFromDateTime } from './helpers'
 
 export interface AccountCountInfo {
   totalAccount: number
@@ -22,7 +23,7 @@ MAX(active_account_count) AS active_account FROM general_info `
   )
 
   return result.reduce((acc, item) => {
-    acc[format(item.datetime, 'YYYY-MM-DD')] = {
+    acc[getDateFromDateTime(new Date(item.datetime))] = {
       totalAccount: item.total_account,
       activeAccount: item.active_account
     }

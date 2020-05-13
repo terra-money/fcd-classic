@@ -3,10 +3,10 @@ import { getRepository, DeepPartial } from 'typeorm'
 
 import { DashboardEntity } from 'orm'
 import { getStakingReturnByDay } from './stakingReturn'
-import { getAccountCountByDay, AccountCountInfo } from './accountGrowth'
+import { getAccountCountByDay } from './accountGrowth'
 import { getBlockRewardsByDay } from './blockReward'
 import { getTxVolumeByDay } from './txVolume'
-import { getObjectDateKey } from './helpers'
+import { getDateFromDateTime } from './helpers'
 import config from 'config'
 import { collectorLogger as logger } from 'lib/logger'
 
@@ -30,7 +30,7 @@ export async function collectDashboard() {
     })
 
     try {
-      const dateKey = getObjectDateKey(dayIt)
+      const dateKey = getDateFromDateTime(dayIt)
       const dashboardEntityObj: DeepPartial<DashboardEntity> = {
         timestamp: dayIt,
         chainId: config.CHAIN_ID,

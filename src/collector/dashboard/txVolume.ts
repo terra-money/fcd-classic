@@ -1,6 +1,6 @@
 import { getConnection } from 'typeorm'
-import { format } from 'date-fns'
 
+import { getDateFromDateTime } from './helpers'
 import { getCountBaseWhereQuery } from 'service/dashboard'
 
 interface TxVolumeByDateDenom {
@@ -17,7 +17,7 @@ export async function getTxVolumeByDay(daysBefore?: number): Promise<TxVolumeByD
     tx_volume: string
   }[] = await getConnection().query(query)
   const txVolObj: TxVolumeByDateDenom = txs.reduce((acc, item) => {
-    const dateKey = format(item.date, 'YYYY-MM-DD')
+    const dateKey = getDateFromDateTime(new Date(item.date))
     if (!acc[dateKey]) {
       acc[dateKey] = {}
     }
