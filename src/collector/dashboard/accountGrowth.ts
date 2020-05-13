@@ -1,22 +1,31 @@
-import { startOfDay, subDays } from 'date-fns'
+import { startOfDay, subDays, format } from 'date-fns'
 import { getConnection } from 'typeorm'
 
 import { getCountBaseWhereQuery } from 'service/dashboard'
 
-interface AccountCountByDay {
-  datetime: string
+export interface AccountCountInfo {
   totalAccount: number
   activeAccount: number
 }
 
-export default async function getAccountCountByDay(daysBefore: number): Promise<AccountCountByDay[]> {
+export async function getAccountCountByDay(daysBefore?: number): Promise<{ [date: string]: AccountCountInfo }> {
   const baseQuery = `SELECT DATE(datetime) AS datetime, \
-MAX(total_account_count) AS totalAccount, \
-MAX(active_account_count) AS activeAccount FROM general_info `
+MAX(total_account_count) AS total_account, \
+MAX(active_account_count) AS active_account FROM general_info `
 
-  const result: AccountCountByDay[] = await getConnection().query(
+  const result: {
+    total_account: number
+    active_account: number
+    datetime: string
+  }[] = await getConnection().query(
     `${baseQuery}${getCountBaseWhereQuery(daysBefore)} GROUP BY DATE(datetime) ORDER BY datetime ASC`
   )
 
-  return result
+  return result.reduce((acc, item) => {
+    acc[format(item.datetime, 'YYYY-MM-DD')] = {
+      totalAccount: item.total_account,
+      activeAccount: item.active_account
+    }
+    return acc
+  }, {})
 }

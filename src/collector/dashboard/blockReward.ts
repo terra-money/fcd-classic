@@ -10,7 +10,7 @@ interface RewardByDateMap {
   [date: string]: string
 }
 
-export default async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
+export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
   const today = startOfDay(Date.now())
 
   const sumRewardsQuery = `SELECT DATE(datetime) AS date, \

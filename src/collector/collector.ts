@@ -9,6 +9,7 @@ import { collectPrice } from './price'
 import { collectorGeneral } from './general'
 import { collectValidator, calculateValidatorsReturn } from './staking'
 import { collectProposal } from './gov'
+import { collectDashboard } from './dashboard'
 import Semaphore from './Semaphore'
 
 process.on('unhandledRejection', (err) => {
@@ -25,6 +26,7 @@ const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, log
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
+const dashboardCollector = new Semaphore('DashbaordCollector', collectDashboard, logger)
 
 const jobs = [
   {
@@ -50,6 +52,10 @@ const jobs = [
   {
     method: proposalCollector.run.bind(proposalCollector),
     cron: '30 * * * * *'
+  },
+  {
+    method: dashboardCollector.run.bind(dashboardCollector),
+    cron: '5 * * * * *'
   }
 ]
 
