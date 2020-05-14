@@ -27,11 +27,12 @@ export async function getActiveAccount(timestamp?: number): Promise<number> {
 }
 
 export async function saveGeneral() {
-  const taxRate = await lcd.getTaxRate()
-  const stakingPool = await lcd.getStakingPool()
-  const taxProceeds = await lcd.getTaxProceeds()
-  const seigniorageProceeds = await lcd.getSeigniorageProceeds()
-  const communityPoolList = await lcd.getCommunityPool()
+  const [taxRate, taxProceeds, seigniorageProceeds, communityPoolList] = await Promise.all([
+    lcd.getTaxRate(),
+    lcd.getTaxProceeds(),
+    lcd.getSeigniorageProceeds(),
+    lcd.getCommunityPool()
+  ])
 
   const communityPool: DenomMap = communityPoolList.reduce((acc, { denom, amount }) => {
     acc[denom] = amount
@@ -48,7 +49,8 @@ export async function saveGeneral() {
     })
   )
 
-  const { bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens } = stakingPool
+  const { bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens } = await lcd.getStakingPool()
+
   const issuances = await lcd.getAllActiveIssuance()
   const stakingRatio = div(bondedTokens, issuances['uluna'])
 

@@ -17,7 +17,7 @@ async function getDashboard(datetime: string): Promise<DashboardEntity | undefin
   return dashboard
 }
 
-async function cacheDashboard() {
+async function populateDashboard() {
   await initORM()
   const accountGrowth = await getAccountCountByDay()
 
@@ -99,4 +99,4 @@ async function cacheDashboard() {
   }
 }
 
-cacheDashboard().catch(console.error)
+populateDashboard().catch(console.error)
