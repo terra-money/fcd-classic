@@ -15,13 +15,13 @@ export default class DashboardEntity {
   @Column({ type: 'jsonb', nullable: true })
   txVolume: DenomMap
 
-  @Column('decimal', { precision: 40, scale: 10, default: '0' })
+  @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
   reward: string
 
-  @Column('decimal', { precision: 40, scale: 10, default: '0' })
+  @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
   avgStaking: string
 
-  @Column('decimal', { precision: 40, scale: 10, default: '0' })
+  @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
   taxReward: string
 
   @Column({ default: 0 })
