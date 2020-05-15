@@ -29,7 +29,7 @@ describe('Dashboard Test', () => {
     })
     expect(typeof body.taxRate).toBe('string')
     expect(body.taxCaps).toBeInstanceOf(Array)
-    expect(body.taxCaps.length).toBe(1)
+    expect(body.taxCaps.length).toBeGreaterThan(0)
 
     expect(body.issuances).toMatchObject({
       uluna: expect.any(String),

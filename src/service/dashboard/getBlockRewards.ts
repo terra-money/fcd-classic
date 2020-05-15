@@ -1,75 +1,27 @@
-import { startOfDay, format } from 'date-fns'
-import { div, plus, times } from 'lib/math'
-import { getQueryDateTime } from 'lib/time'
-import { dashboardRawQuery, getPriceHistory } from './helper'
+import { plus } from 'lib/math'
+import { getDashboardHistory } from './dashboardHistory'
+import { DashboardEntity } from 'orm'
 
 export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
-  const today = startOfDay(Date.now())
+  const dashboardHistory = await getDashboardHistory(daysBefore)
 
-  const sumRewardsQuery = `SELECT DATE(datetime) AS date, \
-denom, SUM(tax) AS sum_reward FROM reward \
-WHERE datetime < '${getQueryDateTime(today)}' \
-GROUP BY date, denom ORDER BY date`
-
-  const rewards: {
-    date: Date
-    denom: string
-    sum_reward: string
-  }[] = await dashboardRawQuery(sumRewardsQuery)
-
-  const priceObj = await getPriceHistory()
-  const getPriceObjKey = (date: Date, denom: string) => `${format(date, 'YYYY-MM-DD')}${denom}`
-
-  // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
-  const rewardObj = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
-      return acc
-    }
-
-    // TODO: why are we using KRT as unit? it should be calculated on client side
-    // Convert each coin value as KRT
-    const reward =
-      item.denom === 'ukrw'
-        ? item.sum_reward
-        : item.denom === 'luna'
-        ? times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')])
-        : div(
-            times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')]),
-            priceObj[getPriceObjKey(item.date, item.denom)]
-          )
-
-    const key = format(item.date, 'YYYY-MM-DD')
-
-    if (acc[key]) {
-      acc[key] = plus(acc[key], reward)
-    } else {
-      acc[key] = reward
-    }
-    return acc
-  }, {})
-
-  const rewardArr = Object.keys(rewardObj).map((key) => {
+  const periodic: BlockRewardSumInfo[] = dashboardHistory.map((dashboard: DashboardEntity) => {
     return {
-      datetime: new Date(key).getTime(),
-      blockReward: rewardObj[key]
+      datetime: dashboard.timestamp.getTime(),
+      blockReward: dashboard.taxReward
+    }
+  })
+  let cumulativeSum = '0'
+  const cumulative: BlockRewardSumInfo[] = dashboardHistory.map((dashboard: DashboardEntity, index) => {
+    cumulativeSum = plus(cumulativeSum, dashboard.taxReward)
+    return {
+      datetime: dashboard.timestamp.getTime(),
+      blockReward: cumulativeSum
     }
   })
 
-  let cum = '0'
-  const sliceCnt = daysBefore ? -daysBefore : 0
-  const cumArray: BlockRewardSumInfo[] = Object.keys(rewardObj)
-    .reduce((acc: BlockRewardSumInfo[], key) => {
-      cum = plus(cum, rewardObj[key])
-      acc.push({
-        datetime: new Date(key).getTime(),
-        blockReward: cum
-      })
-      return acc
-    }, [])
-    .slice(sliceCnt)
-
   return {
-    periodic: rewardArr.slice(sliceCnt),
-    cumulative: cumArray
+    periodic,
+    cumulative
   }
 }

@@ -99,7 +99,7 @@ export function splitDenomAndAmount(denomAndAmount: string): Coin {
   return { amount, denom }
 }
 
-export function denomObjectToArray(denomObject: DenomObject, sliceCnt: number): DenomTxVolume[] {
+export function denomObjectToArray(denomObject: DenomTxVolumeObject, sliceCnt: number): DenomTxVolume[] {
   return sortDenoms(Object.keys(denomObject).map((denom) => ({ denom, data: denomObject[denom].slice(sliceCnt) })))
 }
 

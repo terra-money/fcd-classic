@@ -1,15 +1,7 @@
-import * as Bluebird from 'bluebird'
-import config from 'config'
-import { compact } from 'lodash'
-import {
-  getActiveOraclePrices,
-  getTaxRate,
-  getTaxCap,
-  getAllActiveIssuance,
-  getStakingPool,
-  getCommunityPool
-} from 'lib/lcd'
-import { div } from 'lib/math'
+import { getRepository, MoreThanOrEqual } from 'typeorm'
+import { subMinutes } from 'date-fns'
+
+import { PriceEntity, GeneralInfoEntity } from 'orm'
 
 interface StakingPoolInfo {
   stakingRatio: string // bigint value
@@ -26,42 +18,52 @@ interface GeneralInfoReturn {
   taxRate: string // tax rate big int
 }
 
-export default async function getGeneralInfo(): Promise<GeneralInfoReturn> {
-  const pricesReq = getActiveOraclePrices()
-  const taxRateReq = getTaxRate()
-  const issuanceReq = getAllActiveIssuance()
-  const stakingPoolReq = getStakingPool()
-  const communityPoolReq = getCommunityPool()
-
-  const taxCaps: DenomTaxCap[] = await Bluebird.map(
-    config.TAX_CAP_TARGETS,
-    (denom): Promise<DenomTaxCap> => getTaxCap(denom).then((taxCap) => ({ denom, taxCap }))
-  )
-
-  const [
-    prices,
-    taxRate,
-    issuances,
-    { not_bonded_tokens: notBondedTokens, bonded_tokens: bondedTokens },
-    communityPool
-  ] = await Promise.all([pricesReq, taxRateReq, issuanceReq, stakingPoolReq, communityPoolReq])
-
-  const communityPoolObj = {}
-  compact(communityPool).forEach((item) => {
-    communityPoolObj[item.denom] = item.amount
+async function getLatestPrices(): Promise<DenomMap> {
+  const prices = await getRepository(PriceEntity).find({
+    where: {
+      datetime: MoreThanOrEqual(subMinutes(new Date(), 5))
+    },
+    order: {
+      datetime: 'DESC'
+    }
   })
 
+  return prices.reduce((priceMap: DenomMap, price: PriceEntity) => {
+    if (!priceMap[price.denom]) {
+      priceMap[price.denom] = price.price.toString()
+    }
+    return priceMap
+  }, {} as DenomMap)
+}
+
+async function getLatestGenInfo(): Promise<GeneralInfoEntity> {
+  const latestInfo = await getRepository(GeneralInfoEntity).find({
+    order: {
+      datetime: 'DESC'
+    },
+    skip: 0,
+    take: 1
+  })
+  return latestInfo[0]
+}
+
+export default async function getGeneralInfo(): Promise<GeneralInfoReturn> {
+  const prices = await getLatestPrices()
+
+  const latestInfo = await getLatestGenInfo()
+  const { taxRate, issuances, communityPool, bondedTokens, notBondedTokens, stakingRatio, taxCaps } = latestInfo
+
   const stakingPool = {
-    stakingRatio: div(bondedTokens, issuances['uluna']),
+    stakingRatio: stakingRatio.toString(),
     bondedTokens,
     notBondedTokens
   }
   return {
     prices,
-    taxRate,
+    taxRate: taxRate.toString(),
     taxCaps,
     issuances,
     stakingPool,
-    communityPool: communityPoolObj
+    communityPool
   }
 }
