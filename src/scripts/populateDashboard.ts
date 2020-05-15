@@ -50,14 +50,14 @@ async function populateDashboard() {
     if (dashboard) {
       console.log('updating tax reward of date ', dateKey)
       await getRepository(DashboardEntity).update(dashboard.id, {
-        taxReward: taxRewards[dateKey]
+        taxReward: taxRewards[dateKey] ? taxRewards[dateKey] : '0'
       })
     } else {
       console.log('New insert tax reward of ', dateKey)
       await getRepository(DashboardEntity).save({
         timestamp: date,
         chainId: config.CHAIN_ID,
-        taxReward: taxRewards[dateKey]
+        taxReward: taxRewards[dateKey] ? taxRewards[dateKey] : '0'
       })
     }
   }
@@ -89,7 +89,7 @@ async function populateDashboard() {
     if (dashboard) {
       console.log('updating staking of date ', dateKey)
       await getRepository(DashboardEntity).update(dashboard.id, {
-        avgStaking: stakingReturns[dateKey].avgStaking,
+        avgStaking: stakingReturns[dateKey].avgStaking ? stakingReturns[dateKey].avgStaking : '0',
         reward: stakingReturns[dateKey].reward
       })
     } else {
@@ -97,7 +97,7 @@ async function populateDashboard() {
       await getRepository(DashboardEntity).save({
         timestamp: date,
         chainId: config.CHAIN_ID,
-        avgStaking: stakingReturns[dateKey].avgStaking,
+        avgStaking: stakingReturns[dateKey].avgStaking ? stakingReturns[dateKey].avgStaking : '0',
         reward: stakingReturns[dateKey].reward
       })
     }
