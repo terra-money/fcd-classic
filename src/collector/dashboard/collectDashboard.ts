@@ -1,4 +1,4 @@
-import { startOfToday, subDays, addDays, format } from 'date-fns'
+import { startOfToday, subDays, addDays } from 'date-fns'
 import { getRepository, DeepPartial } from 'typeorm'
 
 import { DashboardEntity } from 'orm'

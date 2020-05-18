@@ -1,8 +1,8 @@
 import { getRepository } from 'typeorm'
+import { startOfToday, subDays } from 'date-fns'
 
 import { getDateFromDateTime, convertDbTimestampToDate } from './helpers'
 import { NetworkEntity } from 'orm'
-import { startOfToday, subDays } from 'date-fns'
 
 interface TxVolumeByDateDenom {
   [date: string]: DenomMap

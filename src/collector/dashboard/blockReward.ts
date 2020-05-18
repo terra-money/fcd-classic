@@ -1,10 +1,10 @@
 import { getRepository } from 'typeorm'
+import { startOfToday, subDays } from 'date-fns'
 
 import { times, div, plus } from 'lib/math'
 import { getPriceHistory } from 'service/dashboard'
 import { getDateFromDateTime, getPriceObjKey, convertDbTimestampToDate } from './helpers'
 import { RewardEntity } from 'orm'
-import { startOfToday, subDays } from 'date-fns'
 
 // key: date in format YYYY-MM-DD
 // value: big int string format
