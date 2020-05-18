@@ -79,12 +79,22 @@ describe('Dashboard Test', () => {
     expect(body.cumulative[0].totalAccountCount).toBeDefined()
     expect(body.cumulative[0].activeAccountCount).toBeDefined()
 
+    body.cumulative.forEach((element) => {
+      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
+      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
+    })
+
     expect(body.periodic).toBeDefined()
     expect(body.periodic.length).toBe(DATA_POINT_COUNT - 1)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].datetime).toBeDefined()
     expect(body.periodic[0].totalAccountCount).toBeDefined()
     expect(body.periodic[0].activeAccountCount).toBeDefined()
+
+    body.periodic.forEach((element) => {
+      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
+      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
+    })
   })
 
   test('Test get tx volumes', async () => {
