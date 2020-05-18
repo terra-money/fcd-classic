@@ -55,7 +55,7 @@ const jobs = [
   },
   {
     method: dashboardCollector.run.bind(dashboardCollector),
-    cron: '5 1 * * * *'
+    cron: '0 1 * * * *'
   }
 ]
 
