@@ -1,8 +1,8 @@
 import { subDays, startOfToday, endOfDay } from 'date-fns'
-import { getRepository } from 'typeorm'
+import { getConnection } from 'typeorm'
 
-import { getDateFromDateTime, convertDbTimestampToDate } from './helpers'
-import { AccountTxEntity } from 'orm'
+import { getDateFromDateTime } from './helpers'
+import { getQueryDateTime } from 'lib/time'
 
 export interface AccountCountInfo {
   totalAccount: number
@@ -15,15 +15,14 @@ async function getTotalAccount(
   date: string
   total_account_count: number
 }> {
-  const queryBuilder = getRepository(AccountTxEntity)
-    .createQueryBuilder()
-    .select('count(distinct account)', 'total_account_count')
-    .where('timestamp <= :until ', { until: endOfDay(until) })
+  // EXP: we are using count (select distinct account from x) rather count(distinct account) because its is 10 times faster.
+
+  const subQuery = `select distinct account from account_tx where timestamp <= '${getQueryDateTime(endOfDay(until))}'`
+  const rawQuery = `select count(*) as total_account_count from (${subQuery}) as temp;`
 
   const result: {
     total_account_count: number
-  }[] = await queryBuilder.getRawMany()
-
+  }[] = await getConnection().query(rawQuery)
   return {
     date: getDateFromDateTime(until),
     total_account_count: result.length ? result[0].total_account_count : 0
@@ -31,23 +30,21 @@ async function getTotalAccount(
 }
 
 async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: string; active_account_count: number }[]> {
-  const queryBuilder = getRepository(AccountTxEntity)
-    .createQueryBuilder()
-    .select(convertDbTimestampToDate('timestamp'), 'date')
-    .addSelect('count(distinct account)', 'active_account_count')
-    .groupBy('date')
-    .orderBy('date', 'ASC')
-    .where('timestamp < :today ', { today: startOfToday() })
+  // EXP: we are using count (select distinct account from x) rather count(distinct account) because its is 10 times faster.
+
+  let subQuery = `select distinct account ,date(timestamp) as date from account_tx where timestamp < '${getQueryDateTime(
+    startOfToday()
+  )}'`
 
   if (daysBefore) {
-    queryBuilder.andWhere('timestamp >= :from', { from: subDays(startOfToday(), daysBefore) })
+    subQuery = `${subQuery} timestamp >= '${getQueryDateTime(subDays(startOfToday(), daysBefore))}'`
   }
 
+  const rawQuery = `select count(*) as active_account_count, t.date as date from (${subQuery}) as t group by t.date order by t.date asc`
   const result: {
     date: string
     active_account_count: number
-  }[] = await queryBuilder.getRawMany()
-
+  }[] = await getConnection().query(rawQuery)
   return result
 }
 
