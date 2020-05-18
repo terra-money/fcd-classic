@@ -358,7 +358,7 @@ export async function getAllActiveIssuance(): Promise<{ [denom: string]: string 
   }, {})
 }
 
-export function getTaxProceeds(): Promise<Coins> {
+export function getTaxProceeds(): Promise<Coin[]> {
   return get(`/treasury/tax_proceeds`)
 }
 

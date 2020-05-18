@@ -27,11 +27,12 @@ export async function getActiveAccount(timestamp?: number): Promise<number> {
 }
 
 export async function saveGeneral() {
-  const [taxRate, taxProceeds, seigniorageProceeds, communityPoolList] = await Promise.all([
+  const [taxRate, taxProceeds, seigniorageProceeds, communityPoolList, activeDenoms] = await Promise.all([
     lcd.getTaxRate(),
     lcd.getTaxProceeds(),
     lcd.getSeigniorageProceeds(),
-    lcd.getCommunityPool()
+    lcd.getCommunityPool(),
+    lcd.getOracleActives()
   ])
 
   const communityPool: DenomMap = communityPoolList.reduce((acc, { denom, amount }) => {
@@ -39,7 +40,6 @@ export async function saveGeneral() {
     return acc
   }, {})
 
-  const activeDenoms = await lcd.getOracleActives()
   const taxCaps: DenomTaxCap[] = await Promise.all(
     activeDenoms.map(async (denom: string) => {
       return {
