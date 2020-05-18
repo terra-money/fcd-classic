@@ -6,24 +6,26 @@ import { getDashboardHistory } from './dashboardHistory'
 export default async function getAccountGrowth(count?: number): Promise<AccountGrowthReturn> {
   const dashboardHistory = await getDashboardHistory(count)
 
+  let cumulativeActiveAccount = 0
   const cumulative = dashboardHistory.map((item: DashboardEntity) => {
+    cumulativeActiveAccount = cumulativeActiveAccount + item.activeAccount
     return {
       datetime: item.timestamp.getTime(),
       totalAccountCount: item.totalAccount,
-      activeAccountCount: item.activeAccount
+      activeAccountCount: cumulativeActiveAccount
     }
   })
 
   const periodic: AccountCountInfo[] = compact(
-    dashboardHistory.map((item: DashboardEntity, i) => {
-      if (i === 0) {
+    dashboardHistory.map((item: DashboardEntity, index) => {
+      if (index === 0) {
         return
       }
 
       return {
         datetime: item.timestamp.getTime(),
-        totalAccountCount: item.totalAccount - dashboardHistory[i - 1].totalAccount,
-        activeAccountCount: item.activeAccount - dashboardHistory[i - 1].activeAccount
+        totalAccountCount: item.totalAccount - dashboardHistory[index - 1].totalAccount,
+        activeAccountCount: item.activeAccount
       }
     })
   )

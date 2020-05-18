@@ -1,6 +1,6 @@
 import { getRepository, getConnection } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
-import { subDays } from 'date-fns'
+import { subDays, startOfDay } from 'date-fns'
 
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
@@ -19,7 +19,7 @@ export async function getTotalAccount(timestamp?: number): Promise<number> {
 export async function getActiveAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
-  const onedayBefore = getQueryDateTime(subDays(now, 1))
+  const onedayBefore = timestamp ? getQueryDateTime(subDays(now, 1)) : getQueryDateTime(startOfDay(now))
 
   const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}' and timestamp >= '${onedayBefore}') as temp;`
   const res = await getConnection().query(query)
