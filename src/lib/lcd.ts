@@ -1,10 +1,7 @@
 import config from 'config'
 import * as crypto from 'crypto'
-import { StatusCodeError } from 'request'
 import * as rp from 'request-promise'
 import { compact, flatten, get as lodashGet, filter } from 'lodash'
-import { getRepository } from 'typeorm'
-import { DenomEntity } from 'orm'
 import { plus, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
 
@@ -50,7 +47,7 @@ async function get(url: string, params?: { [key: string]: string }): Promise<any
 ///////////////////////////////////////////////
 // Transactions
 ///////////////////////////////////////////////
-export function getTx(hash: string): Promise<Transaction.LcdTransaction> {
+export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
   return get(`/txs/${hash}`)
 }
 
@@ -134,7 +131,7 @@ export function getDelegations(delegator: string): Promise<LcdDelegation[]> {
   return get(`/staking/delegators/${delegator}/delegations`)
 }
 
-export function getDelegationForValidator(delegator: string, validator: string): Promise<LcdDelegation> {
+export function getDelegationForValidator(delegator: string, validator: string): Promise<LcdDelegation | undefined> {
   return get(`/staking/delegators/${delegator}/delegations/${validator}`)
 }
 
@@ -175,7 +172,7 @@ export function getProposals(): Promise<LcdProposal[]> {
   return get(`/gov/proposals`)
 }
 
-export function getProposal(proposalId: string): Promise<LcdProposal> {
+export function getProposal(proposalId: string): Promise<LcdProposal | undefined> {
   return get(`/gov/proposals/${proposalId}`)
 }
 
@@ -210,7 +207,7 @@ export async function getProposalVotes(proposalId: string): Promise<LcdProposalV
   return votes || []
 }
 
-export function getProposalTally(proposalId: string): Promise<LcdProposalTally> {
+export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {
   return get(`/gov/proposals/${proposalId}/tally`)
 }
 
@@ -257,7 +254,7 @@ export async function getRewards(delegatorAddress: string, validatorOperAddress:
   return rewards.map(rewardMapper).filter(rewardFilter)
 }
 
-export function getCommissions(validatorAddress: string): Promise<LcdRewardPool> {
+export function getCommissions(validatorAddress: string): Promise<LcdRewardPool | undefined> {
   return get(`/distribution/validators/${validatorAddress}`)
 }
 

@@ -104,7 +104,7 @@
     "winston-daily-rotate-file": "^4"
   },
   "devDependencies": {
-    "@types/bluebird": "^3.5.30",
+    "@types/bluebird": "^3.5.31",
     "@types/globby": "^9.1.0",
     "@types/got": "^9.6.9",
     "@types/jest": "^25.2.1",

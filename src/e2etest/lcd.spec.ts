@@ -81,7 +81,7 @@ describe('LCD', () => {
   })
 
   test('getTx: not found', async () => {
-    await expect(lcd.getTx(UNKNOWN_TX_HASH)).toResolve()
+    await expect(lcd.getTx(UNKNOWN_TX_HASH)).resolves.toBeUndefined()
   })
 
   test('getTx: success', async () => {
