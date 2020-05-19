@@ -1,4 +1,6 @@
 module.exports = {
+  testEnvironment: 'node',
+  testRunner: 'jest-circus/runner',
   roots: ['<rootDir>/src'],
   testMatch: ['**/*.spec.ts'],
   coveragePathIgnorePatterns: ['/migration'],
