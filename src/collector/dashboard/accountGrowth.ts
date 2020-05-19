@@ -15,10 +15,9 @@ async function getTotalAccount(
   date: string
   total_account_count: number
 }> {
-  // EXP: we are using count (select distinct account from x) rather count(distinct account) because its is 10 times faster.
-
-  const subQuery = `select distinct account from account_tx where timestamp <= '${getQueryDateTime(endOfDay(until))}'`
-  const rawQuery = `select count(*) as total_account_count from (${subQuery}) as temp;`
+  // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
+  const subQuery = `SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${getQueryDateTime(endOfDay(until))}'`
+  const rawQuery = `SELECT COUNT(*) AS total_account_count FROM (${subQuery}) AS t;`
 
   const result: {
     total_account_count: number
@@ -30,9 +29,8 @@ async function getTotalAccount(
 }
 
 async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: string; active_account_count: number }[]> {
-  // EXP: we are using count (select distinct account from x) rather count(distinct account) because its is 10 times faster.
-
-  let subQuery = `select distinct account ,date(timestamp) as date from account_tx where timestamp < '${getQueryDateTime(
+  // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
+  let subQuery = `SELECT DISTINCT account, DATE(timestamp) AS date FROM account_tx WHERE timestamp < '${getQueryDateTime(
     startOfToday()
   )}'`
 
@@ -40,7 +38,7 @@ async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: strin
     subQuery = `${subQuery} timestamp >= '${getQueryDateTime(subDays(startOfToday(), daysBefore))}'`
   }
 
-  const rawQuery = `select count(*) as active_account_count, t.date as date from (${subQuery}) as t group by t.date order by t.date asc`
+  const rawQuery = `SELECT COUNT(*) AS active_account_count, t.date AS date FROM (${subQuery}) AS t GROUP BY t.date ORDER BY t.date ASC`
   const result: {
     date: string
     active_account_count: number

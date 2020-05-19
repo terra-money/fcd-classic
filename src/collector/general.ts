@@ -11,7 +11,7 @@ import { getQueryDateTime } from 'lib/time'
 export async function getTotalAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}') as temp;`
+  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}') AS t;`
   const res = await getConnection().query(query)
   return res && res.length ? res[0].count : 0
 }
@@ -20,8 +20,7 @@ export async function getActiveAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
   const onedayBefore = timestamp ? getQueryDateTime(subDays(now, 1)) : getQueryDateTime(startOfDay(now))
-
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}' and timestamp >= '${onedayBefore}') as temp;`
+  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}' AND timestamp >= '${onedayBefore}') AS t;`
   const res = await getConnection().query(query)
   return res && res.length ? res[0].count : 0
 }

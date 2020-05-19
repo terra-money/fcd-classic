@@ -406,8 +406,13 @@ export async function getAvgPrice(fromTs: number, toTs: number): Promise<DenomMa
   const fromStr = getQueryDateTime(startOfDay(fromTs))
   const toStr = getQueryDateTime(startOfDay(toTs))
 
-  const query = `select denom, avg(price) as avg_price from price \
-  where datetime >= '${fromStr}' and datetime < '${toStr}' group by denom`
+  const query = `
+SELECT denom,
+  AVG(price) AS avg_price
+FROM price
+WHERE datetime >= '${fromStr}'
+AND datetime < '${toStr}'
+GROUP BY denom`
 
   const prices = await getConnection().query(query)
   return prices.reduce((acc, item) => {
@@ -416,16 +421,26 @@ export async function getAvgPrice(fromTs: number, toTs: number): Promise<DenomMa
   }, {})
 }
 
-export async function getTotalStakingReturnCached(fromTs: number, toTs: number): Promise<string> {
+export async function getTotalStakingReturnUncached(fromTs: number, toTs: number): Promise<string> {
   const toStr = getQueryDateTime(toTs)
   const fromStr = getQueryDateTime(fromTs)
-  const rewardQuery = `select denom, sum(sum) as reward_sum from reward \
-  where datetime >= '${fromStr}' and datetime < '${toStr}' group by denom`
+  const rewardQuery = `
+SELECT denom,
+  SUM(sum) AS reward_sum
+FROM reward
+WHERE datetime >= '${fromStr}'
+AND datetime < '${toStr}'
+GROUP BY denom
+`
   const rewards = await getConnection().query(rewardQuery)
   const avgPrice = await getAvgPrice(fromTs, toTs)
 
-  const bondedTokensQuery = `select avg(bonded_tokens) as avg_bonded_tokens from general_info \
-  where datetime >= '${fromStr}' and datetime < '${toStr}'`
+  const bondedTokensQuery = `
+SELECT avg(bonded_tokens) AS avg_bonded_tokens
+FROM general_info
+WHERE datetime >= '${fromStr}'
+  AND datetime < '${toStr}'`
+
   const bondedTokens = await getConnection().query(bondedTokensQuery)
 
   if (rewards.length === 0 || bondedTokens.length === 0) {
@@ -448,7 +463,7 @@ export async function getTotalStakingReturnCached(fromTs: number, toTs: number):
   return annualizedReturn
 }
 
-export const getTotalStakingReturn = memoizee(getTotalStakingReturnCached, { promise: true, maxAge: 60 * 60 * 1000 })
+export const getTotalStakingReturn = memoizee(getTotalStakingReturnUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
 export function generateValidatorResponse(
   validator: ValidatorInfoEntity,
