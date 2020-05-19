@@ -1,4 +1,4 @@
-import * as parseDuration from 'parse-duration'
+import { default as parseDuration } from 'parse-duration'
 import * as bech32 from 'bech32'
 import * as bech32buffer from 'bech32-buffer'
 import { orderBy } from 'lodash'
@@ -53,9 +53,9 @@ export function currencyToDenom(currency): string {
   const lowerCaseCurrency = currency.toLowerCase()
   return DENOM_BY_CURRENCIES.get(lowerCaseCurrency) || lowerCaseCurrency
 }
-
+// TODO: figure out the use of this function
 export function candleInitialTs(timestamp: number, timeframe: string): number {
-  const msc = parseDuration(timeframe)
+  const msc = parseDuration(timeframe) || 1
   return timestamp - (timestamp % msc) - msc
 }
 
