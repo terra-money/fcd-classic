@@ -4,12 +4,6 @@ import { getQueryDateRangeFrom } from 'lib/time'
 
 export const getPriceObjKey = (date: string, denom: string): string => `${date}${denom}`
 
-async function dashboardRawQueryUncached(query: string): Promise<any> {
-  return getConnection().query(query)
-}
-
-export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: true, maxAge: 3600000 })
-
 /**
  *
  * @param { number } dayCount days of history from today
@@ -18,16 +12,16 @@ export const dashboardRawQuery = memoizee(dashboardRawQueryUncached, { promise: 
  * values format: bigint { average denom value on that date }
  */
 
-export async function getPriceHistory(dayCount?: number): Promise<{ [key: string]: string }> {
+export async function getPriceHistoryUncached(dayCount?: number): Promise<{ [key: string]: string }> {
   const whereQuery = dayCount
-    ? `where datetime >= '${getQueryDateRangeFrom(dayCount).from}' and datetime < '${
+    ? `WHERE datetime >= '${getQueryDateRangeFrom(dayCount).from}' and datetime < '${
         getQueryDateRangeFrom(dayCount).to
       }'`
     : ``
 
   const priceQuery = `SELECT TO_CHAR(DATE_TRUNC('day', datetime), 'YYYY-MM-DD') AS date\
   , denom, AVG(price) AS avg_price FROM price ${whereQuery} GROUP BY date, denom ORDER BY date DESC`
-  const prices = await dashboardRawQuery(priceQuery)
+  const prices = await getConnection().query(priceQuery)
 
   return prices.reduce((acc, item) => {
     acc[getPriceObjKey(item.date, item.denom)] = item.avg_price
@@ -35,8 +29,6 @@ export async function getPriceHistory(dayCount?: number): Promise<{ [key: string
   }, {})
 }
 
-export function getCountBaseWhereQuery(count?: number) {
-  return count
-    ? `WHERE datetime >= '${getQueryDateRangeFrom(count).from}' AND datetime < '${getQueryDateRangeFrom(count).to}'`
-    : `WHERE datetime < '${getQueryDateRangeFrom(1).to}'`
-}
+const getPriceHistory = memoizee(getPriceHistoryUncached, { promise: true, maxAge: 3600, preFetch: 0.66 })
+
+export default getPriceHistory
