@@ -37,7 +37,7 @@ async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: strin
   )}'`
 
   if (daysBefore) {
-    subQuery = `${subQuery} timestamp >= '${getQueryDateTime(subDays(startOfToday(), daysBefore))}'`
+    subQuery = `${subQuery} and timestamp >= '${getQueryDateTime(subDays(startOfToday(), daysBefore))}'`
   }
 
   const rawQuery = `select count(*) as active_account_count, t.date as date from (${subQuery}) as t group by t.date order by t.date asc`
