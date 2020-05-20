@@ -207,8 +207,8 @@ export default class TxController extends KoaController {
    * @apiSuccess {Number} periodic.datetime unix timestamp
    * @apiSuccess {Number} periodic.value daily registered account count
    * @apiSuccess {Object[]} cumulative cumulative registered account count info's
-   * @apiSuccess {Number} periodic.datetime unix timestamp
-   * @apiSuccess {Number} periodic.value daily cumulative account count from genesis
+   * @apiSuccess {Number} cumulative.datetime unix timestamp
+   * @apiSuccess {Number} cumulative.value daily cumulative account count from genesis
    */
   @Get('/registered_accounts')
   @Validate({
