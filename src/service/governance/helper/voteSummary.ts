@@ -95,12 +95,12 @@ async function getVoteDistributionAndTotal(proposal: LcdProposal, votes: LcdProp
   const tally = await lcd.getProposalTally(proposal.id)
 
   const distribution = {
-    Yes: tally['yes'],
-    No: tally['no'],
-    NoWithVeto: tally['no_with_veto'],
-    Abstain: tally['abstain']
+    Yes: tally ? tally['yes'] : '0',
+    No: tally ? tally['no'] : '0',
+    NoWithVeto: tally ? tally['no_with_veto'] : '0',
+    Abstain: tally ? tally['abstain'] : '0'
   }
-  const total = Object.keys(tally).reduce((acc: string, key: string) => plus(tally[key], acc), '0')
+  const total = Object.keys(distribution).reduce((acc: string, key: string) => plus(distribution[key], acc), '0')
   return { distribution, total }
 }
 

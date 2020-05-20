@@ -7,7 +7,9 @@ import {
   getBlockRewards,
   getSeigniorageProceeds,
   getStakingReturn,
-  getAccountGrowth
+  getAccountGrowth,
+  getActiveAccounts,
+  getRegisteredAccounts
 } from 'service/dashboard'
 
 const Joi = Validator.Joi
@@ -170,5 +172,51 @@ export default class TxController extends KoaController {
   })
   async getAccountGrth(ctx): Promise<void> {
     success(ctx, await getAccountGrowth(+ctx.request.query.count))
+  }
+  /**
+   * @api {get} /dashboard/active_accounts Get active accounts count history
+   * @apiName getActiveAccounts
+   * @apiGroup Dashboard
+   *
+   * @apiParam {number} count number of previous days history from today
+   *
+   * @apiSuccess {Number} total total active accounts in the time period
+   * @apiSuccess {Object[]} periodic daily active account info's
+   * @apiSuccess {Number} periodic.datetime unix timestamp
+   * @apiSuccess {Number} periodic.value active account count
+   */
+  @Get('/active_accounts')
+  @Validate({
+    query: {
+      count: Joi.number().default(0).min(0).description('Number days history')
+    }
+  })
+  async activeAccounts(ctx): Promise<void> {
+    success(ctx, await getActiveAccounts(+ctx.request.query.count))
+  }
+
+  /**
+   * @api {get} /dashboard/registered_accounts Get registered accounts count history
+   * @apiName getRegisteredAccounts
+   * @apiGroup Dashboard
+   *
+   * @apiParam {number} count number of previous days history from today
+   *
+   * @apiSuccess {Number} total total registered accounts in the time period
+   * @apiSuccess {Object[]} periodic daily periodic account info's
+   * @apiSuccess {Number} periodic.datetime unix timestamp
+   * @apiSuccess {Number} periodic.value daily registered account count
+   * @apiSuccess {Object[]} cumulative cumulative registered account count info's
+   * @apiSuccess {Number} periodic.datetime unix timestamp
+   * @apiSuccess {Number} periodic.value daily cumulative account count from genesis
+   */
+  @Get('/registered_accounts')
+  @Validate({
+    query: {
+      count: Joi.number().default(0).min(0).description('Number days history')
+    }
+  })
+  async registereddAccounts(ctx): Promise<void> {
+    success(ctx, await getRegisteredAccounts(+ctx.request.query.count))
   }
 }

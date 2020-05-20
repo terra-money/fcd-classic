@@ -275,7 +275,7 @@ export async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
 export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
   try {
     const totalRewards = await lcd.getCommissions(operatorAddr)
-    return totalRewards.val_commission
+    return totalRewards ? totalRewards.val_commission : []
   } catch (e) {
     return []
   }
