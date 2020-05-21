@@ -232,6 +232,7 @@ describe('Dashboard Test', () => {
     expect(body.total).toBeGreaterThanOrEqual(0)
     expect(body.periodic).toBeDefined()
     expect(body.periodic).toBeInstanceOf(Array)
+    expect(body.cumulative).toBeUndefined()
   })
 
   test('Test active accounts return with fixed history days', async () => {
@@ -243,6 +244,7 @@ describe('Dashboard Test', () => {
     expect(body.periodic).toBeDefined()
     expect(body.periodic).toBeInstanceOf(Array)
     expect(body.periodic.length).toBe(DATA_POINT_COUNT)
+    expect(body.cumulative).toBeUndefined()
   })
 
   test('Test registered accounts return', async () => {
