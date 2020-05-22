@@ -49,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           registry: ${{ steps.login-ecr.outputs.registry }}
-          username: github  # temporary
+          username: AWS  # temporary
           password: ${{ env.ECR_PASSWORD }}  # temporary
           repository: fcd
           tags: ${{ github.sha }}
