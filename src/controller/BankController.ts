@@ -25,9 +25,9 @@ export default class BankController extends KoaController {
    * @apiSuccess {string} balance.remainingVesting Amount not yet freed
    * @apiSuccess {Object[]} vesting Vesting schedule of the User
    * @apiSuccess {string} vesting.denom denom name
-   * @apiSuccess {total} vesting.total vesting amount
+   * @apiSuccess {string} vesting.total vesting amount
    * @apiSuccess {Object[]} vesting.schedules vesting schedules of user
-   * @apiSuccess {amount} vesting.schedules.amount vesting amount
+   * @apiSuccess {string} vesting.schedules.amount vesting amount
    * @apiSuccess {string} vesting.schedules.startTime vestring start time
    * @apiSuccess {string} vesting.schedules.endTime vesting end time
    * @apiSuccess {string} vesting.schedules.ratio vesting ratio
