@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: integration
 
+    container: "amazon/aws-cli"
+
     # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
 
     steps:
@@ -39,16 +41,25 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      # https://github.com/docker/build-push-action/issues/20
+      - name: Get ECR password (tmp)
+        run: |
+          export ECR_PASSWORD=$(aws ecr get-login-password)
+          echo "::set-env name=ECR_PASSWORD::$ECR_PASSWORD"
+
+      - name: Build, tag, and push docker image to AWS ECR
+        uses: docker/build-push-action@v1
+        with:
+          registry: ${{ steps.login-ecr.outputs.registry }}
+          username: github  # temporary
+          password: ${{ env.ECR_PASSWORD }}  # temporary
+          repository: fcd
+          tags: ${{ github.sha }}
+
       - name: Build, tag, and push docker image to Docker Hub
         uses: docker/build-push-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
           repository: terramoney/fcd
-          tags: ${{ github.sha }}
-
-      - name: Build, tag, and push docker image to AWS ECR
-        uses: docker/build-push-action@v1
-        with:
-          repository: ${{ steps.login-ecr.outputs.registry }}
           tags: ${{ github.sha }}
