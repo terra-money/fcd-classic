@@ -53,15 +53,26 @@ interface Schedule {
   ratio: string
 }
 
-interface AccountCountInfo {
+interface CountInfoByDate {
   datetime: number // datetime in unix
-  totalAccountCount: number
+  value: number
+}
+
+interface AccountCountInfo {
+  datetime: number
   activeAccountCount: number
+  totalAccountCount: number
 }
 
 interface AccountGrowthReturn {
   periodic: AccountCountInfo[]
   cumulative: AccountCountInfo[]
+}
+
+interface AccountStatReturn {
+  total: number
+  periodic: CountInfoByDate[]
+  cumulative?: CountInfoByDate[]
 }
 
 interface BlockRewardSumInfo {

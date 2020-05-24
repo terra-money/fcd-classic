@@ -2,12 +2,13 @@ import { get } from 'lodash'
 import { getTime, getMinutes } from 'date-fns'
 import config from 'config'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
-import { BlockEntity, BlockRewardEntity } from 'orm'
+import { BlockEntity, TxEntity, BlockRewardEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
-import { saveTxs } from './tx'
+import { saveTxs, generateTxEntities } from './tx'
 import { splitDenomAndAmount } from 'lib/common'
 import { plus } from 'lib/math'
+import { collectorLogger as logger } from 'lib/logger'
 
 import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
@@ -171,36 +172,48 @@ export async function collectBlock(): Promise<void> {
   let hasNextBlocks = true
 
   while (hasNextBlocks) {
-    const { hasMoreBlocks, lcdBlock: lcdBlock, lastSyncedBlock } = await getLastestBlockInfo()
+    const { hasMoreBlocks, lcdBlock, lastSyncedBlock } = await getLastestBlockInfo()
 
     if (lcdBlock) {
-      await getManager().transaction(async (transactionalEntityManager: EntityManager) => {
-        // Save block rewards
-        const newBlockRewad = await transactionalEntityManager
-          .getRepository(BlockRewardEntity)
-          .save(await getBlockReward(lcdBlock))
-        // new block height
-        const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
-        // Save block entity
-        const newBlockEntity = await transactionalEntityManager
-          .getRepository(BlockEntity)
-          .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockRewad))
-        // get block tx hashes
-        const blockHashes = getTxHashesFromBlock(lcdBlock)
-        // new block timestamp
-        const newBlockTimeStamp = isNewMinuteBlock(lastSyncedBlock, newBlockEntity)
+      const height: string = lcdBlock.block_meta.header.height
+      logger.info(`collectBlock: begin transaction for block ${height}`)
 
-        if (blockHashes) {
-          // save transactions
-          await saveTxs(transactionalEntityManager, newBlockEntity, blockHashes)
-        }
+      await getManager()
+        .transaction(async (transactionalEntityManager: EntityManager) => {
+          // Save block rewards
+          const newBlockRewad = await transactionalEntityManager
+            .getRepository(BlockRewardEntity)
+            .save(await getBlockReward(lcdBlock))
+          // new block height
+          const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
+          // Save block entity
+          const newBlockEntity = await transactionalEntityManager
+            .getRepository(BlockEntity)
+            .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockRewad))
+          // get block tx hashes
+          const txHashes = getTxHashesFromBlock(lcdBlock)
 
-        if (newBlockTimeStamp) {
-          await setReward(transactionalEntityManager, newBlockTimeStamp)
-          await setSwap(transactionalEntityManager, newBlockTimeStamp)
-          await setNetwork(transactionalEntityManager, newBlockTimeStamp)
-        }
-      })
+          if (txHashes) {
+            const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
+            // save transactions
+            await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
+          }
+
+          // new block timestamp
+          const newBlockTimeStamp = isNewMinuteBlock(lastSyncedBlock, newBlockEntity)
+
+          if (newBlockTimeStamp) {
+            await setReward(transactionalEntityManager, newBlockTimeStamp)
+            await setSwap(transactionalEntityManager, newBlockTimeStamp)
+            await setNetwork(transactionalEntityManager, newBlockTimeStamp)
+          }
+        })
+        .then(() => {
+          logger.info('collectBlock: transaction finished')
+        })
+        .catch((err) => {
+          logger.error(`collectBlock: transaction failed: ${err.message}`)
+        })
     }
 
     hasNextBlocks = hasMoreBlocks

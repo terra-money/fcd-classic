@@ -6,13 +6,10 @@ import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { times, minus, plus } from 'lib/math'
 import { getTaxRateAndCap } from 'lib/rpc'
-import { errorReport } from 'lib/errorReporting'
 
 import { getAccountTxDocs } from './accountTx'
 import { getRepository, EntityManager } from 'typeorm'
 import config from 'config'
-
-const GET_TX_RETRY_COUNT = 10
 
 export function getTax(msg, taxRate, taxCaps): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
@@ -67,17 +64,17 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
   return []
 }
 
-async function assignGasAndTax(height, tx): Promise<void> {
+async function assignGasAndTax(height: string, lcdTx: Transaction.LcdTransaction): Promise<void> {
   // get tax rate and tax caps
   const { tax_rate: taxRate, tax_caps: taxCaps } = await getTaxRateAndCap(height)
 
-  const fees = get(tx, 'tx.value.fee.amount')
+  const fees = lcdTx.tx.value.fee.amount
   const feeObj = fees.reduce((acc, fee) => {
     acc[fee.denom] = fee.amount
     return acc
   }, {})
 
-  const msgs = get(tx, 'tx.value.msg')
+  const msgs = lcdTx.tx.value.msg
   const taxArr: string[][] = []
 
   // gas = fee - tax
@@ -103,23 +100,23 @@ async function assignGasAndTax(height, tx): Promise<void> {
   }, feeObj)
 
   // failed tx
-  if (!tx.logs || tx.logs.length !== taxArr.length) {
+  if (!lcdTx.logs || lcdTx.logs.length !== taxArr.length) {
     return
   }
 
   // replace fee to gas
-  tx.tx.value.fee.amount = Object.keys(gasObj).map((denom) => {
+  lcdTx.tx.value.fee.amount = Object.keys(gasObj).map((denom) => {
     return {
       denom,
       amount: gasObj[denom]
     }
   })
 
-  tx.logs.forEach((log, i) => {
+  lcdTx.logs.forEach((log, i) => {
     if (log.log === '') {
       log.log = {
         tax: taxArr[i].join(',')
-      }
+      } as any
     } else {
       log.log['tax'] = taxArr[i].join(',')
     }
@@ -146,40 +143,29 @@ function syncMsgType(tx: object): object {
   return JSON.parse(replaced)
 }
 
-async function getTx(txhash, remRetryCnt: number): Promise<Transaction.LcdTransaction | undefined> {
-  return lcd.getTx(txhash).catch(async () => {
-    if (remRetryCnt >= 0) {
-      await Bluebird.delay((GET_TX_RETRY_COUNT - remRetryCnt + 1) * 2000)
-      logger.info(`Retry GetTx ${txhash}`)
-      return getTx(txhash, remRetryCnt - 1)
-    }
-  })
-}
-
 export async function getTxDoc(
   chainId: string,
-  block: BlockEntity,
-  txhash: string,
-  retryCnt: number
-): Promise<TxEntity | undefined> {
-  const tx = await getTx(txhash, retryCnt)
+  height: string,
+  txhash: string
+): Promise<Transaction.LcdTransaction | undefined> {
+  const tx = await lcd.getTx(txhash)
+
   if (!tx) {
-    errorReport(new Error(`Save Tx failed. ${txhash}`))
     return
   }
 
-  let txJson
+  let txDoc
   try {
     // JSONB에서 \u0000을 넣으려 할때 에러가 나서 처리해줌
     const txStr = JSON.stringify(tx)
-    txJson = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
+    txDoc = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
 
     if (chainId === 'columbus-1') {
-      txJson = syncMsgType(txJson)
+      txDoc = syncMsgType(txDoc)
     }
 
-    if (txJson.logs && txJson.logs.constructor === Array) {
-      txJson.logs = txJson.logs.map((item) => {
+    if (txDoc.logs && txDoc.logs.constructor === Array) {
+      txDoc.logs = txDoc.logs.map((item) => {
         if (item.log && item.log.constructor === String) {
           item.log = JSON.parse(item.log)
         }
@@ -187,21 +173,37 @@ export async function getTxDoc(
       })
     }
 
-    await assignGasAndTax(block.height, txJson)
-  } catch (e) {
-    logger.error(e)
-    process.exit(0)
-    return
+    await assignGasAndTax(height, txDoc)
+  } catch (err) {
+    logger.error(err)
+    throw err
   }
 
-  const txDoc = new TxEntity()
-  txDoc.chainId = chainId
-  txDoc.hash = txhash
-  txDoc.data = txJson
-  txDoc.timestamp = txJson.timestamp
-  txDoc.block = block
-
   return txDoc
+}
+
+export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
+  // pulling all txs from hash
+  const txDocs = await Bluebird.map(txHashes, (txHash) => getTxDoc(config.CHAIN_ID, height, txHash))
+
+  // If we use node cluster, this can be occured.
+  if (txDocs.length !== txDocs.filter(Boolean).length) {
+    throw new Error('transaction not found on node')
+  }
+
+  return txDocs.map((txDoc) => {
+    const txEntity = new TxEntity()
+    txEntity.chainId = config.CHAIN_ID
+
+    if (txDoc) {
+      txEntity.hash = txDoc.txhash
+      txEntity.data = txDoc
+      txEntity.timestamp = new Date(txDoc.timestamp)
+      txEntity.block = block
+    }
+
+    return txEntity
+  })
 }
 
 async function getUpdatedTxCountAccountEntity(
@@ -269,12 +271,10 @@ function getNewTxInfoByAccount(accountTxDocsArray: AccountTxEntity[][]): TxCount
 export async function saveTxs(
   transactionEntityManager: EntityManager,
   block: BlockEntity,
-  txHashs: string[]
+  txEntities: TxEntity[]
 ): Promise<void> {
-  // pulling all txs from hash
-  const txDocs = await Promise.all(txHashs.map((txhash) => getTxDoc(block.chainId, block, txhash, GET_TX_RETRY_COUNT)))
   // save txs
-  const txEntities = await transactionEntityManager.save(txDocs)
+  await transactionEntityManager.save(txEntities)
 
   logger.info(`SaveTx - Height: ${block.height}, ${txEntities.length} txs saved.`)
 

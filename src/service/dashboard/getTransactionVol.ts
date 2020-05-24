@@ -1,55 +1,36 @@
-import { dashboardRawQuery } from './helper'
-import { denomObjectToArray, sortDenoms } from 'lib/common'
 import { plus } from 'lib/math'
-import { startOfDay } from 'date-fns'
-import { getQueryDateTime } from 'lib/time'
+import { getDashboardHistory } from './dashboardHistory'
+import { DashboardEntity } from 'orm'
 
 export default async function getTransactionVol(count = 0): Promise<TxVolumeReturn> {
-  const today = startOfDay(Date.now())
-  const query = `SELECT DATE(datetime) AS date\
-  , denom, SUM(txvolume) AS tx_volume FROM network\
-  WHERE datetime < '${getQueryDateTime(today)}' GROUP BY date, denom ORDER BY date DESC`
-  const txs = await dashboardRawQuery(query)
+  const dashboardHistory = await getDashboardHistory(count)
 
-  const txVolObj: DenomObject = txs.reduce((acc, item) => {
-    if (!acc[item.denom]) {
-      acc[item.denom] = [
-        {
-          datetime: new Date(item.date).getTime(),
-          txVolume: item.tx_volume
-        }
-      ]
-      return acc
-    }
-    acc[item.denom].unshift({
-      datetime: new Date(item.date).getTime(),
-      txVolume: item.tx_volume
-    })
-    return acc
-  }, {})
+  const periodicDenomObj: DenomTxVolumeObject = {}
+  const cummulativeDenomObj: DenomTxVolumeObject = {}
 
-  const sliceCnt = -count
-  const periodic: DenomTxVolume[] = denomObjectToArray(txVolObj, sliceCnt)
-  const cumulative: DenomTxVolume[] = sortDenoms(
-    Object.keys(txVolObj).map((denom) => {
-      const txVolumes = txVolObj[denom]
-
-      let cum = '0'
-      return {
-        denom,
-        data: txVolumes
-          .reduce((acc, item) => {
-            cum = plus(cum, item.txVolume)
-            acc.push({
-              datetime: item.datetime,
-              txVolume: cum
-            })
-            return acc
-          }, [] as TxVolume[])
-          .slice(sliceCnt)
+  dashboardHistory.forEach((item: DashboardEntity) => {
+    Object.keys(item.txVolume).forEach((denom: string) => {
+      if (!periodicDenomObj[denom]) {
+        periodicDenomObj[denom] = [] as TxVolume[]
+        cummulativeDenomObj[denom] = [] as TxVolume[]
       }
+      periodicDenomObj[denom].push({
+        datetime: item.timestamp.getTime(),
+        txVolume: item.txVolume[denom]
+      })
+      const arrLenght = cummulativeDenomObj[denom].length
+      cummulativeDenomObj[denom].push({
+        datetime: item.timestamp.getTime(),
+        txVolume: plus(item.txVolume[denom], arrLenght > 0 ? cummulativeDenomObj[denom][arrLenght - 1].txVolume : '0')
+      })
     })
-  )
+  })
+
+  const periodic = Object.keys(periodicDenomObj).map((denom: string) => ({ denom, data: periodicDenomObj[denom] }))
+  const cumulative = Object.keys(cummulativeDenomObj).map((denom: string) => ({
+    denom,
+    data: cummulativeDenomObj[denom]
+  }))
 
   return { periodic, cumulative }
 }

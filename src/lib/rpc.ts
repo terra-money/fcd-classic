@@ -31,7 +31,7 @@ function base64Decode(data: string) {
 }
 
 export async function getTaxRateAndCap(
-  height: number
+  height: string
 ): Promise<{
   tax_rate: string // 0.006750000000000000
   tax_caps: {

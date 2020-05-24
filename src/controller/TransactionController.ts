@@ -107,10 +107,13 @@ export default class TransactionController extends KoaController {
     )
   }
   /**
-   * @api {POST} /txs Broadcast Txs
+   * @api {post} /txs Broadcast Txs
    * @apiName postTxs
    * @apiGroup Transactions
    *
+   * @apiParam {Object} body request object
+   *
+   * @apiSuccess {Object} response tx response
    */
   @Post('/txs')
   @Validate({

@@ -74,9 +74,15 @@ export default async function getValidatorReturn(
 }
 
 export async function getValidatorAnnualAvgReturn(operatorAddress: string): Promise<ValidatorAnnualReturn> {
-  const rawQuery = `select operator_address,
-    sum((reward - commission)/(avg_voting_power)) * 365 / count(*) as annual_return, count(*) as data_point_count from validator_return_info
-    where timestamp >= DATE(now() - Interval '30 day') and operator_address = '${operatorAddress}' and avg_voting_power > 0 group by operator_address`
+  const rawQuery = `
+SELECT operator_address,
+  SUM((reward - commission) / (avg_voting_power)) * 365 / COUNT(*) AS annual_return,
+  COUNT(*) AS data_point_count
+FROM validator_return_info
+WHERE TIMESTAMP >= DATE(NOW() - INTERVAL '30 day')
+AND operator_address = '${operatorAddress}'
+AND avg_voting_power > 0
+GROUP BY operator_address;`
 
   const validatorReturn = await getConnection().query(rawQuery)
 

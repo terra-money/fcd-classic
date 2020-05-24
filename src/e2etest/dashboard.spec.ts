@@ -29,7 +29,7 @@ describe('Dashboard Test', () => {
     })
     expect(typeof body.taxRate).toBe('string')
     expect(body.taxCaps).toBeInstanceOf(Array)
-    expect(body.taxCaps.length).toBe(1)
+    expect(body.taxCaps.length).toBeGreaterThan(0)
 
     expect(body.issuances).toMatchObject({
       uluna: expect.any(String),
@@ -79,12 +79,22 @@ describe('Dashboard Test', () => {
     expect(body.cumulative[0].totalAccountCount).toBeDefined()
     expect(body.cumulative[0].activeAccountCount).toBeDefined()
 
+    body.cumulative.forEach((element) => {
+      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
+      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
+    })
+
     expect(body.periodic).toBeDefined()
     expect(body.periodic.length).toBe(DATA_POINT_COUNT - 1)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].datetime).toBeDefined()
     expect(body.periodic[0].totalAccountCount).toBeDefined()
     expect(body.periodic[0].activeAccountCount).toBeDefined()
+
+    body.periodic.forEach((element) => {
+      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
+      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
+    })
   })
 
   test('Test get tx volumes', async () => {
@@ -212,5 +222,54 @@ describe('Dashboard Test', () => {
 
       expect(times(div(cummulativeSum, dataCount), DAYS_IN_YEAR)).toBe(body[i].annualizedReturn)
     }
+  })
+
+  test('Test active accounts return', async () => {
+    const { body } = await agent.get('/v1/dashboard/active_accounts').expect(200)
+
+    expect(body).toBeInstanceOf(Object)
+    expect(body.total).toBeDefined()
+    expect(body.total).toBeGreaterThanOrEqual(0)
+    expect(body.periodic).toBeDefined()
+    expect(body.periodic).toBeInstanceOf(Array)
+    expect(body.cumulative).toBeUndefined()
+  })
+
+  test('Test active accounts return with fixed history days', async () => {
+    const { body } = await agent.get(`/v1/dashboard/active_accounts?count=${DATA_POINT_COUNT}`).expect(200)
+
+    expect(body).toBeInstanceOf(Object)
+    expect(body.total).toBeDefined()
+    expect(body.total).toBeGreaterThanOrEqual(0)
+    expect(body.periodic).toBeDefined()
+    expect(body.periodic).toBeInstanceOf(Array)
+    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
+    expect(body.cumulative).toBeUndefined()
+  })
+
+  test('Test registered accounts return', async () => {
+    const { body } = await agent.get('/v1/dashboard/registered_accounts').expect(200)
+
+    expect(body).toBeInstanceOf(Object)
+    expect(body.total).toBeDefined()
+    expect(body.total).toBeGreaterThanOrEqual(0)
+    expect(body.periodic).toBeDefined()
+    expect(body.periodic).toBeInstanceOf(Array)
+
+    expect(body.cumulative).toBeInstanceOf(Array)
+  })
+
+  test('Test registerd accounts return with fixed history days', async () => {
+    const { body } = await agent.get(`/v1/dashboard/registered_accounts?count=${DATA_POINT_COUNT}`).expect(200)
+
+    expect(body).toBeInstanceOf(Object)
+    expect(body.total).toBeDefined()
+    expect(body.total).toBeGreaterThanOrEqual(0)
+    expect(body.periodic).toBeDefined()
+    expect(body.periodic).toBeInstanceOf(Array)
+    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
+
+    expect(body.cumulative).toBeInstanceOf(Array)
+    expect(body.cumulative.length).toBe(DATA_POINT_COUNT)
   })
 })

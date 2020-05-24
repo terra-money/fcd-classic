@@ -283,7 +283,7 @@ export default class TxController extends KoaController {
    * @apiName getStaking
    * @apiGroup Staking
    *
-   * @apiParam {string} [account] User's account address
+   * @apiParam {string} account User's account address
    *
    * @apiSuccess {string} delegationTotal Amount staked by user
    * @apiSuccess {Object[]} undelegations Undelegation information in progress by user
