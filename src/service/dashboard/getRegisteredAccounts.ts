@@ -10,19 +10,15 @@ export default async function getRegisteredAccounts(daysBefore?: number): Promis
   }
   const dashboards = await getDashboardHistory(prevDaysHistory)
 
-  const cumulativeRegestered: CountInfoByDate[] = dashboards.map((item: DashboardEntity) => {
-    return {
-      datetime: item.timestamp.getTime(),
-      value: item.totalAccount
-    }
-  })
+  const cumulativeRegestered: CountInfoByDate[] = dashboards.map((item: DashboardEntity) => ({
+    datetime: item.timestamp.getTime(),
+    value: item.totalAccount
+  }))
 
-  const periodicRegistered: CountInfoByDate[] = dashboards.map((item: DashboardEntity, index) => {
-    return {
-      datetime: item.timestamp.getTime(),
-      value: item.totalAccount - (index > 0 ? dashboards[index - 1].totalAccount : 0)
-    }
-  })
+  const periodicRegistered: CountInfoByDate[] = dashboards.map((item: DashboardEntity, index) => ({
+    datetime: item.timestamp.getTime(),
+    value: item.totalAccount - (index > 0 ? dashboards[index - 1].totalAccount : 0)
+  }))
 
   const index = dashboards.length - prevDaysHistory > 0 ? dashboards.length - prevDaysHistory : 0
 
