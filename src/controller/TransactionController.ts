@@ -91,8 +91,54 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {number} limt Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info
+   * @apiSuccess {string} txs.tx.type Tx type
+   * @apiSuccess {Object} txs.tx.value
+   * @apiSuccess {Object} txs.tx.value.fee
+   * @apiSuccess {string} txs.tx.value.fee.gas
+   * @apiSuccess {Object[]} txs.tx.value.fee.amount
+   * @apiSuccess {string} txs.tx.value.fee.amount.denom
+   * @apiSuccess {string} txs.tx.value.fee.amount.amount
+   * @apiSuccess {string} txs.tx.value.memo
+   * @apiSuccess {Object[]} txs.tx.value.msg
+   * @apiSuccess {string} txs.tx.value.msg.type
+   * @apiSuccess {Object} txs.tx.value.msg.value
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.address
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs.coins
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.deonm
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.amount
+   *
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.address
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs.coins
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.deonm
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.amount
+   *
+   *
+   * @apiSuccess {Object[]} txs.tx.value.signatures
+   * @apiSuccess {string} txs.tx.value.signatures.signature
+   * @apiSuccess {Object} txs.tx.value.signatures.pub_key
+   * @apiSuccess {string} txs.tx.value.signatures.pub_key.type
+   * @apiSuccess {string} txs.tx.value.signatures.pub_key.value
+   *
    * @apiSuccess {Object[]} txs.events events of tx
+   * @apiSuccess {string} txs.events.type
+   * @apiSuccess {Object[]} txs.events.attributes
+   * @apiSuccess {string} txs.events.attributes.key
+   * @apiSuccess {string} txs.events.attributes.value
+   *
+   *
    * @apiSuccess {Object[]} txs.logs tx logs
+   * @apiSuccess {number} txs.logs.msg_index
+   * @apiSuccess {boolean} txs.logs.success
+   * @apiSuccess {Object} txs.logs.log
+   * @apiSuccess {string} txs.logs.log.tax
+   * @apiSuccess {Object[]} txs.logs.events
+   * @apiSuccess {string} txs.logs.events.type
+   * @apiSuccess {Object[]} txs.logs.events.attributes
+   * @apiSuccess {string} txs.logs.events.attributes.key
+   * @apiSuccess {string} txs.logs.events.attributes.value
+   *
    * @apiSuccess {string} txs.height block height
    * @apiSuccess {string} txs.txhash tx hash
    * @apiSuccess {string} txs.raw_log tx raw log
