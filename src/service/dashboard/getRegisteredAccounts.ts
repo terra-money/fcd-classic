@@ -10,6 +10,14 @@ export default async function getRegisteredAccounts(daysBefore?: number): Promis
   }
   const dashboards = await getDashboardHistory(prevDaysHistory)
 
+  if (dashboards.length === 0) {
+    return {
+      total: 0,
+      periodic: [],
+      cumulative: []
+    }
+  }
+
   const cumulativeRegestered: CountInfoByDate[] = dashboards.map((item: DashboardEntity) => ({
     datetime: item.timestamp.getTime(),
     value: item.totalAccount
