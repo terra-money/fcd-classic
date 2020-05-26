@@ -280,7 +280,7 @@ export default class TxController extends KoaController {
 
   /**
    * @api {get} /staking/:account Get all validators and staking info with account
-   * @apiName getStaking
+   * @apiName getStakingWithAccount
    * @apiGroup Staking
    *
    * @apiParam {string} account User's account address
@@ -345,11 +345,11 @@ export default class TxController extends KoaController {
    * @apiSuccess {string} validators.operatorAddress
    * @apiSuccess {string} validators.consensusPubkey
    * @apiSuccess {Object} validators.description
-   * @apiSuccess {Object} validators.description.moniker
-   * @apiSuccess {Object} validators.description.identity
-   * @apiSuccess {Object} validators.description.website
-   * @apiSuccess {Object} validators.description.details
-   * @apiSuccess {Object} validators.description.profileIcon
+   * @apiSuccess {string} validators.description.moniker
+   * @apiSuccess {string} validators.description.identity
+   * @apiSuccess {string} validators.description.website
+   * @apiSuccess {string} validators.description.details
+   * @apiSuccess {string} validators.description.profileIcon
    * @apiSuccess {string} validators.tokens
    * @apiSuccess {string} validators.delegatorShares
    * @apiSuccess {Object} validators.votingPower
