@@ -28,7 +28,7 @@ function testBasicProposal(proposal) {
     description: expect.any(String),
     deposit: {
       depositEndTime: expect.any(String),
-      totalDeposit: expect.arrayContaining([coinObject]),
+      totalDeposit: expect.toBeArray(),
       minDeposit: expect.arrayContaining([coinObject])
     }
   })

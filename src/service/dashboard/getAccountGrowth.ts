@@ -31,7 +31,7 @@ export default async function getAccountGrowth(count?: number): Promise<AccountG
   )
 
   return {
-    cumulative: cumulative.slice(1),
+    cumulative: cumulative.length ? cumulative.slice(1) : [],
     periodic
   }
 }
