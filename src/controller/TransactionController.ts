@@ -14,9 +14,44 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} txhash Tx Hash
+   *
    * @apiSuccess {Object} tx tx info
+   * @apiSuccess {string} tx.type tx type
+   * @apiSuccess {Object} tx.value
+   * @apiSuccess {Object} tx.value.fee
+   * @apiSuccess {Object[]} tx.value.fee.amount
+   * @apiSuccess {string} tx.value.fee.amount.denom
+   * @apiSuccess {string} tx.value.fee.amount.amount
+   * @apiSuccess {string} tx.value.fee.gas
+   * @apiSuccess {string} tx.value.memo
+   * @apiSuccess {Object[]} tx.value.msg
+   * @apiSuccess {string} tx.value.msg.type
+   * @apiSuccess {Object} tx.value.msg.value
+   * @apiSuccess {Object[]} tx.value.msg.value.amount
+   * @apiSuccess {string} tx.value.msg.value.amount.denom
+   * @apiSuccess {string} tx.value.msg.value.amount.amount
+   * @apiSuccess {Object[]} tx.value.signatures
+   * @apiSuccess {Object[]} tx.value.signatures.pubKey
+   * @apiSuccess {string} tx.value.signatures.pubKey.type
+   * @apiSuccess {string} tx.value.signatures.pubKey.value
+   * @apiSuccess {string} tx.value.signatures.signature
+   *
    * @apiSuccess {Object[]} events events of tx
+   * @apiSuccess {Object[]} events
+   * @apiSuccess {string} events.type
+   * @apiSuccess {Object[]} events.attributes
+   * @apiSuccess {string} events.attributes.key
+   * @apiSuccess {string} events.attributes.value
    * @apiSuccess {Object[]} logs tx logs
+   * @apiSuccess {Object[]} logs.events
+   * @apiSuccess {Object[]} logs.events.attributes
+   * @apiSuccess {string} logs.events.attributes.key
+   * @apiSuccess {string} logs.events.attributes.value
+   * @apiSuccess {string} logs.events.types
+   * @apiSuccess {Object} logs.log
+   * @apiSuccess {string} logs.log.tax
+   * @apiSuccess {number} logs.msg_index
+   * @apiSuccess {boolean} logs.success
    * @apiSuccess {string} height block height
    * @apiSuccess {string} txhash tx hash
    * @apiSuccess {string} raw_log tx raw log
@@ -147,9 +182,15 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {Object[]} txs.msgs Parsed tx messages
    * @apiSuccess {string} txs.msgs.tag tx tag
    * @apiSuccess {string} txs.msgs.text tx message text format
-   * @apiSuccess {Object[]} txs.msgs.in tx input address
-   * @apiSuccess {Object[]} txs.msgs.out {denom, amount} format in out
-   * @apiSuccess {string} txs.txFee
+   * @apiSuccess {Object[]} txs.msgs.in
+   * @apiSuccess {string} txs.msgs.in.denom
+   * @apiSuccess {string} txs.msgs.in.amount
+   * @apiSuccess {Object[]} txs.msgs.out
+   * @apiSuccess {string} txs.msgs.out.denom
+   * @apiSuccess {string} txs.msgs.out.amount
+   * @apiSuccess {Object[]} txs.txFee
+   * @apiSuccess {string} txs.txFee.denom
+   * @apiSuccess {string} txs.txFee.amount
    * @apiSuccess {string} txs.memo
    * @apiSuccess {boolean} txs.success
    * @apiSuccess {string} txs.errorMessage

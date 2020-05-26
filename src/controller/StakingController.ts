@@ -50,12 +50,13 @@ export default class TxController extends KoaController {
    * @apiSuccess {Object} rewardsPool
    * @apiSuccess {string} rewardsPool.total
    * @apiSuccess {Object[]} rewardsPool.denoms {denom: string, amount: string} format
+   * @apiSuccess {string} rewardsPool.denoms.denom
+   * @apiSuccess {string} rewardsPool.denoms.amount
    * @apiSuccess {string} stakingReturn
    * @apiSuccess {string} accountAddress
    * @apiSuccess {Object} selfDelegation
    * @apiSuccess {string} selfDelegation.amount
    * @apiSuccess {string} selfDelegation.weight
-   * @apiSuccess {Object[]} commissions
    * @apiSuccess {string} myDelegation total delegation amount
    * @apiSuccess {Object[]} myUndelegation user undelegations
    * @apiSuccess {string} myUndelegation.releaseTime undelegation release date time
@@ -95,36 +96,37 @@ export default class TxController extends KoaController {
    *
    * @apiParam {string} operatorAddr operator address
    *
-   * @apiSuccess {Object[]} -
-   * @apiSuccess {string} -.operatorAddress
-   * @apiSuccess {string} -.consensusPubkey
-   * @apiSuccess {Object} -.description
-   * @apiSuccess {Object} -.description.moniker
-   * @apiSuccess {Object} -.description.identity
-   * @apiSuccess {Object} -.description.website
-   * @apiSuccess {Object} -.description.details
-   * @apiSuccess {Object} -.description.profileIcon
-   * @apiSuccess {string} -.tokens
-   * @apiSuccess {string} -.delegatorShares
-   * @apiSuccess {Object} -.votingPower
-   * @apiSuccess {string} -.votingPower.amount
-   * @apiSuccess {string} -.votingPower.weight
-   * @apiSuccess {Object} -.commissionInfo
-   * @apiSuccess {string} -.commissionInfo.rate
-   * @apiSuccess {string} -.commissionInfo.maxRate
-   * @apiSuccess {string} -.commissionInfo.maxChangeRate
-   * @apiSuccess {string} -.commissionInfo.updateTime
-   * @apiSuccess {number} -.upTime
-   * @apiSuccess {string} -.status
-   * @apiSuccess {Object} -.rewardsPool
-   * @apiSuccess {string} -.rewardsPool.total
-   * @apiSuccess {Object[]} -.rewardsPool.denoms {denom: string, amount: string} format
-   * @apiSuccess {string} -.stakingReturn
-   * @apiSuccess {string} -.accountAddress
-   * @apiSuccess {Object} -.selfDelegation
-   * @apiSuccess {string} -.selfDelegation.amount
-   * @apiSuccess {string} -.selfDelegation.weight
-   * @apiSuccess {Object[]} -.commissions
+   * @apiSuccess {Object[]} validator
+   * @apiSuccess {string} validator.operatorAddress
+   * @apiSuccess {string} validator.consensusPubkey
+   * @apiSuccess {Object} validator.description
+   * @apiSuccess {string} validator.description.moniker
+   * @apiSuccess {string} validator.description.identity
+   * @apiSuccess {string} validator.description.website
+   * @apiSuccess {string} validator.description.details
+   * @apiSuccess {string} validator.description.profileIcon
+   * @apiSuccess {string} validator.tokens
+   * @apiSuccess {string} validator.delegatorShares
+   * @apiSuccess {Object} validator.votingPower
+   * @apiSuccess {string} validator.votingPower.amount
+   * @apiSuccess {string} validator.votingPower.weight
+   * @apiSuccess {Object} validator.commissionInfo
+   * @apiSuccess {string} validator.commissionInfo.rate
+   * @apiSuccess {string} validator.commissionInfo.maxRate
+   * @apiSuccess {string} validator.commissionInfo.maxChangeRate
+   * @apiSuccess {string} validator.commissionInfo.updateTime
+   * @apiSuccess {number} validator.upTime
+   * @apiSuccess {string} validator.status
+   * @apiSuccess {Object} validator.rewardsPool
+   * @apiSuccess {string} validator.rewardsPool.total
+   * @apiSuccess {Object[]} validator.rewardsPool.denoms {denom: string, amount: string} format
+   * @apiSuccess {string} validator.rewardsPool.denoms.denom
+   * @apiSuccess {string} validator.rewardsPool.denoms.amount
+   * @apiSuccess {string} validator.stakingReturn
+   * @apiSuccess {string} validator.accountAddress
+   * @apiSuccess {Object} validator.selfDelegation
+   * @apiSuccess {string} validator.selfDelegation.amount
+   * @apiSuccess {string} validator.selfDelegation.weight
    */
   @Get('/validators')
   async validators(ctx) {
@@ -147,6 +149,8 @@ export default class TxController extends KoaController {
    * @apiSuccess {string} events.height The height of the block the event was performed
    * @apiSuccess {string} events.type Event type
    * @apiSuccess {Object[]} events.amount
+   * @apiSuccess {string} events.amount.denom
+   * @apiSuccess {string} events.amount.amount
    * @apiSuccess {string} events.timestamp
    *
    */
@@ -189,11 +193,12 @@ export default class TxController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} claims Claim list
-   * @apiSuccess {string} claims.height The height of the block the claim was performed
+   * @apiSuccess {string} claims.timestamp Tx timestamp
+   * @apiSuccess {string} claims.tx Tx hash
    * @apiSuccess {string} claims.type Claim type
    * @apiSuccess {Object[]} claims.amount
-   * @apiSuccess {string} claims.timestamp
-   *
+   * @apiSuccess {string} claims.amount.denom
+   * @apiSuccess {string} claims.amount.amount
    */
   @Get('/validators/:operatorAddr/claims')
   @Validate({
@@ -234,9 +239,9 @@ export default class TxController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} delegator Delegator list
-   * @apiSuccess {string} delegators.address Delegator address
-   * @apiSuccess {string} delegators.amount Amount of luna delegated
-   * @apiSuccess {string} delegators.weight
+   * @apiSuccess {string} delegator.address Delegator address
+   * @apiSuccess {string} delegator.amount Amount of luna delegated
+   * @apiSuccess {string} delegator.weight
    *
    */
   @Get('/validators/:operatorAddr/delegators')
@@ -280,66 +285,33 @@ export default class TxController extends KoaController {
 
   /**
    * @api {get} /staking/:account Get all validators and staking info with account
-   * @apiName getStakingWithAccount
+   * @apiName getStakingForAccount
    * @apiGroup Staking
    *
    * @apiParam {string} account User's account address
    *
    * @apiSuccess {string} delegationTotal Amount staked by user
+   * @apiSuccess {string} availableLuna Users total luna amount
    * @apiSuccess {Object[]} undelegations Undelegation information in progress by user
-   * @apiSuccess {Object} rewards User's current reward
+   * @apiSuccess {string} undelegations.amount Undelegation amount
+   * @apiSuccess {string} undelegations.creationHeight Undelegation creation block height
+   * @apiSuccess {string} undelegations.releaseTime Amount release time
+   * @apiSuccess {string} undelegations.validatorAddress Validator address
+   * @apiSuccess {string} undelegations.validatorName Validators name
+   * @apiSuccess {string} undelegations.validatorStatus Validator status
    *
-   * @apiSuccess {Object[]} validators
-   * @apiSuccess {string} validators.operatorAddress
-   * @apiSuccess {string} validators.consensusPubkey
-   * @apiSuccess {Object} validators.description
-   * @apiSuccess {Object} validators.description.moniker
-   * @apiSuccess {Object} validators.description.identity
-   * @apiSuccess {Object} validators.description.website
-   * @apiSuccess {Object} validators.description.details
-   * @apiSuccess {Object} validators.description.profileIcon
-   * @apiSuccess {string} validators.tokens
-   * @apiSuccess {string} validators.delegatorShares
-   * @apiSuccess {Object} validators.votingPower
-   * @apiSuccess {string} validators.votingPower.amount
-   * @apiSuccess {string} validators.votingPower.weight
-   * @apiSuccess {Object} validators.commissionInfo
-   * @apiSuccess {string} validators.commissionInfo.rate
-   * @apiSuccess {string} validators.commissionInfo.maxRate
-   * @apiSuccess {string} validators.commissionInfo.maxChangeRate
-   * @apiSuccess {string} validators.commissionInfo.updateTime
-   * @apiSuccess {number} validators.upTime
-   * @apiSuccess {string} validators.status
-   * @apiSuccess {Object} validators.rewardsPool
-   * @apiSuccess {string} validators.rewardsPool.total
-   * @apiSuccess {Object[]} validators.rewardsPool.denoms
-   * @apiSuccess {string} validators.stakingReturn
-   * @apiSuccess {string} validators.myDelegation The amount of user delegation to this validator
-   * @apiSuccess {string} validators.myUndelegation Undelegation information of user in progress in this validator
-   */
-  @Get('/:account')
-  @Validate({
-    params: {
-      account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async getStakingForAccount(ctx): Promise<void> {
-    const { account } = ctx.params
-
-    success(ctx, await getStaking(account))
-  }
-
-  /**
-   * @api {get} /staking Get all validators and staking info
-   * @apiName getStaking
-   * @apiGroup Staking
+   * @apiSuccess {Object[]} myDelegations Users delegations list
+   * @apiSuccess {string} myDelegations.amountDelegated Users delegations list
+   * @apiSuccess {string} myDelegations.totalReward Users delegations list
+   * @apiSuccess {string} myDelegations.validatorAddress Users delegations list
+   * @apiSuccess {string} myDelegations.validatorName Users delegations list
    *
-   * @apiParam {string} [account] User's account address
    *
-   * @apiSuccess {string} delegationTotal Amount staked by user
-   * @apiSuccess {Object[]} undelegations Undelegation information in progress by user
-   * @apiSuccess {Object} rewards User's current reward
+   * @apiSuccess {Object} rewards User's reward info
+   * @apiSuccess {string} rewards.total User's total reward
+   * @apiSuccess {Object[]} rewards.denoms User's reward by denoms
+   * @apiSuccess {string} rewards.denoms.denom reward denom
+   * @apiSuccess {string} rewards.denoms.amount reward amount
    *
    * @apiSuccess {Object[]} validators
    * @apiSuccess {string} validators.operatorAddress
@@ -365,6 +337,58 @@ export default class TxController extends KoaController {
    * @apiSuccess {Object} validators.rewardsPool
    * @apiSuccess {string} validators.rewardsPool.total
    * @apiSuccess {Object[]} validators.rewardsPool.denoms
+   * @apiSuccess {string} validators.rewardsPool.denoms.denom
+   * @apiSuccess {string} validators.rewardsPool.denoms.amount
+   * @apiSuccess {string} validators.stakingReturn
+   * @apiSuccess {string} validators.myDelegation The amount of user delegation to this validator
+   * @apiSuccess {string} validators.myUndelegation Undelegation information of user in progress in this validator
+   */
+  @Get('/:account')
+  @Validate({
+    params: {
+      account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
+    },
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
+  })
+  async getStakingForAccount(ctx): Promise<void> {
+    const { account } = ctx.params
+
+    success(ctx, await getStaking(account))
+  }
+
+  /**
+   * @api {get} /staking Get all validators and staking info
+   * @apiName getStaking
+   * @apiGroup Staking
+   *
+   * @apiParam {string} [account] User's account address
+   *
+   * @apiSuccess {Object[]} validators
+   * @apiSuccess {string} validators.operatorAddress
+   * @apiSuccess {string} validators.consensusPubkey
+   * @apiSuccess {Object} validators.description
+   * @apiSuccess {string} validators.description.moniker
+   * @apiSuccess {string} validators.description.identity
+   * @apiSuccess {string} validators.description.website
+   * @apiSuccess {string} validators.description.details
+   * @apiSuccess {string} validators.description.profileIcon
+   * @apiSuccess {string} validators.tokens
+   * @apiSuccess {string} validators.delegatorShares
+   * @apiSuccess {Object} validators.votingPower
+   * @apiSuccess {string} validators.votingPower.amount
+   * @apiSuccess {string} validators.votingPower.weight
+   * @apiSuccess {Object} validators.commissionInfo
+   * @apiSuccess {string} validators.commissionInfo.rate
+   * @apiSuccess {string} validators.commissionInfo.maxRate
+   * @apiSuccess {string} validators.commissionInfo.maxChangeRate
+   * @apiSuccess {string} validators.commissionInfo.updateTime
+   * @apiSuccess {number} validators.upTime
+   * @apiSuccess {string} validators.status
+   * @apiSuccess {Object} validators.rewardsPool
+   * @apiSuccess {string} validators.rewardsPool.total
+   * @apiSuccess {Object[]} validators.rewardsPool.denoms
+   * @apiSuccess {string} validators.rewardsPool.denoms.denom
+   * @apiSuccess {string} validators.rewardsPool.denoms.amount
    * @apiSuccess {string} validators.stakingReturn
    * @apiSuccess {string} validators.myDelegation The amount of user delegation to this validator
    * @apiSuccess {string} validators.myUndelegation Undelegation information of user in progress in this validator
