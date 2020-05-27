@@ -21,26 +21,23 @@ const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}t
 const API_VERSION_PREFIX = '/v1'
 
 export default async (): Promise<Koa> => {
+  // apidoc
   const doc = new Koa()
-
-  doc
-    .use(addTrailingSlashes())
-    .use(
-      mount(
-        '/apidoc',
-        serve(path.resolve(__dirname, '..', 'apidoc'), {
-          maxage: 86400 * 1000
-        })
-      )
-    )
-    .use(
-      koaSwagger({
-        routePrefix: '/swagger',
-        swaggerOptions: {
-          url: './../apidoc/swagger.json'
-        }
-      })
-    )
+  doc.use(addTrailingSlashes()).use(
+    serve(path.resolve(__dirname, '..', 'apidoc'), {
+      maxage: 86400 * 1000
+    })
+  )
+  // swagger ui
+  const swagger = new Koa()
+  swagger.use(
+    koaSwagger({
+      routePrefix: '/',
+      swaggerOptions: {
+        url: './../apidoc/swagger.json'
+      }
+    })
+  )
 
   const app = new Koa()
 
@@ -49,7 +46,8 @@ export default async (): Promise<Koa> => {
   app
     .use(morgan('common'))
     .use(helmet())
-    .use(mount('/', doc))
+    .use(mount('/apidoc', doc))
+    .use(mount('/swagger', swagger))
     .use(errorHandler(error))
     .use(async (ctx, next) => {
       await next()
