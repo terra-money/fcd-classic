@@ -1,5 +1,6 @@
 import { startOfDay } from 'date-fns'
 import { mergeWith } from 'lodash'
+
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 import { getRepository } from 'typeorm'
 import { getValidators } from 'lib/lcd'

@@ -28,7 +28,7 @@ function testBasicProposal(proposal) {
     description: expect.any(String),
     deposit: {
       depositEndTime: expect.any(String),
-      totalDeposit: expect.arrayContaining([coinObject]),
+      totalDeposit: expect.toBeArray(),
       minDeposit: expect.arrayContaining([coinObject])
     }
   })
@@ -77,14 +77,12 @@ describe('Governance', () => {
   let agent: SuperTest<Test>
   let connection
 
-  beforeAll(async (done) => {
+  beforeAll(async () => {
     ;({ agent, connection } = await setupAgent())
-    done()
   })
 
-  afterAll(async (done) => {
+  afterAll(async () => {
     await terminateAPITest({ connection })
-    done()
   })
 
   test('Test get proposals', async () => {

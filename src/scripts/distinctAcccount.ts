@@ -4,14 +4,25 @@ import { init as initORM, GeneralInfoEntity } from 'orm'
 import { getQueryDateTime } from 'lib/time'
 
 async function getTotalAccount(now) {
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${now}') as temp;`
+  const query = `
+SELECT COUNT(*)
+FROM
+  (SELECT DISTINCT account
+    FROM account_tx
+    WHERE TIMESTAMP <= '${now}') AS t;`
   return getConnection().query(query)
 }
 
 async function getActiveAccount(now) {
   const onedayBefore = getQueryDateTime(subDays(now, 1).getTime())
 
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${now}' and timestamp >= '${onedayBefore}') as temp;`
+  const query = `
+SELECT COUNT(*)
+FROM
+  (SELECT DISTINCT account
+    FROM account_tx
+    WHERE TIMESTAMP <= '${now}'
+      AND TIMESTAMP >= '${onedayBefore}') AS TEMP;`
   return getConnection().query(query)
 }
 

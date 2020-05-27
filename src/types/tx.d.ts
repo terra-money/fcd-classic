@@ -75,7 +75,7 @@ interface TxVolume {
   txVolume: string // big int tx amount
 }
 
-interface DenomObject {
+interface DenomTxVolumeObject {
   [denom: string]: TxVolume[]
 }
 

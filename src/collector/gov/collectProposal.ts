@@ -1,8 +1,8 @@
+import { getRepository, DeepPartial } from 'typeorm'
+
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ProposalEntity } from 'orm'
-
-import { getRepository, DeepPartial } from 'typeorm'
 import config from 'config'
 import { getVoteSummary } from 'service/governance/helper'
 

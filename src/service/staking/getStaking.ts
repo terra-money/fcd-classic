@@ -79,7 +79,7 @@ function getDelegationTotal(delegations: DelegationInfo[]): string {
 
 interface UserValidatorWithDelegationInfo extends ValidatorResponse {
   myDelegation?: string // user delegation amount
-  myUndelegation?: UndeligationSchedule // user undelegation schedule with amount and info
+  myUndelegation?: UndeligationSchedule[] // user undelegation schedule with amount and info
 }
 
 function joinValidatorsWithMyDelegation(

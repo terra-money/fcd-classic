@@ -54,6 +54,9 @@ export * from './ValidatorInfoEntity'
 import ProposalEntity from './ProposalEntity'
 export * from './ProposalEntity'
 
+import DashboardEntity from './DashboardEntity'
+export * from './DashboardEntity'
+
 export {
   BlockEntity,
   TxEntity,
@@ -70,7 +73,8 @@ export {
   AccountEntity,
   ValidatorReturnInfoEntity,
   ValidatorInfoEntity,
-  ProposalEntity
+  ProposalEntity,
+  DashboardEntity
 }
 
 export const staticOptions = {
@@ -92,7 +96,8 @@ export const staticOptions = {
     AccountEntity,
     ValidatorReturnInfoEntity,
     ValidatorInfoEntity,
-    ProposalEntity
+    ProposalEntity,
+    DashboardEntity
   ]
 }
 

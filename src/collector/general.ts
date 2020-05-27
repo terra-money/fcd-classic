@@ -1,7 +1,8 @@
+import * as Bluebird from 'bluebird'
 import { getRepository, getConnection } from 'typeorm'
-import { GeneralInfoEntity } from 'orm'
-import { subDays } from 'date-fns'
+import { subDays, startOfDay } from 'date-fns'
 
+import { GeneralInfoEntity } from 'orm'
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
@@ -11,7 +12,7 @@ import { getQueryDateTime } from 'lib/time'
 export async function getTotalAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}') as temp;`
+  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}') AS t;`
   const res = await getConnection().query(query)
   return res && res.length ? res[0].count : 0
 }
@@ -19,27 +20,49 @@ export async function getTotalAccount(timestamp?: number): Promise<number> {
 export async function getActiveAccount(timestamp?: number): Promise<number> {
   const now = timestamp || Date.now()
   const targetDate = getQueryDateTime(now)
-  const onedayBefore = getQueryDateTime(subDays(now, 1))
-
-  const query = `select count(*) from (select distinct account from account_tx where timestamp <= '${targetDate}' and timestamp >= '${onedayBefore}') as temp;`
+  const onedayBefore = timestamp ? getQueryDateTime(subDays(now, 1)) : getQueryDateTime(startOfDay(now))
+  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}' AND timestamp >= '${onedayBefore}') AS t;`
   const res = await getConnection().query(query)
   return res && res.length ? res[0].count : 0
 }
 
 export async function saveGeneral() {
-  const taxRate = await lcd.getTaxRate()
-  const stakingPool = await lcd.getStakingPool()
-  const taxProceeds = await lcd.getTaxProceeds()
-  const seigniorageProceeds = await lcd.getSeigniorageProceeds()
+  const [
+    taxRate,
+    taxProceeds,
+    seigniorageProceeds,
+    communityPool,
+    taxCaps,
+    { bondedTokens, notBondedTokens, issuances, stakingRatio },
+    [total, active]
+  ] = await Promise.all([
+    lcd.getTaxRate(),
+    lcd.getTaxProceeds(),
+    lcd.getSeigniorageProceeds(),
+    lcd.getCommunityPool().then(
+      (pool): DenomMap =>
+        pool.reduce((acc, { denom, amount }) => {
+          acc[denom] = amount
+          return acc
+        }, {})
+    ),
+    lcd.getOracleActives().then((activeDenoms) =>
+      Bluebird.map(activeDenoms, async (denom: string) => {
+        const taxCap = await lcd.getTaxCap(denom)
+        return { denom, taxCap }
+      })
+    ),
 
-  const { bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens } = stakingPool
-  const issuances = await lcd.getAllActiveIssuance()
-  const stakingRatio = div(bondedTokens, issuances['uluna'])
+    Promise.all([lcd.getStakingPool(), lcd.getAllActiveIssuance()]).then((results) => {
+      const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
+      return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
+    }),
+
+    Promise.all([getTotalAccount(), getActiveAccount()])
+  ])
 
   const now = Date.now()
   const datetime = new Date(now - (now % 60000) - 60000)
-
-  const [total, active] = await Promise.all([getTotalAccount(), getActiveAccount()])
 
   await getRepository(GeneralInfoEntity).save({
     datetime,
@@ -51,7 +74,10 @@ export async function saveGeneral() {
     bondedTokens,
     notBondedTokens,
     totalAccountCount: total,
-    activeAccountCount: active
+    activeAccountCount: active,
+    issuances,
+    taxCaps,
+    communityPool
   })
 }
 

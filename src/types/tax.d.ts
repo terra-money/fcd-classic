@@ -8,3 +8,8 @@ interface TaxProceed {
   amount: string
   adjustedAmount: string
 }
+
+interface DenomTaxCap {
+  denom: string // denom name
+  taxCap: string // tax cap for denom
+}

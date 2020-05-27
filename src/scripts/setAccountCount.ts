@@ -1,30 +1,23 @@
 import { init as initORM, AccountEntity } from 'orm'
-import { getRepository, getConnection } from 'typeorm'
-import { get } from 'lodash'
+import { getRepository, getManager, EntityManager } from 'typeorm'
 
-async function updateCount(addr: string) {
-  const connection = getConnection()
-  const queryRunner = connection.createQueryRunner()
-  await queryRunner.startTransaction()
-  try {
-    const lockQuery = `select * from account where address='${addr}' for update`
-    await queryRunner.query(lockQuery)
+async function updateCount(address: string) {
+  await getManager().transaction(async (transactionalEntityManager: EntityManager) => {
+    const accountRepo = transactionalEntityManager.getRepository(AccountEntity)
+    const account = await accountRepo.findOneOrFail({ address }, { lock: { mode: 'pessimistic_write' } })
 
-    const query = `with distinctHashes as (select distinct(hash) from account_tx where \
-      account='${addr}') select count(*) from distinctHashes`
-    const totalCntResult = await queryRunner.query(query)
-    const totalCnt = get(totalCntResult, '0.count', 0)
-    const updateQuery = `update account set txcount=${totalCnt} where address='${addr}'`
-    await queryRunner.query(updateQuery)
+    const query = `
+SELECT COUNT(*) FROM
+  (SELECT DISTINCT(hash)
+    FROM account_tx
+    WHERE account='${address}') t`
 
-    // commit transaction now:
-    await queryRunner.commitTransaction()
-  } catch (err) {
-    await queryRunner.rollbackTransaction()
-  } finally {
-    await queryRunner.release()
-  }
-  return
+    const totalCntResult = await transactionalEntityManager.query(query)
+    const txcount = totalCntResult[0].count
+
+    account.txcount = +txcount
+    await accountRepo.save(account)
+  })
 }
 
 async function main() {
@@ -32,12 +25,13 @@ async function main() {
   const limit = 100
   const accountCnt = await getRepository(AccountEntity).count()
 
-  for (let j = 0; j < Math.ceil(accountCnt / limit); j = j + 1) {
+  for (let j = 0; j < Math.ceil(accountCnt / limit); j += 1) {
     console.log(`Update ${j} Start`)
     const accounts = await getRepository(AccountEntity).find({
       skip: j * limit,
       take: limit
     })
+
     await Promise.all(accounts.map((account) => updateCount(account.address)))
     console.log(`Update ${j} Completed`)
   }
