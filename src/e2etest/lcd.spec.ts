@@ -514,7 +514,7 @@ describe('LCD', () => {
   })
 
   test('getTaxProceeds', async () => {
-    await expect(lcd.getTaxProceeds()).resolves.toContainEqual(coinObject)
+    await expect(lcd.getTaxProceeds()).resolves.toBeArray()
   })
 
   test('getSeigniorageProceeds', async () => {
