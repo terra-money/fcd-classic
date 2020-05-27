@@ -132,7 +132,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /validators/:operatorAddr/delegations Get validator's delegations
+   * @api {get} /staking/validators/:operatorAddr/delegations Get validator's delegations
    * @apiName getValidatorDelegations
    * @apiGroup Staking
    *
@@ -177,7 +177,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /validators/:operatorAddr/claims Get validator's claims
+   * @api {get} /staking/validators/:operatorAddr/claims Get validator's claims
    * @apiName getValidatorClaims
    * @apiGroup Staking
    *
@@ -222,7 +222,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /validators/:operatorAddr/delegators Get validator's delegators
+   * @api {get} /staking/validators/:operatorAddr/delegators Get validator's delegators
    * @apiName getValidatorDelegators
    * @apiGroup Staking
    *
@@ -265,7 +265,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /return Get total staking return
+   * @api {get} /staking/return Get total staking return
    * @apiName getStakingReturn
    * @apiGroup Staking
    *
@@ -279,7 +279,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /:account Get all validators and staking info with account
+   * @api {get} /staking/:account Get all validators and staking info with account
    * @apiName getStaking
    * @apiGroup Staking
    *
@@ -322,7 +322,7 @@ export default class TxController extends KoaController {
     params: {
       account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
     },
-    failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingForAccount(ctx): Promise<void> {
     const { account } = ctx.params
@@ -331,7 +331,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} / Get all validators and staking info
+   * @api {get} /staking Get all validators and staking info
    * @apiName getStaking
    * @apiGroup Staking
    *
@@ -377,7 +377,7 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /return/:operatorAddr Get validator's staking return
+   * @api {get} /staking/return/:operatorAddr Get validator's staking return
    * @apiName getValidatorStakingReturn
    * @apiGroup Staking
    *
@@ -391,7 +391,7 @@ export default class TxController extends KoaController {
     params: {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
-    failure: ErrorCodes.INVALID_ACCOUNT_ADDRESS
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
     const { operatorAddr } = ctx.params

@@ -6,9 +6,9 @@
 * ### Collector(Indexer)
   - Takes block and tx from LCD and stores into the database in a usable form
   - Stores issuance, network and staking information to database every minute
-* ### Validator Scrapper
-  - Collect validator info and store in db
+  - Collect & cache validator info and store in db
   - Calculate validaor daily return
+  - Collect & cache proposal info
 * ### Rest API server
   * Serves data via RESTFul API
 
@@ -86,10 +86,6 @@ module.exports = {
   ```bash
   yarn run coldev
   ```
-* Validator scrapper
-  ```bash
-  yarn run vscoldev
-  ```
 * API
   ```bash
   yarn run dev
@@ -104,10 +100,6 @@ module.exports = {
 * Collector
   ```bash
   yarn run collector
-  ```
-* Validator scrapper
-  ```bash
-  yarn run vscolprod
   ```
 * API
   ```bash

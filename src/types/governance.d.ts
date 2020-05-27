@@ -3,20 +3,29 @@ interface LcdProposalProposer {
   proposer: string
 }
 
+interface Deposit {
+  depositEndTime: string
+  totalDeposit: Coin[]
+  minDeposit: Coin[]
+}
+
+interface ProposalContentValue {
+  title: string
+  description: string
+  tax_rate?: string
+  changes?: {
+    subspace: string
+    key: string
+    value: string
+  }[]
+}
+interface Content {
+  type: string
+  value: ProposalContentValue
+}
+
 interface LcdProposal {
-  content: {
-    type: string
-    value: {
-      title: string
-      description: string
-      tax_rate?: string
-      changes?: {
-        subspace: string
-        key: string
-        value: string
-      }[]
-    }
-  }
+  content: Content
   id: string
   proposal_status: string
   final_tally_result: LcdProposalTallyingParams
@@ -81,6 +90,16 @@ interface TallyingInfo {
   total: string // big int - total staked luna attended on vote
 }
 
+interface VoteSummary {
+  id: string // proposal id
+  distribution: VoteDistribution // vote distribution
+  count: VoteCount // vote count
+  total: string // total amount of luna voted
+  votingEndTime: string // proposal vote ending time in unix
+  stakedLuna: string // total staked luna amount
+  voters?: { [key: string]: string } //
+}
+
 interface ProposalBasic {
   id: string
   type: string
@@ -93,10 +112,6 @@ interface ProposalBasic {
   title: string
   description: string
   status: string
-  deposit?: {
-    depositEndTime: string
-    totalDeposit: Coin[]
-    minDeposit: Coin[]
-  }
+  deposit: Deposit
   vote?: VoteSummary
 }

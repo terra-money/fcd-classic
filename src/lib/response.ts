@@ -7,7 +7,7 @@ const TYPES_TO_HTTP_STATUS_CODES = {
   [ErrorTypes.NO_PERMISSION_ERROR]: 401,
   [ErrorTypes.FORBIDDEN]: 403, // Forbidden
   [ErrorTypes.VALIDATOR_DOES_NOT_EXISTS]: 404,
-  [ErrorTypes.INVALID_ACCOUNT_ADDRESS]: 404,
+  [ErrorTypes.NOT_FOUND_ERROR]: 404,
   [ErrorTypes.TIMEOUT]: 408,
   [ErrorTypes.RATE_LIMIT_ERROR]: 429, // Too Many Requests
   [ErrorTypes.API_ERROR]: 500,
