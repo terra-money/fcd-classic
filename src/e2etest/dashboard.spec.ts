@@ -191,6 +191,18 @@ describe('Dashboard Test', () => {
     expect(body[0].annualizedReturn).toBeDefined()
   })
 
+  test('Test get staking ratio', async () => {
+    const { body } = await agent.get(`/v1/dashboard/staking_ratio`).expect(200)
+
+    expect(body).toBeInstanceOf(Array)
+    expect(body.length).toBeGreaterThan(0)
+
+    expect(body[0]).toMatchObject({
+      datetime: expect.any(Number),
+      stakingRatio: expect.any(Number)
+    })
+  })
+
   test('Test get staking return with count', async () => {
     const { body } = await agent.get(`/v1/dashboard/staking_return?count=${DATA_POINT_COUNT}`).expect(200)
 

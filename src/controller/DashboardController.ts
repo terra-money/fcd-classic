@@ -7,6 +7,7 @@ import {
   getBlockRewards,
   getSeigniorageProceeds,
   getStakingReturn,
+  getStakingRatio,
   getAccountGrowth,
   getActiveAccounts,
   getRegisteredAccounts
@@ -145,6 +146,27 @@ export default class TxController extends KoaController {
   })
   async getStakingReturn(ctx): Promise<void> {
     success(ctx, await getStakingReturn(+ctx.request.query.count))
+  }
+
+  /**
+   * @api {get} /dashboard/staking_ratio Get the historical staking ratio
+   * @apiName getStakingRatio
+   * @apiGroup Dashboard
+   *
+   * @apiParam {number} count number of previous days from today
+   *
+   * @apiSuccess {Object[]} _
+   * @apiSuccess {Number} _.datetime unix timestamp
+   * @apiSuccess {String} _.stakingRatio staking ratio
+   */
+  @Get('/staking_ratio')
+  @Validate({
+    query: {
+      count: Joi.number().default(0).min(0).description('Number days history')
+    }
+  })
+  async getStakingRatio(ctx): Promise<void> {
+    success(ctx, await getStakingRatio(+ctx.request.query.count))
   }
 
   /**
