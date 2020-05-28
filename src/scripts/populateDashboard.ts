@@ -6,10 +6,9 @@ import {
   getBlockRewardsByDay,
   getStakingReturnByDay,
   getTxVolumeByDay,
-  getDateFromDateTime,
   getDailyActiveAccount
 } from 'collector/dashboard'
-import { getQueryDateTime } from 'lib/time'
+import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
 import config from 'config'
 
 async function getDashboard(datetime: Date): Promise<DashboardEntity | undefined> {
