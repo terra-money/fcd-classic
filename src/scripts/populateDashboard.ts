@@ -78,7 +78,6 @@ async function accountCountHistory(): Promise<{
 async function populateDashboard() {
   await initORM()
   const accountGrowth = await accountCountHistory()
-  console.log(accountGrowth)
 
   for (const dateKey of Object.keys(accountGrowth)) {
     const date = startOfDay(dateKey)
