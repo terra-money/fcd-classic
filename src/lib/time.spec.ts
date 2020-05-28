@@ -5,7 +5,8 @@ import {
   dateFromDateString,
   daysBeforeTs,
   getQueryDateTime,
-  getDateRangeOfLastMinute
+  getDateRangeOfLastMinute,
+  getDateFromDateTime
 } from './time'
 
 describe('time', () => {
@@ -43,5 +44,11 @@ describe('time', () => {
     const d = new Date('2020-04-25')
 
     expect(dateFromDateString('2020-04-25').toString()).toBe(addMinutes(d, d.getTimezoneOffset()).toString())
+  })
+
+  test('getDateFromDateTime', () => {
+    const d = new Date('2020-01-30 12:23:11')
+
+    expect(getDateFromDateTime(d)).toBe('2020-01-30')
   })
 })

@@ -1,10 +1,9 @@
 import { subDays, startOfToday, endOfDay } from 'date-fns'
 import { getConnection } from 'typeorm'
 
-import { getDateFromDateTime } from './helpers'
-import { getQueryDateTime } from 'lib/time'
+import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
 
-export interface AccountCountInfo {
+export interface DailyAccountStat {
   totalAccount: number
   activeAccount: number
 }
@@ -28,7 +27,9 @@ async function getTotalAccount(
   }
 }
 
-async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: string; active_account_count: number }[]> {
+export async function getDailyActiveAccount(
+  daysBefore?: number
+): Promise<{ date: string; active_account_count: number }[]> {
   // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
   let subQuery = `SELECT DISTINCT account, DATE(timestamp) AS date FROM account_tx WHERE timestamp < '${getQueryDateTime(
     startOfToday()
@@ -46,7 +47,7 @@ async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: strin
   return result
 }
 
-export async function getAccountCountByDay(daysBefore?: number): Promise<{ [date: string]: AccountCountInfo }> {
+export async function getAccountCountByDay(daysBefore?: number): Promise<{ [date: string]: DailyAccountStat }> {
   const dailyActiveAccount = await getDailyActiveAccount(daysBefore)
   const totalAccount = await Promise.all(dailyActiveAccount.map((item) => getTotalAccount(endOfDay(item.date))))
   const totalAccountMap = totalAccount.reduce((acc, item) => {

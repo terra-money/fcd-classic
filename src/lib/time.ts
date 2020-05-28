@@ -34,3 +34,7 @@ export function dateFromDateString(dateString: string) {
   const dateArray: string[] = YYYY_MM_DD_REGEX.exec(dateString) || []
   return new Date(+dateArray[1], +dateArray[2] - 1, +dateArray[3])
 }
+
+export function getDateFromDateTime(date: Date): string {
+  return format(date, 'YYYY-MM-DD')
+}
