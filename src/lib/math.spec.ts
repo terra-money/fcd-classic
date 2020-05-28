@@ -156,4 +156,7 @@ describe('math', () => {
   test(`getIntegerPortion('-1.1010')`, () => {
     expect(getIntegerPortion('-1.1010')).toBe('-1')
   })
+  test('test div by zero', () => {
+    expect(div('100', '0')).toBe('Infinity')
+  })
 })

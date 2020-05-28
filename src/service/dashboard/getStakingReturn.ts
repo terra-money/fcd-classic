@@ -12,7 +12,7 @@ interface StakingDailyReturn {
   annualizedReturn: string
 }
 
-export async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
+async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
   let requiredPrevDaysHistory
 
   if (count) {
@@ -22,7 +22,7 @@ export async function getStakingReturnUncached(count?: number): Promise<StakingD
   const dashboardHistory = await getDashboardHistory(requiredPrevDaysHistory)
   let movingAvgSum = '0'
   const stakingReturn = dashboardHistory.reduce((retArray, item: DashboardEntity) => {
-    const dailyReturn = div(item.reward, item.avgStaking)
+    const dailyReturn = Number(item.avgStaking) ? div(item.reward, item.avgStaking) : '0'
     movingAvgSum = plus(movingAvgSum, dailyReturn)
 
     if (retArray.length >= MOVING_AVG_WINDOW_IN_DAYS) {
