@@ -1,6 +1,10 @@
 import { getRepository, getConnection } from 'typeorm'
 import { startOfDay, startOfToday } from 'date-fns'
 
+import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
+
+import config from 'config'
+
 import { DashboardEntity, init as initORM } from 'orm'
 import {
   getBlockRewardsByDay,
@@ -8,8 +12,6 @@ import {
   getTxVolumeByDay,
   getDailyActiveAccount
 } from 'collector/dashboard'
-import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
-import config from 'config'
 
 async function getDashboard(datetime: Date): Promise<DashboardEntity | undefined> {
   const dashboard = await getRepository(DashboardEntity).findOne({
