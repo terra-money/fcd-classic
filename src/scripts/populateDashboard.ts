@@ -3,11 +3,11 @@ import { startOfDay, startOfToday } from 'date-fns'
 
 import { DashboardEntity, init as initORM } from 'orm'
 import {
-  getAccountCountByDay,
   getBlockRewardsByDay,
   getStakingReturnByDay,
   getTxVolumeByDay,
-  getDateFromDateTime
+  getDateFromDateTime,
+  getDailyActiveAccount
 } from 'collector/dashboard'
 import { getQueryDateTime } from 'lib/time'
 import config from 'config'
@@ -33,28 +33,14 @@ async function getDailyTotalAccounts(): Promise<{ date: string; total_account_co
   return result
 }
 
-async function getDailyActiveAccounts(): Promise<{ date: string; active_account_count: number }[]> {
-  // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
-  const subQuery = `SELECT DISTINCT account, DATE(timestamp) AS date FROM account_tx WHERE timestamp < '${getQueryDateTime(
-    startOfToday()
-  )}'`
-
-  const rawQuery = `SELECT COUNT(*) AS active_account_count, t.date AS date FROM (${subQuery}) AS t GROUP BY t.date ORDER BY t.date ASC`
-  const result: {
-    date: string
-    active_account_count: number
-  }[] = await getConnection().query(rawQuery)
-  return result
-}
-
-async function accountCountHistory(): Promise<{
+async function getAccountCountHistory(): Promise<{
   [date: string]: {
     activeAccount: number
     totalAccount: number
   }
 }> {
   const totalAccount = await getDailyTotalAccounts()
-  const activeAccount = await getDailyActiveAccounts()
+  const activeAccount = await getDailyActiveAccount()
 
   const totalAccountMap = totalAccount.reduce((acc, info) => {
     const dateKey = getDateFromDateTime(new Date(info.date))
@@ -77,7 +63,7 @@ async function accountCountHistory(): Promise<{
 
 async function populateDashboard() {
   await initORM()
-  const accountGrowth = await accountCountHistory()
+  const accountGrowth = await getAccountCountHistory()
 
   for (const dateKey of Object.keys(accountGrowth)) {
     const date = startOfDay(dateKey)

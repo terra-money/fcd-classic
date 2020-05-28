@@ -28,7 +28,9 @@ async function getTotalAccount(
   }
 }
 
-async function getDailyActiveAccount(daysBefore?: number): Promise<{ date: string; active_account_count: number }[]> {
+export async function getDailyActiveAccount(
+  daysBefore?: number
+): Promise<{ date: string; active_account_count: number }[]> {
   // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
   let subQuery = `SELECT DISTINCT account, DATE(timestamp) AS date FROM account_tx WHERE timestamp < '${getQueryDateTime(
     startOfToday()
