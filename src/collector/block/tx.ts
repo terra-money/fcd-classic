@@ -196,7 +196,7 @@ export async function generateTxEntities(txHashes: string[], height: string, blo
     txEntity.chainId = config.CHAIN_ID
 
     if (txDoc) {
-      txEntity.hash = txDoc.txhash
+      txEntity.hash = txDoc.txhash.toLowerCase()
       txEntity.data = txDoc
       txEntity.timestamp = new Date(txDoc.timestamp)
       txEntity.block = block
