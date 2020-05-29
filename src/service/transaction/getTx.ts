@@ -6,6 +6,6 @@ export async function getTx(txhash: string): Promise<Transaction.LcdTransaction 
     .createQueryBuilder()
     .where(`hash = :hash`, { hash: txhash.toLowerCase() })
     .orWhere(`hash = :hash`, { hash: txhash.toUpperCase() })
-    .getMany()
-  return tx.length ? (tx[0].data as Transaction.LcdTransaction) : undefined
+    .getOne()
+  return tx && (tx[0].data as Transaction.LcdTransaction)
 }
