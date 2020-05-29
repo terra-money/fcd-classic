@@ -106,6 +106,15 @@ module.exports = {
   yarn start
   ```
 
+### Check a single block
+  * Block Explorer
+    ```bash
+      yarn run checkblock block_height
+    ```
+    * Replace `block_height` with check block height
+    * To change network use `LCD_URI` in `config.ts` 
+
+
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements
 1. docker-ce

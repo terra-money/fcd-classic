@@ -18,7 +18,8 @@
     "tracking": "better-npm-run tracking",
     "stability": "better-npm-run stability",
     "doc": "npx apidoc -f \".*\\\\.ts$\" -i src/controller -o apidoc/",
-    "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm"
+    "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
+    "checkblock": "ts-node --files -r tsconfig-paths/register src/scripts/exploreBlock.ts"
   },
   "betterScripts": {
     "api-dev": {
