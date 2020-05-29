@@ -14,7 +14,7 @@ import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
 
-function getTxHashesFromBlock(block): string[] {
+function getTxHashesFromBlock(block: LcdBlock): string[] {
   const numTxs = Number(get(block, 'block.header.num_txs'))
 
   if (!numTxs || numTxs === 0) {
