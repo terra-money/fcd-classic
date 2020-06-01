@@ -48,7 +48,7 @@ export async function collectDashboard() {
         logger.info(`Saved dashboard of day ${dayIt.toISOString()}`)
       }
     } catch (error) {
-      logger.info(`Failed to save dashboard of day ${dayIt.toISOString()}`)
+      logger.error(`Failed to save dashboard of day ${dayIt.toISOString()}`)
       logger.error(error)
     }
   }

@@ -1,11 +1,11 @@
 import { getRepository } from 'typeorm'
-import { startOfToday, subDays } from 'date-fns'
+import { subDays } from 'date-fns'
 
 import { times, div, plus } from 'lib/math'
 import { getDateFromDateTime } from 'lib/time'
 
 import { getPriceHistory } from 'service/dashboard'
-import { getPriceObjKey, convertDbTimestampToDate } from './helpers'
+import { getPriceObjKey, convertDbTimestampToDate, getLatestDateOfReward } from './helpers'
 import { RewardEntity } from 'orm'
 
 // key: date in format YYYY-MM-DD
@@ -15,6 +15,7 @@ interface RewardByDateMap {
 }
 
 export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
+  const latestDate = await getLatestDateOfReward()
   const queryBuilder = getRepository(RewardEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
@@ -23,10 +24,10 @@ export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardB
     .groupBy('date')
     .addGroupBy('denom')
     .orderBy('date', 'ASC')
-    .where('datetime < :today', { today: startOfToday() })
+    .where('datetime < :today', { today: latestDate })
 
   if (daysBefore) {
-    queryBuilder.where('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+    queryBuilder.where('datetime >= :from', { from: subDays(latestDate, daysBefore) })
   }
 
   const rewards: {

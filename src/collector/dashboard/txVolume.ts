@@ -1,9 +1,9 @@
 import { getRepository } from 'typeorm'
-import { startOfToday, subDays } from 'date-fns'
+import { subDays } from 'date-fns'
 
 import { getDateFromDateTime } from 'lib/time'
 
-import { convertDbTimestampToDate } from './helpers'
+import { convertDbTimestampToDate, getLatestDateOfNetwork } from './helpers'
 import { NetworkEntity } from 'orm'
 
 interface TxVolumeByDateDenom {
@@ -11,18 +11,20 @@ interface TxVolumeByDateDenom {
 }
 
 export async function getTxVolumeByDay(daysBefore?: number): Promise<TxVolumeByDateDenom> {
+  const latestDate = await getLatestDateOfNetwork()
+
   const queryBuilder = getRepository(NetworkEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
     .addSelect('denom', 'denom')
     .addSelect('SUM(txvolume)', 'tx_volume')
-    .where('datetime < :today', { today: startOfToday() })
+    .where('datetime < :today', { today: latestDate })
     .groupBy('date')
     .addGroupBy('denom')
     .orderBy('date', 'DESC')
 
   if (daysBefore) {
-    queryBuilder.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+    queryBuilder.andWhere('datetime >= :from', { from: subDays(latestDate, daysBefore) })
   }
 
   const txs: {

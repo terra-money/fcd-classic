@@ -1,12 +1,12 @@
 import { getRepository } from 'typeorm'
-import { startOfToday, subDays } from 'date-fns'
+import { subDays } from 'date-fns'
 
 import * as lcd from 'lib/lcd'
 import { times, div, plus } from 'lib/math'
 import { getDateFromDateTime } from 'lib/time'
 
 import { RewardEntity, GeneralInfoEntity } from 'orm'
-import { convertDbTimestampToDate, getPriceObjKey } from './helpers'
+import { convertDbTimestampToDate, getPriceObjKey, getLatestDateOfGeneralInfo, getLatestDateOfReward } from './helpers'
 import { getPriceHistory } from 'service/dashboard'
 
 interface DailyReturnInfo {
@@ -22,9 +22,18 @@ interface DailyStakingInfo {
   avgStaking: string // bigint
 }
 
-export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
-  const { issuance } = await lcd.getIssuanceByDenom('uluna')
+interface RewardsByDateReturn {
+  date: string
+  denom: string
+  tax_sum: string
+  gas_sum: string
+  oracle_sum: string
+  reward_sum: string
+  commission_sum: string
+}
 
+async function getRewardsByDate(daysBefore?: number): Promise<RewardsByDateReturn[]> {
+  const latestDate = await getLatestDateOfReward()
   const rewardQb = getRepository(RewardEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
@@ -37,16 +46,25 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
     .groupBy('date')
     .addGroupBy('denom')
     .orderBy('date', 'ASC')
-    .where('datetime < :today', { today: startOfToday() })
+    .where('datetime < :today', { today: latestDate })
 
   if (daysBefore) {
-    rewardQb.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+    rewardQb.andWhere('datetime >= :from', { from: subDays(latestDate, daysBefore) })
   }
 
-  const rewards = await rewardQb.getRawMany()
+  const rewards: RewardsByDateReturn[] = await rewardQb.getRawMany()
 
-  const priceObj = await getPriceHistory(daysBefore)
+  return rewards
+}
 
+async function getAvgBondedTokensByDate(
+  daysBefore?: number
+): Promise<{
+  [date: string]: string
+}> {
+  const latestDate = await getLatestDateOfGeneralInfo()
+
+  const { issuance } = await lcd.getIssuanceByDenom('uluna')
   const stakingQb = getRepository(GeneralInfoEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
@@ -54,10 +72,10 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
     .addSelect('AVG(bonded_tokens)', 'avg_bonded_tokens')
     .groupBy('date')
     .orderBy('date', 'DESC')
-    .where('datetime < :today', { today: startOfToday() })
+    .where('datetime < :today', { today: latestDate })
 
   if (daysBefore) {
-    stakingQb.andWhere('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
+    stakingQb.andWhere('datetime >= :from', { from: subDays(latestDate, daysBefore) })
   }
 
   const bondedTokens = await stakingQb.getRawMany()
@@ -66,6 +84,16 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
     acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(issuance, item.avg_staking_ratio)
     return acc
   }, {})
+  return bondedTokensObj
+}
+
+async function getRewadsInLunaByDate(
+  daysBefore?: number
+): Promise<{
+  [date: string]: DailyReturnInfo
+}> {
+  const rewards = await getRewardsByDate(daysBefore)
+  const priceObj = await getPriceHistory(daysBefore)
 
   const rewardObj: {
     [date: string]: DailyReturnInfo
@@ -99,6 +127,13 @@ export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [dat
 
     return acc
   }, {})
+  return rewardObj
+}
+
+export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
+  const bondedTokensObj = await getAvgBondedTokensByDate(daysBefore)
+  const rewardObj = await getRewadsInLunaByDate(daysBefore)
+
   const stakingReturns = Object.keys(rewardObj).reduce((acc, date) => {
     const staked = bondedTokensObj[date]
 
