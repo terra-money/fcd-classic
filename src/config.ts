@@ -19,7 +19,7 @@ const config = {
   ORM: 'default',
   PORT: SERVER_PORT ? +SERVER_PORT : 3060,
   CHAIN_ID: CHAIN_ID || 'soju-0014',
-  LCD_URI: LCD_URI || 'https://lcd.terra.dev',
+  LCD_URI: LCD_URI || 'https://soju-lcd.terra.dev',
   FCD_URI: FCD_URI || 'https://soju-fcd.terra.dev',
   RPC_URI: RPC_URI || 'http://15.164.46.6:26657',
   BYPASS_URI: BYPASS_URI || 'https://soju-lcd.terra.dev',
