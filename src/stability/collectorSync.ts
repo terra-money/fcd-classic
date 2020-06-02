@@ -6,7 +6,7 @@ import { BlockEntity, TxEntity } from 'orm'
 import { getRepository, FindConditions } from 'typeorm'
 import config from 'config'
 import {
-  COLLECTOR_PM2_ID,
+  COLLECTOR_PM2_PROCESS_NAME,
   CHAIN_ID,
   BLOCK_SYNC_RESTART_THRESHOLD,
   BLOCK_SYNC_ALERT_THRESHOLD,
@@ -34,7 +34,7 @@ const alert = async (errorType: string, title: string): Promise<void> => {
 
 const restartCollector = (now): void => {
   if (!restartTimestamp || now - restartTimestamp > COLLECTOR_RESTART_TIME_GAP) {
-    exec(`pm2 restart ${COLLECTOR_PM2_ID}`, (err, stdout) => {
+    exec(`pm2 restart ${COLLECTOR_PM2_PROCESS_NAME}`, (err, stdout) => {
       console.log(`Collector has restarted, ${stdout}`)
       restartTimestamp = now
     })

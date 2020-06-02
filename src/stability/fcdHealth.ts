@@ -1,5 +1,5 @@
 import got from 'got'
-import { FCD_PORT, FCD_PM2_ID } from './constants'
+import { FCD_PORT, FCD_PM2_PROCESS_NAME } from './constants'
 import { create, update } from './pagerduty'
 import { exec } from 'child_process'
 import { get } from 'lodash'
@@ -51,7 +51,7 @@ export default async (): Promise<void> => {
 
   // restart fcd if down condition persists for 5 minutes
   if (!aliveNow && downTimestamp && now - downTimestamp > 1000 * 60 * 5) {
-    exec(`pm2 restart ${FCD_PM2_ID}`, () => {
+    exec(`pm2 restart ${FCD_PM2_PROCESS_NAME}`, () => {
       downTimestamp = now
     })
   }
