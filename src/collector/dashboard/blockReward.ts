@@ -3,7 +3,7 @@ import { getDateFromDateTime } from 'lib/time'
 
 import { getPriceHistory } from 'service/dashboard'
 import { getPriceObjKey } from './helpers'
-import { getRewardsSumByDateDenom } from './stakingReturn'
+import { getRewardsSumByDateDenom } from './rewardsInfo'
 
 // key: date in format YYYY-MM-DD
 // value: big int string format
