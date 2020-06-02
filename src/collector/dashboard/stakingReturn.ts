@@ -32,7 +32,7 @@ interface RewardsByDateReturn {
   commission_sum: string
 }
 
-async function getRewardsByDate(daysBefore?: number): Promise<RewardsByDateReturn[]> {
+export async function getRewardsSumByDateDenom(daysBefore?: number): Promise<RewardsByDateReturn[]> {
   const latestDate = await getLatestDateOfReward()
   const rewardQb = getRepository(RewardEntity)
     .createQueryBuilder()
@@ -92,7 +92,7 @@ async function getRewadsInLunaByDate(
 ): Promise<{
   [date: string]: DailyReturnInfo
 }> {
-  const rewards = await getRewardsByDate(daysBefore)
+  const rewards = await getRewardsSumByDateDenom(daysBefore)
   const priceObj = await getPriceHistory(daysBefore)
 
   const rewardObj: {
