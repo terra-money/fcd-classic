@@ -22,8 +22,8 @@ async function getTotalActiveAccountUncached(daysBefore?: number): Promise<numbe
 
 const getTotalActiveAccount = memoizee(getTotalActiveAccountUncached, {
   promise: true,
-  maxAge: 60 * 10 * 1000,
-  preFetch: true
+  maxAge: 60 * 60 * 1000, // 1 hour cache
+  preFetch: 0.75 // fetch again after 45 mins
 })
 
 export default async function getActiveAccounts(daysBefore?: number): Promise<AccountStatReturn> {

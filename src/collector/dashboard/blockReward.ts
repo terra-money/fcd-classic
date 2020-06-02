@@ -1,12 +1,9 @@
-import { getRepository } from 'typeorm'
-import { startOfToday, subDays } from 'date-fns'
-
 import { times, div, plus } from 'lib/math'
 import { getDateFromDateTime } from 'lib/time'
 
 import { getPriceHistory } from 'service/dashboard'
-import { getPriceObjKey, convertDbTimestampToDate } from './helpers'
-import { RewardEntity } from 'orm'
+import { getPriceObjKey } from './helpers'
+import { getRewardsSumByDateDenom } from './rewardsInfo'
 
 // key: date in format YYYY-MM-DD
 // value: big int string format
@@ -15,25 +12,7 @@ interface RewardByDateMap {
 }
 
 export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardByDateMap> {
-  const queryBuilder = getRepository(RewardEntity)
-    .createQueryBuilder()
-    .select(convertDbTimestampToDate('datetime'), 'date')
-    .addSelect('denom', 'denom')
-    .addSelect('SUM(tax)', 'sum_reward')
-    .groupBy('date')
-    .addGroupBy('denom')
-    .orderBy('date', 'ASC')
-    .where('datetime < :today', { today: startOfToday() })
-
-  if (daysBefore) {
-    queryBuilder.where('datetime >= :from', { from: subDays(startOfToday(), daysBefore) })
-  }
-
-  const rewards: {
-    date: Date
-    denom: string
-    sum_reward: string
-  }[] = await queryBuilder.getRawMany()
+  const rewards = await getRewardsSumByDateDenom(daysBefore)
 
   const priceObj = await getPriceHistory(daysBefore)
 
@@ -47,15 +26,15 @@ export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardB
     // Convert each coin value as KRT
     const reward =
       item.denom === 'ukrw'
-        ? item.sum_reward
-        : item.denom === 'luna'
-        ? times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')])
+        ? item.tax_sum
+        : item.denom === 'uluna'
+        ? times(item.tax_sum, priceObj[getPriceObjKey(item.date, 'ukrw')])
         : div(
-            times(item.sum_reward, priceObj[getPriceObjKey(item.date, 'ukrw')]),
+            times(item.tax_sum, priceObj[getPriceObjKey(item.date, 'ukrw')]),
             priceObj[getPriceObjKey(item.date, item.denom)]
           )
 
-    const key = getDateFromDateTime(item.date)
+    const key = getDateFromDateTime(new Date(item.date))
 
     if (acc[key]) {
       acc[key] = plus(acc[key], reward)

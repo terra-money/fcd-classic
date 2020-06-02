@@ -1,5 +1,5 @@
 import got from 'got'
-import { LCD_PORT, FCD_PM2_ID } from './constants'
+import { LCD_PORT, FCD_PM2_PROCESS_NAME } from './constants'
 import { create, update } from './pagerduty'
 import { exec } from 'child_process'
 import { get } from 'lodash'
@@ -21,7 +21,7 @@ const resolve = async (): Promise<void> => {
   incidentId = undefined
 }
 
-const fcdHealthCheck = async (): Promise<boolean> => {
+const lcdNodeHealthCheck = async (): Promise<boolean> => {
   return got
     .get(`http://localhost:${LCD_PORT}/node_info`)
     .then((res) => {
@@ -34,7 +34,7 @@ const fcdHealthCheck = async (): Promise<boolean> => {
 }
 
 export default async (): Promise<void> => {
-  const aliveNow = await fcdHealthCheck()
+  const aliveNow = await lcdNodeHealthCheck()
   console.log(`fcd alive: ${aliveNow}`)
   const now = Date.now()
 
@@ -50,7 +50,7 @@ export default async (): Promise<void> => {
 
   // restart fcd if down condition persists for 5 minutes
   if (!aliveNow && downTimestamp && now - downTimestamp > 1000 * 60 * 5) {
-    exec(`pm2 restart ${FCD_PM2_ID}`, () => {
+    exec(`pm2 restart ${FCD_PM2_PROCESS_NAME}`, () => {
       downTimestamp = now
     })
   }

@@ -1,7 +1,8 @@
-import { subDays, startOfToday, endOfDay } from 'date-fns'
+import { subDays, endOfDay } from 'date-fns'
 import { getConnection } from 'typeorm'
 
 import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
+import { getLatestDateOfAccountTx } from './helpers'
 
 export interface DailyAccountStat {
   totalAccount: number
@@ -30,13 +31,15 @@ async function getTotalAccount(
 export async function getDailyActiveAccount(
   daysBefore?: number
 ): Promise<{ date: string; active_account_count: number }[]> {
+  const latestDate = await getLatestDateOfAccountTx()
+
   // EXP: we are using count (SELECT DISTINCT account FROM x) rather COUNT(DISTINCT account) because its is 10 times faster.
   let subQuery = `SELECT DISTINCT account, DATE(timestamp) AS date FROM account_tx WHERE timestamp < '${getQueryDateTime(
-    startOfToday()
+    latestDate
   )}'`
 
   if (daysBefore) {
-    subQuery = `${subQuery} and timestamp >= '${getQueryDateTime(subDays(startOfToday(), daysBefore))}'`
+    subQuery = `${subQuery} and timestamp >= '${getQueryDateTime(subDays(latestDate, daysBefore))}'`
   }
 
   const rawQuery = `SELECT COUNT(*) AS active_account_count, t.date AS date FROM (${subQuery}) AS t GROUP BY t.date ORDER BY t.date ASC`
