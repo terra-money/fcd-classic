@@ -1,11 +1,17 @@
 import { exec } from 'child_process'
-import Bluebird from 'bluebird'
+import * as Bluebird from 'bluebird'
 import got from 'got'
 import { get } from 'lodash'
 import { BlockEntity, TxEntity } from 'orm'
 import { getRepository, FindConditions } from 'typeorm'
 import config from 'config'
-import { COLLECTOR_PM2_ID, CHAIN_ID, BLOCK_SYNC_RESTART_THRESHOLD, BLOCK_SYNC_ALERT_THRESHOLD } from './constants'
+import {
+  COLLECTOR_PM2_ID,
+  CHAIN_ID,
+  BLOCK_SYNC_RESTART_THRESHOLD,
+  BLOCK_SYNC_ALERT_THRESHOLD,
+  COLLECTOR_RESTART_TIME_GAP
+} from './constants'
 import { create, update } from './pagerduty'
 
 const incidentId = {
@@ -27,7 +33,7 @@ const alert = async (errorType: string, title: string): Promise<void> => {
 }
 
 const restartCollector = (now): void => {
-  if (!restartTimestamp || now - restartTimestamp > 30000) {
+  if (!restartTimestamp || now - restartTimestamp > COLLECTOR_RESTART_TIME_GAP) {
     exec(`pm2 restart ${COLLECTOR_PM2_ID}`, (err, stdout) => {
       console.log(`Collector has restarted, ${stdout}`)
       restartTimestamp = now
@@ -44,13 +50,14 @@ const resolve = async (errorType: string): Promise<void> => {
 }
 
 const isBlockCorrectlySynced = async (lastSavedBlock: BlockEntity): Promise<boolean> => {
+  console.log('correctly synced')
   const latestBlock = await got.get(`${config.LCD_URI}/blocks/latest`).json()
   const latestHeight = get(latestBlock, 'block.header.height')
   const syncGap = latestHeight - lastSavedBlock.height
 
   console.log(`height: ${latestHeight}, sync gap: ${syncGap}`)
 
-  if (syncGap > BLOCK_SYNC_RESTART_THRESHOLD) {
+  if (syncGap > BLOCK_SYNC_RESTART_THRESHOLD && (await collectorHalted())) {
     const now = Date.now()
     restartCollector(now)
     await Bluebird.delay(10000)
@@ -73,7 +80,32 @@ const isTxCorrectlySynced = async (lastSavedBlock: BlockEntity): Promise<boolean
   return blockNumTx === savedNumTx
 }
 
+async function getLatestBlockFromDb(): Promise<BlockEntity | undefined> {
+  const where: FindConditions<BlockEntity> = {
+    chainId: CHAIN_ID
+  }
+  const latestBlock = await getRepository(BlockEntity).findOne({
+    where,
+    order: {
+      height: 'DESC'
+    }
+  })
+  return latestBlock
+}
+
+async function collectorHalted(): Promise<boolean> {
+  const sleepTimeToWait = 30000
+  const blockFirst = await getLatestBlockFromDb()
+  await Bluebird.delay(sleepTimeToWait)
+  const blockAfterThirtySec = await getLatestBlockFromDb()
+  if (!blockFirst || !blockAfterThirtySec) {
+    return true
+  }
+  return blockFirst.height === blockAfterThirtySec.height
+}
+
 export default async (): Promise<void> => {
+  console.log('call collector sync')
   const where: FindConditions<BlockEntity> = {
     chainId: CHAIN_ID
   }
@@ -85,7 +117,6 @@ export default async (): Promise<void> => {
     },
     take: 3
   })
-
   if (!savedBlocks || savedBlocks.length < 3) {
     return
   }

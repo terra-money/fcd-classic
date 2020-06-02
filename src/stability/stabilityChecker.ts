@@ -10,7 +10,7 @@ const jobs = [
   },
   {
     method: collectorSync,
-    cron: '*/5 * * * * *'
+    cron: '0 * * * * *'
   }
 ]
 
