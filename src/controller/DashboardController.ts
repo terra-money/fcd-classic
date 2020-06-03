@@ -22,14 +22,16 @@ export default class TxController extends KoaController {
    * @apiName getDashboard
    * @apiGroup Dashboard
    *
-   * @apiSuccess {Object} price Current oracle price
-   * @apiSuccess {string} price.ukrw ukrw amount
-   * @apiSuccess {string} price.uluna uluna amount
-   * @apiSuccess {string} price.umnt umnt amount
-   * @apiSuccess {string} price.usdr usdr amount
-   * @apiSuccess {string} price.uusd uusd amount
+   * @apiSuccess {Object} prices Current oracle price
+   * @apiSuccess {string} prices.ukrw ukrw amount
+   * @apiSuccess {string} prices.uluna uluna amount
+   * @apiSuccess {string} prices.umnt umnt amount
+   * @apiSuccess {string} prices.usdr usdr amount
+   * @apiSuccess {string} prices.uusd uusd amount
    * @apiSuccess {String} taxRate Current tax rate
-   * @apiSuccess {Object} taxCaps Current tax cap
+   * @apiSuccess {Object[]} taxCaps Current tax cap
+   * @apiSuccess {string} taxCaps.denom denom name
+   * @apiSuccess {string} taxCaps.taxCap tax cap amount
    * @apiSuccess {Object} issuances Total issuances of coins
    * @apiSuccess {string} issuances.ukrw ukrw amount
    * @apiSuccess {string} issuances.uluna uluna amount
@@ -37,7 +39,9 @@ export default class TxController extends KoaController {
    * @apiSuccess {string} issuances.usdr usdr amount
    * @apiSuccess {string} issuances.uusd uusd amount
    * @apiSuccess {Object} stakingPool Current state of the staking pool
-   * @apiSuccess {Object} stakingPool Current state of the staking pool
+   * @apiSuccess {string} stakingPool.bondedTokens bonded token amount
+   * @apiSuccess {string} stakingPool.notBondedTokens not bonded token amount
+   * @apiSuccess {string} stakingPool.stakingRatio staking ratio
    * @apiSuccess {Object} communityPool Current state of the community pool
    * @apiSuccess {string} communityPool.ukrw ukrw amount
    * @apiSuccess {string} communityPool.uluna uluna amount
@@ -59,7 +63,7 @@ export default class TxController extends KoaController {
    *
    * @apiSuccess {Object[]} cumulative
    * @apiSuccess {string} cumulative.denom denom name
-   * @apiSuccess {Object[]} cumulative.data.data history data
+   * @apiSuccess {Object[]} cumulative.data history data
    * @apiSuccess {number} cumulative.data.datetime unix time
    * @apiSuccess {string} cumulative.data.txVolume time wise cumulative tx volume
    *
@@ -132,10 +136,10 @@ export default class TxController extends KoaController {
    *
    * @apiParam {number} count number of previous days history from today
    *
-   * @apiSuccess {Object[]} - return history
-   * @apiSuccess {Number} -.datetime unix timestamp
-   * @apiSuccess {Number} -.dailyReturn daily return
-   * @apiSuccess {Number} -.annualizedReturn annualize return
+   * @apiSuccess {Object[]} segniorage return history
+   * @apiSuccess {Number} segniorage.datetime unix timestamp
+   * @apiSuccess {Number} segniorage.dailyReturn daily return
+   * @apiSuccess {Number} segniorage.annualizedReturn annualize return
    *
    */
   @Get('/staking_return')

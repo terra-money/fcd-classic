@@ -106,6 +106,16 @@ module.exports = {
   yarn start
   ```
 
+### Documentation
+* apiDoc (https://apidocjs.com)
+  - Generate by `yarn run apidoc`
+  - Access UI from: `http://localhost:3060/apidoc`
+* Swagger 2.0 (https://swagger.io)
+  - Generate by `yarn run swagger`
+  - Access UI from: `http://localhost:3060/swagger`
+  - Access the definition from: `http://localhost:3060/static/swagger.json` 
+  - Use `yarn run swagger --host hostname` for different host name
+
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements
 1. docker-ce

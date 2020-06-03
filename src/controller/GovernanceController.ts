@@ -25,6 +25,8 @@ export default class GovernanceController extends KoaController {
    * @apiSuccess {Object[]} proposals
    * @apiSuccess {string} proposals.id
    * @apiSuccess {Object} proposals.proposer Proposer information
+   * @apiSuccess {string} proposals.proposer.accountAddress Proposer address
+   * @apiSuccess {string} proposals.proposer.moniker Proposer moniker
    * @apiSuccess {string} proposals.type Proposal type
    * @apiSuccess {string} proposals.status Proposal status
    * @apiSuccess {string} proposals.submitTime
@@ -33,10 +35,19 @@ export default class GovernanceController extends KoaController {
    * @apiSuccess {Object} proposals.deposit
    * @apiSuccess {string} proposals.deposit.depositEndTime
    * @apiSuccess {Object[]} proposals.deposit.totalDeposit
+   * @apiSuccess {string} proposals.deposit.totalDeposit.depositEndTime
    * @apiSuccess {Object} proposals.vote
    * @apiSuccess {string} proposals.vote.id
    * @apiSuccess {object} proposals.vote.distribution Distribution of vote
+   * @apiSuccess {string} proposals.vote.distribution.Yes vote amount
+   * @apiSuccess {string} proposals.vote.distribution.No vote amount
+   * @apiSuccess {string} proposals.vote.distribution.NoWithVeto vote amount
+   * @apiSuccess {string} proposals.vote.distribution.Abstain vote amount
    * @apiSuccess {object} proposals.vote.count
+   * @apiSuccess {string} proposals.vote.count.Yes vote count
+   * @apiSuccess {string} proposals.vote.count.No vote count
+   * @apiSuccess {string} proposals.vote.count.NoWithVeto vote count
+   * @apiSuccess {string} proposals.vote.count.Abstain vote count
    * @apiSuccess {string} proposals.vote.total Total voted luna
    * @apiSuccess {string} proposals.vote.votingEndTime
    * @apiSuccess {string} proposals.vote.stakedLuna Total staked luna
@@ -65,6 +76,9 @@ export default class GovernanceController extends KoaController {
    *
    * @apiSuccess {string} id
    * @apiSuccess {Object} proposer Proposer information
+   * @apiSuccess {string} proposer.accountAddress Proposer information
+   * @apiSuccess {string} [proposer.moniker] Proposer information
+   * @apiSuccess {string} [proposer.operatorAddress] Proposer information
    * @apiSuccess {string} type Proposal type
    * @apiSuccess {string} status Proposal status
    * @apiSuccess {string} submitTime
@@ -72,11 +86,24 @@ export default class GovernanceController extends KoaController {
    * @apiSuccess {string} description
    * @apiSuccess {Object} deposit
    * @apiSuccess {string} deposit.depositEndTime
-   * @apiSuccess {Object[]} deposit.totalDeposit
+   * @apiSuccess {Object[]} deposit.totalDeposit total deposit info
+   * @apiSuccess {string} deposit.totalDeposit.denom denom name
+   * @apiSuccess {string} deposit.totalDeposit.amount denom amount
+   * @apiSuccess {Object[]} deposit.minDeposit Minimum deposit
+   * @apiSuccess {string} deposit.minDeposit.denom Minimum deposit demon
+   * @apiSuccess {string} deposit.minDeposit.amount Minimum deposit amount
    * @apiSuccess {Object} vote
    * @apiSuccess {string} vote.id
    * @apiSuccess {object} vote.distribution Distribution of vote
+   * @apiSuccess {string} vote.distribution.Yes vote amount
+   * @apiSuccess {string} vote.distribution.No vote amount
+   * @apiSuccess {string} vote.distribution.NoWithVeto vote amount
+   * @apiSuccess {string} vote.distribution.Abstain vote amount
    * @apiSuccess {object} vote.count
+   * @apiSuccess {string} vote.count.Yes vote count
+   * @apiSuccess {string} vote.count.No vote count
+   * @apiSuccess {string} vote.count.NoWithVeto vote count
+   * @apiSuccess {string} vote.count.Abstain vote count
    * @apiSuccess {string} vote.total Total voted luna
    * @apiSuccess {string} vote.votingEndTime
    * @apiSuccess {string} vote.stakedLuna Total staked luna
@@ -84,7 +111,12 @@ export default class GovernanceController extends KoaController {
    * @apiSuccess {string} validatorsNotVoted.operatorAddress
    * @apiSuccess {string} validatorsNotVoted.consensusPubKey
    * @apiSuccess {object} validatorsNotVoted.description
-   * @apiSuccess {object} validatorsNotVoted.selfDelegation
+   * @apiSuccess {string} validatorsNotVoted.description.moniker
+   * @apiSuccess {string} validatorsNotVoted.description.identity
+   * @apiSuccess {string} validatorsNotVoted.description.website
+   * @apiSuccess {string} validatorsNotVoted.description.details
+   * @apiSuccess {string} validatorsNotVoted.description.profileIcon
+   *
    */
   @Get('/proposals/:proposalId')
   @Validate({
@@ -122,9 +154,9 @@ export default class GovernanceController extends KoaController {
    * @apiSuccess {string} deposits.deposit.denom Deposit denomination
    *
    * @apiSuccess {Object[]} deposits.depositor Depositor information
-   * @apiSuccess {string} deposits.deposit.accountAddress
-   * @apiSuccess {string} deposits.deposit.operatorAddress
-   * @apiSuccess {string} deposits.deposit.moniker
+   * @apiSuccess {string} deposits.depositor.accountAddress
+   * @apiSuccess {string} deposits.depositor.operatorAddress
+   * @apiSuccess {string} deposits.depositor.moniker
    */
   @Get('/proposals/:proposalId/deposits')
   @Validate({

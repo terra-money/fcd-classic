@@ -51,10 +51,10 @@ export default class TreasuryController extends KoaController {
    *
    * @apiParam {string} denom Coin denomination
    *
-   * @apiSuccess {Object[]}  -       List of accounts
-   * @apiSuccess {Number}    -.account
-   * @apiSuccess {String}    -.amount
-   * @apiSuccess {String}    -.percentage
+   * @apiSuccess {Object[]}  accounts List of accounts
+   * @apiSuccess {Number}    accounts.account
+   * @apiSuccess {String}    accounts.amount
+   * @apiSuccess {String}    accounts.percentage
    */
   @Get('/richlist/:denom')
   @Validate({

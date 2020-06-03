@@ -49,11 +49,11 @@ export default class TxController extends KoaController {
    *
    * @apiParam {string} denom Coin denomination
    *
-   * @apiSuccess {Object[]} -
-   * @apiSuccess {string} -.denom Coin denomination
-   * @apiSuccess {string} -.swaprate Current swap rate
-   * @apiSuccess {string} -.oneDayVariation
-   * @apiSuccess {string} -.oneDayVariationRate
+   * @apiSuccess {Object[]} rates
+   * @apiSuccess {string} rates.denom Coin denomination
+   * @apiSuccess {string} rates.swaprate Current swap rate
+   * @apiSuccess {string} rates.oneDayVariation
+   * @apiSuccess {string} rates.oneDayVariationRate
    */
   @Get('/swaprate/:base')
   @Validate({
