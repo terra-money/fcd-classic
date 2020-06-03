@@ -1212,7 +1212,7 @@ apidoc-core@0.11.1:
 
 "apidoc-swagger@git+https://github.com/terra-project/apidoc-swagger.git":
   version "0.2.3"
-  resolved "git+https://github.com/terra-project/apidoc-swagger.git#9a520c226bb4d9259915897575a2c47ec9c02497"
+  resolved "git+https://github.com/terra-project/apidoc-swagger.git#923e1989357fc97077b79d07651f95aa776f36bd"
   dependencies:
     apidoc-core "0.11.1"
     eslint "^7.1.0"
@@ -4952,9 +4952,9 @@ merge-stream@^2.0.0:
   integrity sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==
 
 merge2@^1.3.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/merge2/-/merge2-1.4.0.tgz#bdd9881be97140bb706cd4ff0fa4dc95855dbd60"
-  integrity sha512-jxzaaEHzHbWqSj2fn02NhgvJSYT6RQYNGBDh4xL8ynXzzEhrtolRQ5AKCNXX99mX/JbwD9uI6gK5Y1dzZcUUtQ==
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/merge2/-/merge2-1.4.1.tgz#4368892f885e907455a6fd7dc55c0c9d404990ae"
+  integrity sha512-8q7VEgMJW4J8tcfVPy8g09NcQwZdbwFEqhe/WZkoIzjn/3TGDwtOCYtXGxA3O8tPzpczCCDgv+P2P5y00ZJOOg==
 
 methods@1.1.2, methods@^1.0.1, methods@^1.1.1, methods@^1.1.2:
   version "1.1.2"

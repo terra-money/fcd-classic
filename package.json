@@ -19,7 +19,7 @@
     "stability": "better-npm-run stability",
     "doc": "npx apidoc -f \".*\\\\.ts$\" -i src/controller -o apidoc/",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "npx apidoc-swagger -i src/controller -o apidoc/"
+    "swagger": "npx apidoc-swagger -i src/controller -o apidoc/ --basepath /v1"
   },
   "betterScripts": {
     "api-dev": {
