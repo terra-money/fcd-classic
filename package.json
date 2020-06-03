@@ -17,9 +17,9 @@
     "vscolprod": "better-npm-run val-col-prod",
     "tracking": "better-npm-run tracking",
     "stability": "better-npm-run stability",
-    "doc": "npx apidoc -f \".*\\\\.ts$\" -i src/controller -o apidoc/",
+    "apidoc": "npx apidoc -f \".*\\\\.ts$\" -i src/controller -o static/",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "npx apidoc-swagger -i src/controller -o apidoc/ --basepath /v1"
+    "swagger": "npx apidoc-swagger -i src/controller -o static/ --basepath /v1"
   },
   "betterScripts": {
     "api-dev": {

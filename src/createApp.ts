@@ -21,10 +21,10 @@ const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}t
 const API_VERSION_PREFIX = '/v1'
 
 export default async (): Promise<Koa> => {
-  // apidoc
-  const doc = new Koa()
-  doc.use(addTrailingSlashes()).use(
-    serve(path.resolve(__dirname, '..', 'apidoc'), {
+  // static
+  const staticFiles = new Koa()
+  staticFiles.use(addTrailingSlashes()).use(
+    serve(path.resolve(__dirname, '..', 'static'), {
       maxage: 86400 * 1000
     })
   )
@@ -34,7 +34,7 @@ export default async (): Promise<Koa> => {
     koaSwagger({
       routePrefix: '/',
       swaggerOptions: {
-        url: './../apidoc/swagger.json'
+        url: '/static/swagger.json'
       }
     })
   )
@@ -46,7 +46,8 @@ export default async (): Promise<Koa> => {
   app
     .use(morgan('common'))
     .use(helmet())
-    .use(mount('/apidoc', doc))
+    .use(mount('/static', staticFiles))
+    .use(mount('/apidoc', staticFiles))
     .use(mount('/swagger', swagger))
     .use(errorHandler(error))
     .use(async (ctx, next) => {

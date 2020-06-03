@@ -107,13 +107,14 @@ module.exports = {
   ```
 
 ### Documentation
-* api doc
-  - `yarn run doc` will generate the apidoc
-  - `http://localhost:3060/apidoc` will serve the doc
-* swagger
-  - `yarn run swagger` will generate the swagger.json
-  - `http://localhost:3060/swagger` will serve the swagger ui
-  - use ``yarn run swagger --host hostname`` for different host name
+* apiDoc (https://apidocjs.com)
+  - Generate by `yarn run apidoc`
+  - Access UI from: `http://localhost:3060/apidoc`
+* Swagger 2.0 (https://swagger.io)
+  - Generate by `yarn run swagger`
+  - Access UI from: `http://localhost:3060/swagger`
+  - Access the definition from: `http://localhost:3060/static/swagger.json` 
+  - Use `yarn run swagger --host hostname` for different host name
 
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements
