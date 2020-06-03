@@ -192,9 +192,42 @@ export default class TransactionController extends KoaController {
    * @apiName postTxs
    * @apiGroup Transactions
    *
-   * @apiParam {Object} body request object
+   * @apiParam {Object}   tx request tx must be signed
+   * @apiParam {string[]} tx.msg tx message
+   * @apiParam {Object}   tx.fee tx fee
+   * @apiParam {string}   tx.fee.gas tx gas
+   * @apiParam {Object[]}   tx.fee.amount tx gas amount
+   * @apiParam {string}   tx.fee.amount.denom tx gas amount
+   * @apiParam {string}   tx.fee.amount.amount tx gas amount
+   * @apiParam {Object}   tx.signature tx signature
+   * @apiParam {string}   tx.signature.signature tx signature
+   * @apiParam {Object}   tx.signature.pub_key tx signature
+   * @apiParam {string}   tx.signature.pub_key.type Key type
+   * @apiParam {string}   tx.signature.pub_key.value Key value
+   * @apiParam {string}   tx.signature.account_number tx signature
+   * @apiParam {string}   tx.signature.sequence tx sequence of the account
+   * @apiParam {string}   tx.memo Information related to tx
+   * @apiParam {string}   mode broadcast mode
    *
-   * @apiSuccess {Object} response tx response
+   *
+   * @apiSuccess {string} hash Tx hash
+   * @apiSuccess {number} height Block height
+   * @apiSuccess {Object} check_tx tx info
+   * @apiSuccess {number} check_tx.code
+   * @apiSuccess {string} check_tx.data
+   * @apiSuccess {string} check_tx.log
+   * @apiSuccess {number} check_tx.gas_used
+   * @apiSuccess {number} check_tx.gas_wanted
+   * @apiSuccess {string} check_tx.info
+   * @apiSuccess {string[]} check_tx.tags
+   * @apiSuccess {Object} deliver_tx tx info
+   * @apiSuccess {number} deliver_tx.code
+   * @apiSuccess {string} deliver_tx.data
+   * @apiSuccess {string} deliver_tx.log
+   * @apiSuccess {number} deliver_tx.gas_used
+   * @apiSuccess {number} deliver_tx.gas_wanted
+   * @apiSuccess {string} deliver_tx.info
+   * @apiSuccess {string[]} deliver_tx.tags
    */
   @Post('/txs')
   @Validate({
