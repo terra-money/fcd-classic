@@ -12,7 +12,7 @@ export async function getCirculatingSupply(input: string): Promise<string> {
       denom
     },
     order: {
-      amount: 'DESC'
+      id: 'DESC'
     },
     take: 1
   })
