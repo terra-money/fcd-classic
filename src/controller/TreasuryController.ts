@@ -75,7 +75,7 @@ export default class TreasuryController extends KoaController {
    *
    * @apiParam {string} denom Coin denomination
    *
-   * @apiSuccess {number}  - Circulating supply of coin.
+   * @apiSuccess {number} amount Circulating supply of coin.
    */
   @Get('/circulatingsupply/:denom')
   @Validate({
