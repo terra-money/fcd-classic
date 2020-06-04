@@ -120,6 +120,7 @@
     "jest": "^26",
     "jest-circus": "^26.0.1",
     "jest-extended": "^0.11.5",
+    "js-yaml": "^3.14.0",
     "lint-staged": "^10.0.9",
     "nodemon": "^2",
     "prettier": "^2",
