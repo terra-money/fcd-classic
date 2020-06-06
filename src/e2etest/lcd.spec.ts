@@ -270,6 +270,11 @@ describe('LCD', () => {
   test('getProposal', async () => {
     const proposal = await lcd.getProposal('1')
 
+    if (!proposal) {
+      expect(proposal).not.toBeUndefined()
+      return
+    }
+
     expect(proposal).toMatchObject(basicProposalObject)
 
     expect(proposal.content.type).toBe('params/ParameterChangeProposal')

@@ -1,5 +1,5 @@
 import { exec } from 'child_process'
-import Bluebird from 'bluebird'
+import * as Bluebird from 'bluebird'
 import got from 'got'
 import { get } from 'lodash'
 import { BlockEntity, TxEntity } from 'orm'
