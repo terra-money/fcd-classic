@@ -24,10 +24,10 @@ describe('Network Info Test', () => {
     expect(body.taxProceeds).toBeDefined()
   })
 
-  test('Test get total supply', async () => {
-    await Promise.all(
-      config.ACTIVE_DENOMS_WITH_NORMAL.map((denom) => agent.get(`/v1/totalsupply/${denom}`).expect(200))
-    )
+  test('Test get total supply by denom', async () => {
+    await Promise.all(config.ACTIVE_DENOMS.map((denom) => agent.get(`/v1/totalsupply/${denom}`).expect(200)))
+
+    await Promise.all(config.ACTIVE_CURRENCY.map((currency) => agent.get(`/v1/totalsupply/${currency}`).expect(200)))
   })
 
   test('Test get richlist', async () => {
@@ -35,8 +35,10 @@ describe('Network Info Test', () => {
   })
 
   test('Test get circulatingsupply', async () => {
+    await Promise.all(config.ACTIVE_DENOMS.map((denom) => agent.get(`/v1/circulatingsupply/${denom}`).expect(200)))
+
     await Promise.all(
-      config.ACTIVE_DENOMS_WITH_NORMAL.map((denom) => agent.get(`/v1/circulatingsupply/${denom}`).expect(200))
+      config.ACTIVE_CURRENCY.map((currency) => agent.get(`/v1/circulatingsupply/${currency}`).expect(200))
     )
   })
 

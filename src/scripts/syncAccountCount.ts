@@ -15,12 +15,7 @@ export async function increaseTxCount(address: string, txDate: Date) {
   let account
 
   if (!accountDocObj[address]) {
-    account = await getRepository(AccountEntity).findOne({
-      where: {
-        address,
-        chainId: config.CHAIN_ID
-      }
-    })
+    account = await getRepository(AccountEntity).findOne({ address })
   } else {
     account = accountDocObj[address]
   }
