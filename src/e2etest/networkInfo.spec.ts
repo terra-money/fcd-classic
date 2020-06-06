@@ -1,7 +1,6 @@
 import { SuperTest, Test } from 'supertest'
+import config from 'config'
 import { setupAgent, terminateAPITest } from './lib/agent'
-
-const denoms = ['uusd', 'ukrw', 'usdr', 'umnt', 'uluna']
 
 jest.mock('request-promise-native')
 
@@ -26,26 +25,22 @@ describe('Network Info Test', () => {
   })
 
   test('Test get total supply', async () => {
-    for (let i = 0; i < denoms.length; i = i + 1) {
-      await agent.get(`/v1/totalsupply/${denoms[i]}`).expect(200)
-    }
+    await Promise.all(
+      config.ACTIVE_DENOMS_WITH_NORMAL.map((denom) => agent.get(`/v1/totalsupply/${denom}`).expect(200))
+    )
   })
 
   test('Test get richlist', async () => {
-    for (let i = 0; i < denoms.length; i = i + 1) {
-      await agent.get(`/v1/richlist/${denoms[i]}`).expect(200)
-    }
+    await Promise.all(config.ACTIVE_DENOMS.map((denom) => agent.get(`/v1/richlist/${denom}`).expect(200)))
   })
 
   test('Test get circulatingsupply', async () => {
-    for (let i = 0; i < denoms.length; i = i + 1) {
-      await agent.get(`/v1/circulatingsupply/${denoms[i]}`).expect(200)
-    }
+    await Promise.all(
+      config.ACTIVE_DENOMS_WITH_NORMAL.map((denom) => agent.get(`/v1/circulatingsupply/${denom}`).expect(200))
+    )
   })
 
-  test('Test get circulatingsupply with failed demons', async () => {
-    for (let i = 0; i < denoms.length; i = i + 1) {
-      await agent.get(`/v1/circulatingsupply/${denoms[i]}ab`).expect(400)
-    }
+  test('Test get circulatingsupply with unknown demons', async () => {
+    await agent.get(`/v1/circulatingsupply/unknown`).expect(400)
   })
 })

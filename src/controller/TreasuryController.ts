@@ -36,7 +36,7 @@ export default class TreasuryController extends KoaController {
   @Get('/totalsupply/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name')
+      denom: Joi.string().required().valid(config.ACTIVE_DENOMS_WITH_NORMAL).description('Denom name')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -80,7 +80,7 @@ export default class TreasuryController extends KoaController {
   @Get('/circulatingsupply/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name')
+      denom: Joi.string().required().valid(config.ACTIVE_DENOMS_WITH_NORMAL).description('Denom name')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

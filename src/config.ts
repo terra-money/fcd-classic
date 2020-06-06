@@ -34,7 +34,14 @@ const config = {
   // Chain parameters
   TAX_CAP_TARGETS: TAX_CAP_TARGETS ? (JSON.parse(TAX_CAP_TARGETS) as string[]) : ['usdr'],
   ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'umnt'],
-  ACTIVE_CURRENCY: ACTIVE_CURRENCY ? (JSON.parse(ACTIVE_CURRENCY) as string[]) : ['luna', 'sdt', 'krt', 'ust', 'mnt']
+  ACTIVE_CURRENCY: ACTIVE_CURRENCY ? (JSON.parse(ACTIVE_CURRENCY) as string[]) : ['luna', 'sdt', 'krt', 'ust', 'mnt'],
+  ACTIVE_DENOMS_WITH_NORMAL: ['']
 }
+
+config.ACTIVE_DENOMS_WITH_NORMAL = config.ACTIVE_DENOMS.reduce((acc, denom) => {
+  acc.push(denom)
+  acc.push(denom.slice(1))
+  return acc
+}, [] as string[])
 
 export default config
