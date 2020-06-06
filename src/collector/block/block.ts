@@ -1,8 +1,10 @@
+import * as Bluebird from 'bluebird'
+import * as sentry from '@sentry/node'
 import { get } from 'lodash'
 import { getTime, getMinutes } from 'date-fns'
 import config from 'config'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
-import { BlockEntity, TxEntity, BlockRewardEntity } from 'orm'
+import { BlockEntity, BlockRewardEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 import { saveTxs, generateTxEntities } from './tx'
@@ -178,7 +180,7 @@ export async function collectBlock(): Promise<void> {
       const height: string = lcdBlock.block_meta.header.height
       logger.info(`collectBlock: begin transaction for block ${height}`)
 
-      await getManager()
+      const result: boolean = await getManager()
         .transaction(async (transactionalEntityManager: EntityManager) => {
           // Save block rewards
           const newBlockRewad = await transactionalEntityManager
@@ -210,10 +212,18 @@ export async function collectBlock(): Promise<void> {
         })
         .then(() => {
           logger.info('collectBlock: transaction finished')
+          return true
         })
         .catch((err) => {
-          logger.error(`collectBlock: transaction failed: ${err.message}`)
+          sentry.captureException(err)
+          logger.error(err)
+          return false
         })
+
+      // Exit the loop when transaction failure whether there's more blocks or not
+      if (!result) {
+        break
+      }
     }
 
     hasNextBlocks = hasMoreBlocks

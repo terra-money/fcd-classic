@@ -11,7 +11,7 @@ const agent = new protocol.Agent({
   keepAlive: true
 })
 
-const NOT_FOUND_REGEX = /(?:not found|no del|not ex|failed to find|unknown prop|empty bytes)/i
+const NOT_FOUND_REGEX = /(?:not found|no del|not ex|failed to find|unknown prop|empty bytes|No price reg)/i
 
 async function get(url: string, params?: { [key: string]: string }): Promise<any> {
   const options = {
@@ -26,12 +26,12 @@ async function get(url: string, params?: { [key: string]: string }): Promise<any
   }
 
   const res = await rp(`${config.LCD_URI}${url}`, options).catch((err) => {
-    if (err.statusCode === 400) {
-      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
-    }
-
     if (err.statusCode === 404 || (err?.message && NOT_FOUND_REGEX.test(err.message))) {
       return undefined
+    }
+
+    if (err.statusCode === 400) {
+      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
     }
 
     throw new APIError(ErrorTypes.LCD_ERROR, err.statusCode, err.message, err)
@@ -269,7 +269,7 @@ export function getCommunityPool(): Promise<Coin[]> {
 ///////////////////////////////////////////////
 // Market
 ///////////////////////////////////////////////
-export async function getSwapResult(params: { offer_coin: string; ask_denom: string }): Promise<Coin> {
+export async function getSwapResult(params: { offer_coin: string; ask_denom: string }): Promise<Coin | undefined> {
   return get(`/market/swap`, params)
 }
 
