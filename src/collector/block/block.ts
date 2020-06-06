@@ -220,7 +220,7 @@ export async function collectBlock(): Promise<void> {
           return false
         })
 
-      // Exit the loop when transaction failure whether there's more blocks or not
+      // Exit the loop after transaction error whether there's more blocks or not
       if (!result) {
         break
       }
