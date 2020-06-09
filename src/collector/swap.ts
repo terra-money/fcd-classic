@@ -20,9 +20,10 @@ async function getSpread(denom: string, price: string) {
   const swapResult = await lcd.getSwapResult(swapRequestParams)
 
   return (
-    get(swapResult, 'amount') && {
+    swapResult &&
+    swapResult.amount && {
       denom,
-      spread: div(minus(times(price, '1000000'), get(swapResult, 'amount')), times(price, '1000000'))
+      spread: div(minus(times(price, '1000000'), swapResult.amount), times(price, '1000000'))
     }
   )
 }

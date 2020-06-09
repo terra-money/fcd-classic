@@ -270,6 +270,11 @@ describe('LCD', () => {
   test('getProposal', async () => {
     const proposal = await lcd.getProposal('1')
 
+    if (!proposal) {
+      expect(proposal).not.toBeUndefined()
+      return
+    }
+
     expect(proposal).toMatchObject(basicProposalObject)
 
     expect(proposal.content.type).toBe('params/ParameterChangeProposal')
@@ -450,8 +455,11 @@ describe('LCD', () => {
   })
 
   test('getSwapResult: invalid', async () => {
-    await expect(lcd.getSwapResult({ offer_coin: '1000usdr', ask_denom: 'invalid' })).toReject()
     await expect(lcd.getSwapResult({ offer_coin: 'invalid', ask_denom: 'usdr' })).toReject()
+  })
+
+  test('getSwapResult: not found', async () => {
+    await expect(lcd.getSwapResult({ offer_coin: '1000usdr', ask_denom: 'invalid' })).resolves.toBeUndefined()
   })
 
   test('getSwapResult: success', async () => {
