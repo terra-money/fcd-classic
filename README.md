@@ -115,6 +115,14 @@ module.exports = {
   - Access UI from: `http://localhost:3060/swagger`
   - Access the definition from: `http://localhost:3060/static/swagger.json` 
   - Use `yarn run swagger --host hostname` for different host name
+* Generate swagger for [`AWS`](https://aws.amazon.com/api-gateway/) api gateway
+  - ```sh
+    yarn run swagger -- --apigateway
+    ```
+  - Generated file can be directly imported to aws api gateway
+  - ```diff 
+    - NB : its uses empty schema for reponse object as api gateway support object and properties name only having alphanum. 
+    ```
 
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements

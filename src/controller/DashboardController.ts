@@ -115,9 +115,9 @@ export default class TxController extends KoaController {
    *
    * @apiParam {number} count number of previous days from today
    *
-   * @apiSuccess {Object[]} _
-   * @apiSuccess {Number} _.datetime unix time of history data
-   * @apiSuccess {String} _.seigniorageProceeds amount of seigniorage on datetime
+   * @apiSuccess {Object[]} seigniorage
+   * @apiSuccess {Number} seigniorage.datetime unix time of history data
+   * @apiSuccess {String} seigniorage.seigniorageProceeds amount of seigniorage on datetime
    */
   @Get('/seigniorage_proceeds')
   @Validate({
@@ -159,9 +159,9 @@ export default class TxController extends KoaController {
    *
    * @apiParam {number} count number of previous days from today
    *
-   * @apiSuccess {Object[]} _
-   * @apiSuccess {Number} _.datetime unix timestamp
-   * @apiSuccess {String} _.stakingRatio staking ratio
+   * @apiSuccess {Object[]} stakingHistory
+   * @apiSuccess {Number} stakingHistory.datetime unix timestamp
+   * @apiSuccess {String} stakingHistory.stakingRatio staking ratio
    */
   @Get('/staking_ratio')
   @Validate({

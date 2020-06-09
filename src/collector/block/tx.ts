@@ -211,12 +211,7 @@ async function getUpdatedTxCountAccountEntity(
   newTxCount: number,
   txDate: Date
 ): Promise<AccountEntity> {
-  let account = await getRepository(AccountEntity).findOne({
-    where: {
-      address,
-      chainId: config.CHAIN_ID
-    }
-  })
+  let account = await getRepository(AccountEntity).findOne({ address })
 
   if (!account) {
     logger.info(`CreateAcccount - ${address}`)
