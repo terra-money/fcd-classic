@@ -6,6 +6,42 @@ import * as path from 'path'
 
 import * as yargs from 'yargs'
 
+const LCD_SWAGGER_URL = 'https://lcd.terra.dev/swagger-ui/swagger.yaml'
+
+interface Info {
+  title: string
+  version: string
+  description: string
+}
+
+interface Definition {
+  [definitionName: string]: Object
+}
+
+interface Method {
+  description: string
+  summary: string
+  tags: string[]
+  comsumes?: string[]
+  produces?: string[]
+  responses: Object
+}
+
+interface Path {
+  [httpMethod: string]: Method
+}
+
+interface Swagger {
+  swagger: string
+  info: Info
+  paths: {
+    [pathName: string]: Path
+  }
+  definitions: Definition
+  host?: string
+  basePath?: string
+}
+
 const argv = yargs.options({
   o: {
     type: 'string',
@@ -15,18 +51,16 @@ const argv = yargs.options({
   }
 }).argv
 
-async function getLcdSwaggerObject() {
+async function getLcdSwaggerObject(): Promise<Swagger> {
   try {
-    const doc = yaml.safeLoad(await rp('https://lcd.terra.dev/swagger-ui/swagger.yaml'))
-    // const json = JSON.stringify(doc)
-    // writeFileSync('tmpswg.json', JSON.stringify(doc))
+    const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
     return doc
   } catch (err) {
     throw err
   }
 }
 
-async function getFcdSwaggerObject() {
+function getFcdSwaggerObject(): Swagger {
   const options = {
     simulate: true,
     src: path.join(__dirname, '..', 'controller'),
@@ -40,7 +74,7 @@ async function getFcdSwaggerObject() {
   throw new Error('Could not generate fcd swagger')
 }
 
-function resolveBasePath(swagger) {
+function resolveBasePath(swagger: Swagger): Swagger {
   const { paths } = swagger
   let resoledPath
   if (swagger['basePath']) {
@@ -59,9 +93,9 @@ async function mergeFiles() {
   const dest = path.join(__dirname, '..', '..', 'static')
 
   const lcd = resolveBasePath(await getLcdSwaggerObject())
-  const fcd = resolveBasePath(await getFcdSwaggerObject())
+  const fcd = resolveBasePath(getFcdSwaggerObject())
 
-  const combinedSwagger = {
+  const combinedSwagger: Swagger = {
     swagger: '2.0',
     info: {
       title: 'Terra REST apis',
@@ -74,6 +108,7 @@ async function mergeFiles() {
 
   combinedSwagger.paths = Object.assign({}, lcd.paths, fcd.paths)
   combinedSwagger.definitions = Object.assign({}, lcd.definitions, fcd.definitions)
+
   if (!existsSync(dest)) {
     mkdirSync(dest)
   }
