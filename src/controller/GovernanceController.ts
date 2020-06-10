@@ -11,7 +11,7 @@ const Joi = Validator.Joi
 @Controller('/gov')
 export default class GovernanceController extends KoaController {
   /**
-   * @api {get} /proposals Get proposal list
+   * @api {get} /gov/proposals Get proposal list
    * @apiName getProposallist
    * @apiGroup Governance
    *
@@ -68,7 +68,7 @@ export default class GovernanceController extends KoaController {
   }
 
   /**
-   * @api {get} /proposals/:proposalId Get proposal
+   * @api {get} /gov/proposals/:proposalId Get proposal
    * @apiName getProposal
    * @apiGroup Governance
    *
@@ -135,7 +135,7 @@ export default class GovernanceController extends KoaController {
   }
 
   /**
-   * @api {get} /proposals/:proposalId/deposits Get proposal's deposits
+   * @api {get} /gov/proposals/:proposalId/deposits Get proposal's deposits
    * @apiName getProposalDeposits
    * @apiGroup Governance
    *
@@ -185,7 +185,7 @@ export default class GovernanceController extends KoaController {
   }
 
   /**
-   * @api {get} /proposals/:proposalId/votes Get proposal's votes
+   * @api {get} /gov/proposals/:proposalId/votes Get proposal's votes
    * @apiName getProposalVotes
    * @apiGroup Governance
    *
