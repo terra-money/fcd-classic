@@ -46,8 +46,8 @@ export default function parseMsgsInTx(account: string | undefined) {
 
     const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(msgs, (msg) => {
       // index 0 is tax info
-      msg['log'] = logs && logs.filter((_, index) => index > 0)
-      return parseMsg(msg, account, success)
+      const log = logs && logs.slice(1)
+      return parseMsg(msg, log, account, success)
     })
     return {
       timestamp: get(tx, 'data.timestamp'),
