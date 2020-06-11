@@ -128,8 +128,12 @@ module.exports = {
   - ```sh
     yarn run mergeswagger -- -o filename
     ```
-  - combined swagger file will be saved in `static` directory in project `root`
-  - if no filename provided as command line argument then default saved file name is `combined-swagger.json`
+  - Combined swagger file will be saved in `static` directory in project `root`
+  - If no filename provided as command line argument then default saved file name is `combined-swagger.json`
+  - To generate combined swagger for Amazon api gateway add `--apigateway`
+    - Ex: ```
+            yarn run mergeswagger -- -o filename --apigateway
+          ```
 
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements

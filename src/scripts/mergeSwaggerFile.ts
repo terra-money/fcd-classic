@@ -1,10 +1,11 @@
 import * as rp from 'request-promise'
 import * as yaml from 'js-yaml'
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
-import { createApidocSwagger } from 'apidoc-swagger'
+import { createApidocSwagger, convertSwaggerForApiGateway } from 'apidoc-swagger'
 import * as path from 'path'
 
 import * as yargs from 'yargs'
+import delegators from 'service/staking/getDelegators'
 
 const LCD_SWAGGER_URL = 'https://lcd.terra.dev/swagger-ui/swagger.yaml'
 
@@ -48,6 +49,12 @@ const argv = yargs.options({
     alias: 'output',
     default: 'combined-swagger.json',
     description: 'Output file name'
+  },
+  apigateway: {
+    type: 'boolean',
+    alias: 'apiGateway',
+    default: false,
+    description: 'should generate for api gateway'
   }
 }).argv
 
@@ -85,8 +92,8 @@ function resolveBasePath(swagger: Swagger): Swagger {
   } else {
     resoledPath = paths
   }
-
-  return Object.assign({}, swagger, { basePath: undefined, paths: resoledPath })
+  delete swagger.basePath
+  return Object.assign({}, swagger, { paths: resoledPath })
 }
 
 async function mergeFiles() {
@@ -95,7 +102,7 @@ async function mergeFiles() {
   const lcd = resolveBasePath(await getLcdSwaggerObject())
   const fcd = resolveBasePath(getFcdSwaggerObject())
 
-  const combinedSwagger: Swagger = {
+  let combinedSwagger: Swagger = {
     swagger: '2.0',
     info: {
       title: 'Terra REST apis',
@@ -109,9 +116,13 @@ async function mergeFiles() {
   combinedSwagger.paths = Object.assign({}, lcd.paths, fcd.paths)
   combinedSwagger.definitions = Object.assign({}, lcd.definitions, fcd.definitions)
 
+  if (argv.apigateway) {
+    combinedSwagger = convertSwaggerForApiGateway(combinedSwagger)
+  }
   if (!existsSync(dest)) {
     mkdirSync(dest)
   }
+
   writeFileSync(path.join(dest, argv.output as string), JSON.stringify(combinedSwagger))
 
   console.log(`Combined file saved in ${path.join(dest, argv.output as string)}`)
