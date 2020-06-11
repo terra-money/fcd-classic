@@ -1200,7 +1200,7 @@ apidoc-core@0.11.1:
 
 "apidoc-swagger@git+https://github.com/terra-project/apidoc-swagger.git":
   version "0.2.3"
-  resolved "git+https://github.com/terra-project/apidoc-swagger.git#0b83328302070dc412a711e833c1b0622d617c12"
+  resolved "git+https://github.com/terra-project/apidoc-swagger.git#f0ee88a5433fdeaa319ca6e90dd9daed4c42175e"
   dependencies:
     apidoc-core "0.11.1"
     eslint "^7.1.0"
