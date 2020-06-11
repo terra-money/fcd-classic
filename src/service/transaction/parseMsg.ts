@@ -3,7 +3,7 @@ import getMoniker from 'lib/getMoniker'
 import { splitDenomAndAmount } from 'lib/common'
 import { get, filter } from 'lodash'
 
-type Params = Transaction.Message & { address?: string; log?: { [key: string]: string } }
+type Params = Transaction.Message & { address?: string; log?: Transaction.Log[] }
 type Parsed = { tag?: string; text: string }
 type Parser = ({ type, value, address }: Params) => Promise<Parsed> | Parsed
 
@@ -250,12 +250,13 @@ const types: { [type: string]: Parser } = {
 
 export default async (
   message: Transaction.Message,
+  logs: Transaction.Log[],
   address: string | undefined,
   success: boolean
 ): Promise<ParsedTxMsgInfo> => {
   const type = message.type.split('/')[1]
   const parser = types[type] || defaultParser
-  const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address })
+  const parsed: ParsedTxMsgInfo = await parser({ ...message, log: logs, type, address })
 
   if (!success) {
     parsed.text = `Fail to ${parsed.text}`

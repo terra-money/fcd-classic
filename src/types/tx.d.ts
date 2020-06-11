@@ -116,6 +116,7 @@ interface ParsedTxInfo {
   msgs: ParsedTxMsgInfo[]
   txFee: string
   memo: string
+  tax: string
   success: boolean
   errorMessage?: string
   chainId: string

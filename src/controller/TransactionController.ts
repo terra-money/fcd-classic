@@ -274,6 +274,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {boolean} txs.success
    * @apiSuccess {string} txs.errorMessage
    * @apiSuccess {string} txs.chainId
+   * @apiSuccess {string} txs.tax transaction tax
    */
   @Get('/msgs')
   @Validate({
