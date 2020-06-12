@@ -1200,7 +1200,7 @@ apidoc-core@0.11.1:
 
 "apidoc-swagger@git+https://github.com/terra-project/apidoc-swagger.git":
   version "0.2.3"
-  resolved "git+https://github.com/terra-project/apidoc-swagger.git#f0ee88a5433fdeaa319ca6e90dd9daed4c42175e"
+  resolved "git+https://github.com/terra-project/apidoc-swagger.git#18df6425fb97dfc5cfe9abef2bc3a11156f5d3d5"
   dependencies:
     apidoc-core "0.11.1"
     eslint "^7.1.0"
@@ -4505,9 +4505,9 @@ koa-add-trailing-slashes@^2.0.1:
   integrity sha512-mCH5Pm7xkfwHN2qhpSARq1HV0XZ7WOSDGbED079oZN/azHOTcJBy8EtiICcuFu/zblPg67IISF6mT/RDmLdCHA==
 
 koa-body@^4.1.0:
-  version "4.1.3"
-  resolved "https://registry.yarnpkg.com/koa-body/-/koa-body-4.1.3.tgz#1381c91bd2def7044ba790045bf3cfb2cdbb4c51"
-  integrity sha512-lSu0zmGqtF8vxzgPqNb7CpsIE05llY4pflkOVct9jN1yGTM7ajLz3wBSh8TrSzMGzguBjgEWizoxHLdMbmzz8A==
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/koa-body/-/koa-body-4.2.0.tgz#37229208b820761aca5822d14c5fc55cee31b26f"
+  integrity sha512-wdGu7b9amk4Fnk/ytH8GuWwfs4fsB5iNkY8kZPpgQVb04QZSv85T0M8reb+cJmvLE8cjPYvBzRikD3s6qz8OoA==
   dependencies:
     "@types/formidable" "^1.0.31"
     co-body "^5.1.1"
