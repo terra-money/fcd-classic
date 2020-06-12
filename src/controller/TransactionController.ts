@@ -77,6 +77,7 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
+   * @apiParam {string} [action] Tx type
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [block] Block number

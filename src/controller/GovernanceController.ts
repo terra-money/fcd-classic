@@ -73,6 +73,7 @@ export default class GovernanceController extends KoaController {
    * @apiGroup Governance
    *
    * @apiParam {string} proposalId Proposal id
+   * @apiParam {string} [account] User account
    *
    * @apiSuccess {string} id
    * @apiSuccess {Object} proposer Proposer information
