@@ -124,6 +124,17 @@ module.exports = {
     - NB : its uses empty schema for reponse object as api gateway support object and properties name only having alphanum. 
     ```
 
+* Generate combined swagger for lcd and fcd
+  - ```sh
+    yarn run mergeswagger -- -o filename
+    ```
+  - Combined swagger file will be saved in `static` directory in project `root`
+  - If no filename provided as command line argument then default saved file name is `combined-swagger.json`
+  - To generate combined swagger for Amazon api gateway add `--apigateway`
+    - Ex: ```
+            yarn run mergeswagger -- -o filename --apigateway
+          ```
+
 ## To run whole ecosystem locally with docker (WIP)
 ### Requirements
 1. docker-ce

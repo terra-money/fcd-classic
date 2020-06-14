@@ -19,7 +19,8 @@
     "stability": "better-npm-run stability",
     "apidoc": "npx apidoc -f \".*\\\\.ts$\" -i src/controller -o static/",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "npx apidoc-swagger -i src/controller -o static/ --basepath /v1"
+    "swagger": "npx apidoc-swagger -i src/controller -o static/ --basepath /v1",
+    "mergeswagger": "ts-node --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts"
   },
   "betterScripts": {
     "api-dev": {
@@ -115,11 +116,13 @@
     "@types/lodash": "^4.14.149",
     "@types/memoizee": "^0.4.3",
     "@types/supertest": "^2.0.8",
+    "@types/yargs": "^15.0.5",
     "apidoc-swagger": "git+https://github.com/terra-project/apidoc-swagger.git",
     "husky": "^4.2.3",
     "jest": "^26",
     "jest-circus": "^26.0.1",
     "jest-extended": "^0.11.5",
+    "js-yaml": "^3.14.0",
     "lint-staged": "^10.0.9",
     "nodemon": "^2",
     "prettier": "^2",
@@ -127,7 +130,8 @@
     "ts-jest": "^26",
     "tslint": "^6",
     "tslint-config-airbnb": "^5.11.2",
-    "tslint-config-prettier": "^1.18.0"
+    "tslint-config-prettier": "^1.18.0",
+    "yargs": "^15.3.1"
   },
   "prettier": {
     "printWidth": 120,
