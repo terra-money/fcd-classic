@@ -5,7 +5,6 @@ import { createApidocSwagger, convertSwaggerForApiGateway } from 'apidoc-swagger
 import * as path from 'path'
 
 import * as yargs from 'yargs'
-import delegators from 'service/staking/getDelegators'
 
 const LCD_SWAGGER_URL = 'https://lcd.terra.dev/swagger-ui/swagger.yaml'
 
