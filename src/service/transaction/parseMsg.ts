@@ -200,6 +200,7 @@ const gov: Parser = ({ type, value: v }) => {
 }
 
 const defaultParser: Parser = ({ type, value: v }) => ({
+  tag: 'Default',
   text: type,
   details: Object.entries(v)
 })
@@ -229,12 +230,13 @@ const types: { [type: string]: Parser } = {
 
 export default async (
   message: Transaction.Message,
+  log: Transaction.Log,
   address: string | undefined,
   success: boolean
 ): Promise<ParsedTxMsgInfo> => {
   const type = message.type.split('/')[1]
   const parser = types[type] || defaultParser
-  const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address })
+  const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address, log })
 
   if (!success) {
     parsed.text = `Fail to ${parsed.text}`

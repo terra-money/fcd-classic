@@ -35,10 +35,6 @@ function failedRawLogToLogs(
   )
 }
 
-function addLogsToMsg(msg: Transaction.Message, logs: Transaction.Log[]): void {
-  msg['log'] = logs && logs.shift()
-}
-
 export default function parseTx(account: string | undefined) {
   return async (tx): Promise<ParsedTxInfo> => {
     const msgs = get(tx, 'data.tx.value.msg') as Transaction.Message[]
@@ -46,10 +42,7 @@ export default function parseTx(account: string | undefined) {
     const chainId = get(tx, 'chain_id')
     const { success, errorMessage } = isSuccessful(logs)
 
-    const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(msgs, (msg) => {
-      addLogsToMsg(msg, logs)
-      return parseMsg(msg, account, success)
-    })
+    const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(msgs, (msg, i) => parseMsg(msg, logs[i], account, success))
 
     return {
       timestamp: get(tx, 'data.timestamp'),
