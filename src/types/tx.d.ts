@@ -110,6 +110,7 @@ interface DelegationTxsReturn {
 interface ParsedTxMsgInfo {
   tag?: string
   text?: string
+  tax?: string
   in?: any[]
   out?: Coin[]
 }
