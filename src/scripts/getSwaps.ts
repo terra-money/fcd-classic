@@ -1,9 +1,10 @@
-import { init as initORM, AccountTxEntity } from 'orm'
+import { init as initORM, TxEntity } from 'orm'
 import { getRepository } from 'typeorm'
 import { get } from 'lodash'
 import { getQueryDateTime } from 'lib/time'
+import { getSwapCoinAndFee } from 'service/transaction'
 
-function getSwapResult(data) {
+function getSwapResult({ data }) {
   const logs = get(data, 'logs')
   const msgs = get(data, 'tx.value.msg')
 
@@ -11,8 +12,8 @@ function getSwapResult(data) {
     return
   }
 
-  msgs.map((msg, i) => {
-    if (msg.type !== 'market/MsgSwap') {
+  msgs.map(({ type, value }, i) => {
+    if (type !== 'market/MsgSwap') {
       return
     }
 
@@ -20,14 +21,13 @@ function getSwapResult(data) {
       return
     }
 
-    const swapFee = get(logs[i], 'log.swap_fee')
-    const swapCoin = get(logs[i], 'log.swap_coin')
-    const offerCoin = get(msg, 'value.offer_coin')
-    const trader = get(msg, 'value.trader')
+    const { swapCoin, swapFee } = getSwapCoinAndFee(logs[i])
+    const offerCoin = value.offer_coin
+    const trader = value.trader
 
     const askAmount = Number(swapCoin.split('u')[0]) / 1000000
     const swapFeeAmount = Number(swapFee.split('u')[0]) / 1000000
-    const askDenom = get(msg, 'value.ask_denom').slice(1)
+    const askDenom = value.ask_denom.slice(1)
 
     const offerAmount = Number(offerCoin.amount) / 1000000
     const offerDenom = offerCoin.denom.slice(1)
@@ -42,19 +42,12 @@ function getSwapResult(data) {
 async function main() {
   await initORM()
 
-  const swapTxs = await getRepository(AccountTxEntity).find({
-    where: {
-      type: 'swap'
-    },
-    order: {
-      timestamp: 'ASC'
-    },
-    relations: ['tx']
-  })
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select(`tx.data`)
+  qb.andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "market/MsgSwap"}]'`)
+  qb.take(100)
 
-  for (let i = 0; i < swapTxs.length; i = i + 1) {
-    getSwapResult(swapTxs[i].tx.data)
-  }
+  const txs = await qb.getMany()
+  txs.forEach(getSwapResult)
 }
 
 main().catch(console.error)
