@@ -2,7 +2,6 @@ import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 import config from 'config'
-import { isUndefined } from 'lodash'
 
 const VALID_TX = 'E339D4F9B1529AB4946193F5FFB21F2E34404A47979F89E3FEF4CB1A98C7658D'
 const VALID_ACCOUNT = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
