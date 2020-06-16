@@ -9,5 +9,8 @@ RUN yarn
 
 COPY . .
 
+RUN yarn run apidoc \
+    && yarn run mergeswagger -- -o swagger.json
+
 ENTRYPOINT [ "yarn", "run" ]
 CMD [ "--help" ]

@@ -1,24 +1,31 @@
 import format from 'lib/format'
 import getMoniker from 'lib/getMoniker'
 import { splitDenomAndAmount } from 'lib/common'
-import { get, filter } from 'lodash'
+import { get } from 'lodash'
+import { getSwapCoinAndFee } from './helper'
 
-type Params = Transaction.Message & { address?: string; log?: { [key: string]: string } }
-type Parsed = { tag?: string; text: string }
+type Params = Transaction.Message & { address?: string; log?: Transaction.Log }
+type Parsed = { tag: string; text: string; tax?: string }
 type Parser = ({ type, value, address }: Params) => Promise<Parsed> | Parsed
 
-const bank: Parser = ({ type, value: v, address }) => {
+const bank: Parser = ({ type, value: v, address, log }) => {
   const messages: { [type: string]: () => Parsed } = {
     MsgSend: () => {
       const isSent = v.from_address === address
       // const isSelf = v.from_address === v.to_address
       const [{ amount, denom }]: Coin[] = v.amount
+      let tax: string | undefined
+
+      if (typeof log?.log === 'object') {
+        tax = log.log.tax
+      }
 
       return {
         tag: isSent ? 'Send' : 'Receive',
         text: `${isSent ? 'Sent' : 'Received'} ${format.amount(amount)} ${format.denom(denom)} \
 ${isSent ? 'to' : 'from'} ${isSent ? v.to_address : v.from_address}`,
-        [`${isSent ? 'out' : 'in'}`]: v.amount
+        [`${isSent ? 'out' : 'in'}`]: v.amount,
+        tax
       }
     },
     MsgMultiSend: () => {
@@ -61,6 +68,7 @@ const distribute: Parser = ({ type, value: v }) => {
 const slashing: Parser = ({ type, value: v }) => {
   const messages: { [type: string]: () => Parsed } = {
     MsgUnjail: () => ({
+      tag: 'Slashing',
       text: `Unjail requested for ${v.address}`
     })
   }
@@ -105,7 +113,7 @@ const staking: Parser = async ({ type, value: v }) => {
   return messages[type]()
 }
 
-const custom: Parser = ({ type, value: v, log }) => {
+const custom: Parser = ({ type, value: v, log }: Params) => {
   const messages: { [type: string]: () => Parsed } = {
     MsgPricePrevote: () => ({
       tag: 'Market',
@@ -126,37 +134,7 @@ const custom: Parser = ({ type, value: v, log }) => {
         }
       }
 
-      const getSwapCoin = (log): string => {
-        if (!log) {
-          return ''
-        }
-
-        const { events } = log
-
-        if (!events) {
-          return get(log, 'log.swap_coin', '')
-        }
-
-        if (get(log, 'log.swap_coin')) {
-          return get(log, 'log.swap_coin', '')
-        }
-
-        const swapEvent = filter(events, { type: 'swap' })[0]
-
-        if (!swapEvent || !swapEvent.attributes) {
-          return ''
-        }
-
-        const swapCoin = filter(swapEvent.attributes, { key: 'swap_coin' })[0]
-
-        if (!swapCoin) {
-          return ''
-        }
-
-        return swapCoin.value
-      }
-
-      const swapCoin = getSwapCoin(log)
+      const { swapCoin, swapFee } = getSwapCoinAndFee(log)
       let swapCoinMsg = ''
 
       if (swapCoin) {
@@ -168,7 +146,8 @@ const custom: Parser = ({ type, value: v, log }) => {
         tag: 'Market',
         text: `Swapped ${format.coin(v.offer_coin)} ${swapCoinMsg}`,
         out: [v.offer_coin],
-        in: [splitDenomAndAmount(swapCoin)]
+        in: [splitDenomAndAmount(swapCoin)],
+        tax: swapFee
       }
     },
     MsgSubmitProgram: () => ({
@@ -221,6 +200,7 @@ const gov: Parser = ({ type, value: v }) => {
 }
 
 const defaultParser: Parser = ({ type, value: v }) => ({
+  tag: 'Default',
   text: type,
   details: Object.entries(v)
 })
@@ -250,12 +230,13 @@ const types: { [type: string]: Parser } = {
 
 export default async (
   message: Transaction.Message,
+  log: Transaction.Log,
   address: string | undefined,
   success: boolean
 ): Promise<ParsedTxMsgInfo> => {
   const type = message.type.split('/')[1]
   const parser = types[type] || defaultParser
-  const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address })
+  const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address, log })
 
   if (!success) {
     parsed.text = `Fail to ${parsed.text}`

@@ -43,11 +43,11 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /market/swaprate/:denom Get current swaprate
+   * @api {get} /market/swaprate/:base Get current swaprate
    * @apiName getSwapRate
    * @apiGroup Market
    *
-   * @apiParam {string} denom Coin denomination
+   * @apiParam {string} base Coin denomination
    *
    * @apiSuccess {Object[]} rates
    * @apiSuccess {string} rates.denom Coin denomination

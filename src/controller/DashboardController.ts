@@ -59,7 +59,7 @@ export default class TxController extends KoaController {
    * @apiName getTxVolume
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Object[]} cumulative
    * @apiSuccess {string} cumulative.denom denom name
@@ -88,7 +88,7 @@ export default class TxController extends KoaController {
    * @apiName getBlockReward
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Object[]} cumulative cumulative history
    * @apiSuccess {Number} cumulative.datetime unix timestamp
@@ -113,11 +113,11 @@ export default class TxController extends KoaController {
    * @apiName getSeigniorageProc
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days from today
+   * @apiParam {number} [count] number of previous days from today
    *
-   * @apiSuccess {Object[]} _
-   * @apiSuccess {Number} _.datetime unix time of history data
-   * @apiSuccess {String} _.seigniorageProceeds amount of seigniorage on datetime
+   * @apiSuccess {Object[]} seigniorage
+   * @apiSuccess {Number} seigniorage.datetime unix time of history data
+   * @apiSuccess {String} seigniorage.seigniorageProceeds amount of seigniorage on datetime
    */
   @Get('/seigniorage_proceeds')
   @Validate({
@@ -134,7 +134,7 @@ export default class TxController extends KoaController {
    * @apiName getStakingReturn
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Object[]} segniorage return history
    * @apiSuccess {Number} segniorage.datetime unix timestamp
@@ -157,11 +157,11 @@ export default class TxController extends KoaController {
    * @apiName getStakingRatio
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days from today
+   * @apiParam {number} [count] number of previous days from today
    *
-   * @apiSuccess {Object[]} _
-   * @apiSuccess {Number} _.datetime unix timestamp
-   * @apiSuccess {String} _.stakingRatio staking ratio
+   * @apiSuccess {Object[]} stakingHistory
+   * @apiSuccess {Number} stakingHistory.datetime unix timestamp
+   * @apiSuccess {String} stakingHistory.stakingRatio staking ratio
    */
   @Get('/staking_ratio')
   @Validate({
@@ -178,7 +178,7 @@ export default class TxController extends KoaController {
    * @apiName getAccountGrowth
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Object[]} cumulative cumulative history data
    * @apiSuccess {Number} cumulative.datetime unix timestamp
@@ -204,7 +204,7 @@ export default class TxController extends KoaController {
    * @apiName getActiveAccounts
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Number} total total active accounts in the time period
    * @apiSuccess {Object[]} periodic daily active account info's
@@ -226,7 +226,7 @@ export default class TxController extends KoaController {
    * @apiName getRegisteredAccounts
    * @apiGroup Dashboard
    *
-   * @apiParam {number} count number of previous days history from today
+   * @apiParam {number} [count] number of previous days history from today
    *
    * @apiSuccess {Number} total total registered accounts in the time period
    * @apiSuccess {Object[]} periodic daily periodic account info's

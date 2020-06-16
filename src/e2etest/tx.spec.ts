@@ -72,6 +72,51 @@ const transactionObject = {
   events: expect.arrayContaining([eventObject])
 }
 
+const parsedTxObject = {
+  chainId: expect.any(String),
+  memo: expect.any(String),
+  success: expect.any(Boolean),
+  timestamp: expect.any(String),
+  txhash: expect.any(String),
+  txFee: expect.arrayContaining([coinObject]),
+  msgs: expect.arrayContaining([
+    {
+      out: expect.arrayContaining([coinObject]),
+      in: expect.arrayContaining([coinObject]),
+      tag: expect.any(String),
+      text: expect.any(String),
+      tax: expect.any(String)
+    }
+  ])
+}
+
+function addOptionalProperties(parsedTx: ParsedTxInfo): ParsedTxInfo {
+  const msgsWithOptionalKeys = parsedTx.msgs.map((msg) => {
+    return Object.assign(
+      {},
+      {
+        in: [
+          {
+            denom: 'uluna',
+            amount: '0'
+          }
+        ],
+        out: [
+          {
+            denom: 'uluna',
+            amount: '0'
+          }
+        ],
+        tag: '',
+        text: '',
+        tax: ''
+      },
+      msg
+    )
+  })
+  return { ...parsedTx, ...{ msgs: msgsWithOptionalKeys } }
+}
+
 function testPagination(body): void {
   expect(body).toMatchObject({
     totalCnt: expect.any(Number),
@@ -165,9 +210,9 @@ describe('Transaction', () => {
 
   test('get parsed tx list', async () => {
     const { body } = await agent.get(`/v1/msgs?account=${VALID_ACCOUNT}`).expect(200)
-
     testPagination(body)
     expect(body.txs).not.toBeArrayOfSize(0)
+    expect(addOptionalProperties(body.txs[0])).toMatchObject(parsedTxObject)
   })
 
   test('get parsed tx list action filter', async () => {
@@ -182,6 +227,7 @@ describe('Transaction', () => {
       tag: expect.any(String),
       text: expect.stringMatching('Voted')
     })
+    expect(addOptionalProperties(body.txs[0])).toMatchObject(parsedTxObject)
   })
 
   test('get parsed tx list datetime filter', async () => {
@@ -191,5 +237,12 @@ describe('Transaction', () => {
 
     testPagination(body)
     expect(body.txs).toBeArray()
+    expect(addOptionalProperties(body.txs[0])).toMatchObject(parsedTxObject)
+  })
+
+  test('get parsed tx list having invalid accout address', async () => {
+    const { body } = await agent
+      .get(`/v1/msgs?account=${VALID_ACCOUNT}_&to=1587808652000&from=1587804294000`)
+      .expect(400)
   })
 })

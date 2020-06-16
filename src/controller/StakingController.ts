@@ -25,7 +25,8 @@ export default class TxController extends KoaController {
    * @apiName getValidatorDetail
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr operator address
+   * @apiParam {string} operatorAddr Operator address
+   * @apiParam {string} [account] User address
    *
    * @apiSuccess {string} operatorAddress
    * @apiSuccess {string} consensusPubkey
@@ -93,8 +94,6 @@ export default class TxController extends KoaController {
    * @api {get} /staking/validators Get all validator info
    * @apiName getValidators
    * @apiGroup Staking
-   *
-   * @apiParam {string} operatorAddr operator address
    *
    * @apiSuccess {Object[]} validator
    * @apiSuccess {string} validator.operatorAddress
@@ -360,8 +359,6 @@ export default class TxController extends KoaController {
    * @api {get} /staking Get all validators and staking info
    * @apiName getStaking
    * @apiGroup Staking
-   *
-   * @apiParam {string} [account] User's account address
    *
    * @apiSuccess {Object[]} validators
    * @apiSuccess {string} validators.operatorAddress

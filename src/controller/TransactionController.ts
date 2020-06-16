@@ -77,6 +77,7 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
+   * @apiParam {string} [action] Tx type
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [block] Block number
@@ -274,6 +275,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {boolean} txs.success
    * @apiSuccess {string} txs.errorMessage
    * @apiSuccess {string} txs.chainId
+   * @apiSuccess {string} txs.tax transaction tax
    */
   @Get('/msgs')
   @Validate({
