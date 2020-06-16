@@ -268,6 +268,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {Object[]} txs.msgs.out
    * @apiSuccess {string} txs.msgs.out.denom
    * @apiSuccess {string} txs.msgs.out.amount
+   * @apiSuccess {string} txs.msgs.tax transaction tax
    * @apiSuccess {Object[]} txs.txFee
    * @apiSuccess {string} txs.txFee.denom
    * @apiSuccess {string} txs.txFee.amount
@@ -275,7 +276,6 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {boolean} txs.success
    * @apiSuccess {string} txs.errorMessage
    * @apiSuccess {string} txs.chainId
-   * @apiSuccess {string} txs.tax transaction tax
    */
   @Get('/msgs')
   @Validate({
