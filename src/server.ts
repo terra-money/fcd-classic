@@ -1,6 +1,7 @@
 import * as http from 'http'
 import * as Bluebird from 'bluebird'
 import * as sentry from '@sentry/node'
+
 import { init as initORM } from 'orm'
 import config from 'config'
 import createApp from 'createApp'
@@ -26,12 +27,20 @@ export async function createServer() {
   initializeSentry()
 
   await initORM()
+  const server = http.createServer()
+  let socket
 
-  const app = await createApp()
+  if (!config.DISABLE_API) {
+    logger.info(`Adding rest API`)
+    const app = await createApp()
+    server.addListener('request', app.callback())
+  }
 
-  const server = http.createServer(app.callback())
-  const socket = initSocket(server)
-  await reporter()
+  if (!config.DISABLE_SOCKET) {
+    logger.info(`Adding Socket`)
+    socket = initSocket(server)
+    await reporter()
+  }
 
   server.listen(config.PORT, () => {
     logger.info(`${packageJson.description} is listening on port ${config.PORT}`)
