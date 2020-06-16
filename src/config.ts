@@ -12,7 +12,9 @@ const {
   HEIGHT_REPORT_INTERVAL,
   TAX_CAP_TARGETS,
   ACTIVE_DENOMS,
-  ACTIVE_CURRENCY
+  ACTIVE_CURRENCY,
+  DISABLE_API,
+  DISABLE_SOCKET
 } = process.env
 
 const config = {
@@ -27,6 +29,8 @@ const config = {
   SENTRY_DSN,
   SC_AUTH_KEY,
   USE_LOG_FILE: USE_LOG_FILE ? true : false,
+  DISABLE_API: DISABLE_API ? true : false,
+  DISABLE_SOCKET: DISABLE_SOCKET ? true : false,
   // Keybase for fetching validator avatar image
   KEYBASE_URL_PREFIX: `https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=`,
   // Reporter module

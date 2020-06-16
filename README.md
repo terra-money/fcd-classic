@@ -77,6 +77,8 @@ module.exports = {
 | TAX_CAP_TARGETS     | Cap of Tax                      | ["usdr"]                                     | API                                |
 | ACTIVE_DENOMS       | Active Denominations            | ["uluna","usdr","ukrw","uusd","umnt"]        | API                                |
 | ACTIVE_CURRENCY     | Active Currencies               | ["luna","sdt","krt","ust","mnt"]             | API                                |
+| DISABLE_API         | Disable REST APIs               | false                                        | API                                |
+| DISABLE_SOCKET      | Dsiable Web Socket              | false                                        | API                                |
 
 > In Terra we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
@@ -90,11 +92,6 @@ module.exports = {
   ```bash
   yarn run dev
   ```
-  - Run API `REST` or `Socket` only mode.
-    - Pass `-- --rest-only` option to run only `REST` apis
-    - Pass `-- --socket-only` option to run only `web-socket`
-    - Pass `-- --all` option to run both
-    - Passing no option considered as `--all`
 * Test
   ```bash
   yarn run test
@@ -110,11 +107,6 @@ module.exports = {
   ```bash
   yarn start
   ```
-  - Run API `REST` or `Socket` only mode.
-    - Pass `-- --rest-only` option to run only `REST` apis
-    - Pass `-- --socket-only` option to run only `web-socket`
-    - Pass `-- --all` option to run both
-    - Passing no option considered as `--all`
 
 ### Documentation
 * apiDoc (https://apidocjs.com)
