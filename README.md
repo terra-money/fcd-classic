@@ -90,6 +90,11 @@ module.exports = {
   ```bash
   yarn run dev
   ```
+  - Run API `REST` or `Socket` only mode.
+    - Pass `-- --rest-only` option to run only `REST` apis
+    - Pass `-- --socket-only` option to run only `web-socket`
+    - Pass `-- --all` option to run both
+    - Passing no option considered as `--all`
 * Test
   ```bash
   yarn run test
@@ -105,6 +110,11 @@ module.exports = {
   ```bash
   yarn start
   ```
+  - Run API `REST` or `Socket` only mode.
+    - Pass `-- --rest-only` option to run only `REST` apis
+    - Pass `-- --socket-only` option to run only `web-socket`
+    - Pass `-- --all` option to run both
+    - Passing no option considered as `--all`
 
 ### Documentation
 * apiDoc (https://apidocjs.com)
