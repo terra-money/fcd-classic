@@ -139,9 +139,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY data->'timestamp' ${order}`
 
-  const txsReq = getConnection().query(query)
-
-  const txs = await txsReq
+  const txs = await getConnection().query(query)
 
   return {
     totalCnt,

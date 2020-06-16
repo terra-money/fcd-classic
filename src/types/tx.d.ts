@@ -2,7 +2,11 @@ declare namespace Transaction {
   interface Log {
     msg_index: number
     success: boolean
-    log: string
+    log:
+      | string
+      | {
+          tax: string
+        }
     events?: Event[]
   }
 
@@ -106,6 +110,7 @@ interface DelegationTxsReturn {
 interface ParsedTxMsgInfo {
   tag?: string
   text?: string
+  tax?: string
   in?: any[]
   out?: Coin[]
 }
@@ -116,7 +121,6 @@ interface ParsedTxInfo {
   msgs: ParsedTxMsgInfo[]
   txFee: string
   memo: string
-  tax: string
   success: boolean
   errorMessage?: string
   chainId: string
