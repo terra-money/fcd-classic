@@ -145,7 +145,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   }
 
   const repo = getRepository(ValidatorInfoEntity)
-  const validator = await repo.findOne({ operatorAddress })
+  const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 
   if (!validator) {
     logger.info(`New validator found (operater address: ${operatorAddress}`)
