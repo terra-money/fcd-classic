@@ -22,6 +22,7 @@ interface Method {
   description: string
   summary: string
   tags: string[]
+  parameters?: any
   comsumes?: string[]
   produces?: string[]
   responses: Object
@@ -57,10 +58,33 @@ const argv = yargs.options({
   }
 }).argv
 
+function normalizeSwagger(doc: Swagger): Swagger {
+  for (const path in doc.paths) {
+    let isOutSideParams = false
+    let outSideParams
+    for (const method in doc.paths[path]) {
+      if (method === 'parameters') {
+        outSideParams = doc.paths[path][method]
+        isOutSideParams = true
+        continue
+      }
+      if (isOutSideParams) {
+        if (doc.paths[path][method].parameters) {
+          doc.paths[path][method].parameters = [...doc.paths[path][method].parameters, ...outSideParams]
+        } else {
+          doc.paths[path][method].parameters = outSideParams
+        }
+      }
+    }
+    delete doc.paths[path].parameters
+  }
+  return doc
+}
+
 async function getLcdSwaggerObject(): Promise<Swagger> {
   try {
     const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
-    return doc
+    return normalizeSwagger(doc)
   } catch (err) {
     throw err
   }
@@ -75,7 +99,7 @@ function getFcdSwaggerObject(): Swagger {
   }
   const api = createApidocSwagger(options)
   if (api['swaggerData']) {
-    return JSON.parse(api['swaggerData'])
+    return normalizeSwagger(JSON.parse(api['swaggerData']))
   }
   throw new Error('Could not generate fcd swagger')
 }
