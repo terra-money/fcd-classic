@@ -8,29 +8,50 @@ import * as helmet from 'koa-helmet'
 import * as serve from 'koa-static'
 import * as mount from 'koa-mount'
 import * as addTrailingSlashes from 'koa-add-trailing-slashes'
+import { configureRoutes } from 'koa-joi-controllers'
+
 import config from 'config'
 import { errorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 import proxy from 'lib/bypass'
+import { apiLogger as logger } from 'lib/logger'
+
 import controllers from 'controller'
-import { configureRoutes } from 'koa-joi-controllers'
 
 const koaSwagger = require('koa2-swagger-ui')
 
 const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}(terra\.money|terra\.dev|station\.terra-project\.now\.sh)(?::\d{4,5})?(?:\/|$)/
 const API_VERSION_PREFIX = '/v1'
 
-export default async (): Promise<Koa> => {
+function getRootApp(): Koa {
+  // root app only contains the health check route
+  const app = new Koa()
+  const router = new Router()
+
+  router.get('/health', async (ctx) => {
+    ctx.status = 200
+    ctx.body = 'OK'
+  })
+  app.use(router.routes())
+  app.use(router.allowedMethods())
+  return app
+}
+
+function getApiDocApp(): Koa {
   // static
-  const staticFiles = new Koa()
-  staticFiles.use(addTrailingSlashes()).use(
+  const app = new Koa()
+  app.use(addTrailingSlashes()).use(
     serve(path.resolve(__dirname, '..', 'static'), {
       maxage: 86400 * 1000
     })
   )
+  return app
+}
+
+function getSwaggerApp(): Koa {
   // swagger ui
-  const swagger = new Koa()
-  swagger.use(
+  const app = new Koa()
+  app.use(
     koaSwagger({
       routePrefix: '/',
       swaggerOptions: {
@@ -38,17 +59,28 @@ export default async (): Promise<Koa> => {
       }
     })
   )
+  return app
+}
 
-  const app = new Koa()
+export default async (disableAPI: boolean = false): Promise<Koa> => {
+  const app = getRootApp()
 
+  if (disableAPI) {
+    // Return app with only health check if api is disbaled.
+    logger.info('API Disabled')
+    return app
+  }
+  logger.info('Adding REST API')
   app.proxy = true
+  const apiDoc = getApiDocApp()
+  const swaggerUI = getSwaggerApp()
 
   app
     .use(morgan('common'))
     .use(helmet())
-    .use(mount('/static', staticFiles))
-    .use(mount('/apidoc', staticFiles))
-    .use(mount('/swagger', swagger))
+    .use(mount('/static', apiDoc))
+    .use(mount('/apidoc', apiDoc))
+    .use(mount('/swagger', swaggerUI))
     .use(errorHandler(error))
     .use(async (ctx, next) => {
       await next()
@@ -80,18 +112,11 @@ export default async (): Promise<Koa> => {
       })
     )
 
-  const router = new Router()
-
-  router.get('/health', async (ctx) => {
-    ctx.status = 200
-    ctx.body = 'OK'
-  })
-
   // add API
-
   configureRoutes(app, controllers, API_VERSION_PREFIX)
 
   // routes && init
+  const router = new Router()
   router.all(
     '(.*)',
     proxy({
