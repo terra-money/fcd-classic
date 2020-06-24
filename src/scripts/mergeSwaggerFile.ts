@@ -18,15 +18,17 @@ interface Definition {
   [definitionName: string]: Object
 }
 
+export interface Param {
+  name: string
+  in: string
+  required: boolean
+}
+
 interface Method {
   description: string
   summary: string
   tags: string[]
-  parameters: {
-    name: string
-    in: string
-    required: boolean
-  }[]
+  parameters: Param[]
   comsumes?: string[]
   produces?: string[]
   responses: Object
@@ -36,7 +38,7 @@ interface Path {
   [httpMethod: string]: Method
 }
 
-interface Swagger {
+export interface Swagger {
   swagger: string
   info: Info
   paths: {
@@ -68,6 +70,7 @@ function normalizeSwagger(doc: Swagger): Swagger {
     let outSideParams
     for (const method in doc.paths[path]) {
       if (method === 'parameters') {
+        // used as common params for all methods
         outSideParams = doc.paths[path][method]
         isOutSideParams = true
         continue

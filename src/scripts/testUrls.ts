@@ -1,6 +1,6 @@
 import * as rp from 'request-promise'
 
-import { getMergedSwagger } from './mergeSwaggerFile'
+import { getMergedSwagger, Param, Swagger } from './mergeSwaggerFile'
 import config from 'config'
 
 const staticParams = {
@@ -27,27 +27,37 @@ const staticParams = {
   txhash: 'CAAB4EA3B8BF56B8F160E10C6F4406B20EDE62732762BCDCA0AEE214F9B9FBCB'
 }
 
-export async function generateUrlsFromSwagger(): Promise<string[]> {
-  const swagger = await getMergedSwagger()
+function relacePathParam(url: string, param: Param): string {
+  return url.replace(`{${param.name}}`, `${staticParams[param.name]}`)
+}
+
+function replaceQueryParam(url: string, param: Param): string {
+  if (url.indexOf('?') === -1) {
+    return `${url}?${param.name}=${staticParams[param.name]}`
+  }
+  return `${url}&${param.name}=${staticParams[param.name]}`
+}
+
+function replaceUrlParamsAndQuery(url: string, params: Param[]): string {
+  let generated = url
+  for (const param of params) {
+    if (param.required) {
+      generated = param.in === 'path' ? relacePathParam(generated, param) : replaceQueryParam(generated, param)
+    }
+  }
+
+  return generated
+}
+
+async function generateUrlsFromSwagger(): Promise<string[]> {
+  const swagger: Swagger = await getMergedSwagger()
   const urls: string[] = []
   for (const path in swagger.paths) {
     for (const method in swagger.paths[path]) {
       if (method !== 'get') continue
       let url = `${config.FCD_URI}${path}`
       if (swagger.paths[path][method].parameters) {
-        for (const param of swagger.paths[path][method].parameters) {
-          if (param.required) {
-            if (param.in === 'path') {
-              url = url.replace(`{${param.name}}`, `${staticParams[param.name]}`)
-            } else {
-              if (url.indexOf('?') === -1) {
-                url = `${url}?${param.name}=${staticParams[param.name]}`
-              } else {
-                url = `${url}&${param.name}=${staticParams[param.name]}`
-              }
-            }
-          }
-        }
+        url = replaceUrlParamsAndQuery(url, swagger.paths[path][method].parameters)
       }
       urls.push(url)
     }
@@ -85,7 +95,7 @@ export async function testUrls() {
 
   const resp = await Promise.all(urls.map((url) => isAlive(url)))
 
-  const failedUrls = urls.filter((url, index) => !resp[index])
+  const failedUrls = urls.filter((_, index) => !resp[index])
   if (failedUrls.length) {
     console.log(`Failed URL's`, failedUrls)
     throw new Error(failedUrls.join(`\n`))
