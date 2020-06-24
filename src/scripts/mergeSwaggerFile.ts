@@ -22,7 +22,11 @@ interface Method {
   description: string
   summary: string
   tags: string[]
-  parameters?: any
+  parameters: {
+    name: string
+    in: string
+    required: boolean
+  }[]
   comsumes?: string[]
   produces?: string[]
   responses: Object
@@ -119,13 +123,11 @@ function resolveBasePath(swagger: Swagger): Swagger {
   return Object.assign({}, swagger, { paths: resoledPath })
 }
 
-async function mergeFiles() {
-  const dest = path.join(__dirname, '..', '..', 'static')
-
+export async function getMergedSwagger() {
   const lcd = resolveBasePath(await getLcdSwaggerObject())
   const fcd = resolveBasePath(getFcdSwaggerObject())
 
-  let combinedSwagger: Swagger = {
+  const combinedSwagger: Swagger = {
     swagger: '2.0',
     info: {
       title: 'Terra REST apis',
@@ -138,6 +140,13 @@ async function mergeFiles() {
 
   combinedSwagger.paths = Object.assign({}, lcd.paths, fcd.paths)
   combinedSwagger.definitions = Object.assign({}, lcd.definitions, fcd.definitions)
+  return combinedSwagger
+}
+
+async function mergeSwagger() {
+  const dest = path.join(__dirname, '..', '..', 'static')
+
+  let combinedSwagger = await getMergedSwagger()
 
   if (argv.apigateway) {
     combinedSwagger = convertSwaggerForApiGateway(combinedSwagger)
@@ -151,4 +160,6 @@ async function mergeFiles() {
   console.log(`Combined file saved in ${path.join(dest, argv.output as string)}`)
 }
 
-mergeFiles().catch((e) => console.log(e))
+if (require.main?.filename === __filename) {
+  mergeSwagger().catch((e) => console.log(e))
+}
