@@ -42,7 +42,7 @@ export interface Swagger {
   swagger: string
   info: Info
   paths: {
-    [pathName: string]: Path
+    [pathName: string]: Path | Param[]
   }
   definitions: Definition
   host?: string
@@ -64,26 +64,25 @@ const argv = yargs.options({
   }
 }).argv
 
+function mergeParams(commonParams: Param[] = [], individualParams: Param[] = []): Param[] {
+  return [...commonParams, ...individualParams]
+}
+
 function normalizeSwagger(doc: Swagger): Swagger {
+  // Some swagger file contains commond params under paths object
+  // We are keeping all params under method params key
+
   for (const path in doc.paths) {
-    let isOutSideParams = false
-    let outSideParams
     for (const method in doc.paths[path]) {
       if (method === 'parameters') {
-        // used as common params for all methods
-        outSideParams = doc.paths[path][method]
-        isOutSideParams = true
         continue
       }
-      if (isOutSideParams) {
-        if (doc.paths[path][method].parameters) {
-          doc.paths[path][method].parameters = [...doc.paths[path][method].parameters, ...outSideParams]
-        } else {
-          doc.paths[path][method].parameters = outSideParams
-        }
+      const mergedParams = mergeParams(doc.paths[path]['parameters'], doc.paths[path][method].parameters)
+      if (mergedParams.length) {
+        doc.paths[path][method].parameters = mergedParams
       }
     }
-    delete doc.paths[path].parameters
+    delete doc.paths[path]['parameters']
   }
   return doc
 }
