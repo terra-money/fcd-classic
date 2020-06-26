@@ -32,6 +32,7 @@ function getRootApp(): Koa {
     ctx.status = 200
     ctx.body = 'OK'
   })
+
   app.use(router.routes())
   app.use(router.allowedMethods())
   return app
@@ -40,6 +41,7 @@ function getRootApp(): Koa {
 function getApiDocApp(): Koa {
   // static
   const app = new Koa()
+
   app.use(addTrailingSlashes()).use(
     serve(path.resolve(__dirname, '..', 'static'), {
       maxage: 86400 * 1000
@@ -51,6 +53,7 @@ function getApiDocApp(): Koa {
 function getSwaggerApp(): Koa {
   // swagger ui
   const app = new Koa()
+
   app.use(
     koaSwagger({
       routePrefix: '/',
@@ -70,17 +73,18 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
     logger.info('API Disabled')
     return app
   }
+
   logger.info('Adding REST API')
   app.proxy = true
-  const apiDoc = getApiDocApp()
-  const swaggerUI = getSwaggerApp()
+  const apiDocApp = getApiDocApp()
+  const swaggerApp = getSwaggerApp()
 
   app
     .use(morgan('common'))
     .use(helmet())
-    .use(mount('/static', apiDoc))
-    .use(mount('/apidoc', apiDoc))
-    .use(mount('/swagger', swaggerUI))
+    .use(mount('/static', apiDocApp))
+    .use(mount('/apidoc', apiDocApp))
+    .use(mount('/swagger', swaggerApp))
     .use(errorHandler(error))
     .use(async (ctx, next) => {
       await next()
