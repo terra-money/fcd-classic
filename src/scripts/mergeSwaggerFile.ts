@@ -18,10 +18,17 @@ interface Definition {
   [definitionName: string]: Object
 }
 
+export interface Param {
+  name: string
+  in: string
+  required: boolean
+}
+
 interface Method {
   description: string
   summary: string
   tags: string[]
+  parameters: Param[]
   comsumes?: string[]
   produces?: string[]
   responses: Object
@@ -31,11 +38,11 @@ interface Path {
   [httpMethod: string]: Method
 }
 
-interface Swagger {
+export interface Swagger {
   swagger: string
   info: Info
   paths: {
-    [pathName: string]: Path
+    [pathName: string]: Path | Param[]
   }
   definitions: Definition
   host?: string
@@ -57,10 +64,33 @@ const argv = yargs.options({
   }
 }).argv
 
+function mergeParams(commonParams: Param[] = [], individualParams: Param[] = []): Param[] {
+  return [...commonParams, ...individualParams]
+}
+
+function normalizeSwagger(doc: Swagger): Swagger {
+  // Some swagger file contains commond params under paths object
+  // We are keeping all params under method params key
+
+  for (const path in doc.paths) {
+    for (const method in doc.paths[path]) {
+      if (method === 'parameters') {
+        continue
+      }
+      const mergedParams = mergeParams(doc.paths[path]['parameters'], doc.paths[path][method].parameters)
+      if (mergedParams.length) {
+        doc.paths[path][method].parameters = mergedParams
+      }
+    }
+    delete doc.paths[path]['parameters']
+  }
+  return doc
+}
+
 async function getLcdSwaggerObject(): Promise<Swagger> {
   try {
     const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
-    return doc
+    return normalizeSwagger(doc)
   } catch (err) {
     throw err
   }
@@ -75,7 +105,7 @@ function getFcdSwaggerObject(): Swagger {
   }
   const api = createApidocSwagger(options)
   if (api['swaggerData']) {
-    return JSON.parse(api['swaggerData'])
+    return normalizeSwagger(JSON.parse(api['swaggerData']))
   }
   throw new Error('Could not generate fcd swagger')
 }
@@ -95,13 +125,11 @@ function resolveBasePath(swagger: Swagger): Swagger {
   return Object.assign({}, swagger, { paths: resoledPath })
 }
 
-async function mergeFiles() {
-  const dest = path.join(__dirname, '..', '..', 'static')
-
+export async function getMergedSwagger() {
   const lcd = resolveBasePath(await getLcdSwaggerObject())
   const fcd = resolveBasePath(getFcdSwaggerObject())
 
-  let combinedSwagger: Swagger = {
+  const combinedSwagger: Swagger = {
     swagger: '2.0',
     info: {
       title: 'Terra REST apis',
@@ -114,6 +142,13 @@ async function mergeFiles() {
 
   combinedSwagger.paths = Object.assign({}, lcd.paths, fcd.paths)
   combinedSwagger.definitions = Object.assign({}, lcd.definitions, fcd.definitions)
+  return combinedSwagger
+}
+
+async function mergeSwagger() {
+  const dest = path.join(__dirname, '..', '..', 'static')
+
+  let combinedSwagger = await getMergedSwagger()
 
   if (argv.apigateway) {
     combinedSwagger = convertSwaggerForApiGateway(combinedSwagger)
@@ -127,4 +162,6 @@ async function mergeFiles() {
   console.log(`Combined file saved in ${path.join(dest, argv.output as string)}`)
 }
 
-mergeFiles().catch((e) => console.log(e))
+if (require.main?.filename === __filename) {
+  mergeSwagger().catch((e) => console.log(e))
+}

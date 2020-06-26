@@ -27,14 +27,10 @@ export async function createServer() {
   initializeSentry()
 
   await initORM()
-  const server = http.createServer()
-  let socket
+  const app = await createApp(config.DISABLE_API)
+  const server = http.createServer(app.callback())
 
-  if (!config.DISABLE_API) {
-    logger.info(`Adding rest API`)
-    const app = await createApp()
-    server.addListener('request', app.callback())
-  }
+  let socket
 
   if (!config.DISABLE_SOCKET) {
     logger.info(`Adding Socket`)
