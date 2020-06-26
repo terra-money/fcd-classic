@@ -245,7 +245,7 @@ export default class TransactionController extends KoaController {
    * @apiName getParsedTxList
    * @apiGroup Transactions
    *
-   * @apiParam {string} [account] Account address
+   * @apiParam {string} account Account address
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [action] Action filter
@@ -280,7 +280,7 @@ export default class TransactionController extends KoaController {
   @Get('/msgs')
   @Validate({
     query: {
-      account: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('User address'),
+      account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
       action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
       order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
       from: Joi.number().description('From timestamp unix time'),
