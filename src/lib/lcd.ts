@@ -363,10 +363,10 @@ export function getSeigniorageProceeds(): Promise<string> {
   return get(`/treasury/seigniorage_proceeds`)
 }
 
-export async function getTaxRate(): Promise<string> {
-  return get(`/treasury/tax_rate`)
+export async function getTaxRate(height?: string): Promise<string> {
+  return get(`/treasury/tax_rate`, height ? { height } : undefined)
 }
 
-export async function getTaxCap(denom: string): Promise<string> {
-  return get(`/treasury/tax_cap/${denom}`)
+export async function getTaxCap(denom: string, height?: string): Promise<string> {
+  return get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
 }

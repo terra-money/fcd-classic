@@ -17,14 +17,10 @@ import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
 
 function getTxHashesFromBlock(block: LcdBlock): string[] {
-  const numTxs = Number(get(block, 'block.header.num_txs'))
-
-  if (!numTxs || numTxs === 0) {
+  const txStrings = get(block, 'block.data.txs')
+  if (!txStrings || !txStrings.length) {
     return []
   }
-
-  const txStrings = get(block, 'block.data.txs')
-
   const hashes = txStrings.map(lcd.getTxHash)
   return hashes
 }
@@ -175,9 +171,8 @@ export async function collectBlock(): Promise<void> {
 
   while (hasNextBlocks) {
     const { hasMoreBlocks, lcdBlock, lastSyncedBlock } = await getLastestBlockInfo()
-
     if (lcdBlock) {
-      const height: string = lcdBlock.block_meta.header.height
+      const height: string = lcdBlock.block.header.height
       logger.info(`collectBlock: begin transaction for block ${height}`)
 
       const result: boolean = await getManager()

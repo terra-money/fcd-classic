@@ -5,17 +5,42 @@ import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { times, minus, plus } from 'lib/math'
-import { getTaxRateAndCap } from 'lib/rpc'
 
 import { getAccountTxDocs } from './accountTx'
 import { getRepository, EntityManager } from 'typeorm'
 import config from 'config'
+import { string } from 'yargs'
+
+async function getTaxCapByDenom(denom: string, height?: string): Promise<Coin> {
+  return {
+    denom,
+    amount: await lcd.getTaxCap(denom, height)
+  }
+}
+
+async function getTaxRateAndCap(
+  height?: string
+): Promise<{
+  taxRate: string
+  taxCaps: { [denom: string]: string }
+}> {
+  const taxCapsList: Coin[] = await Promise.all(config.ACTIVE_DENOMS.map((denom) => getTaxCapByDenom(denom, height)))
+
+  const taxRate = await lcd.getTaxRate(height)
+
+  return {
+    taxRate,
+    taxCaps: taxCapsList.reduce((acc, tax) => {
+      acc[tax.denom] = tax.amount
+      return acc
+    }, {})
+  }
+}
 
 export function getTax(msg, taxRate, taxCaps): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
     return []
   }
-
   if (msg.type === 'bank/MsgSend') {
     const amount = get(msg, 'value.amount')
     return compact(
@@ -23,7 +48,6 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
         if (item.denom === 'uluna') {
           return
         }
-
         const taxCap = taxCaps && taxCaps[item.denom] ? taxCaps[item.denom] : '1000000'
         return {
           denom: item.denom,
@@ -66,7 +90,7 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
 
 async function assignGasAndTax(height: string, lcdTx: Transaction.LcdTransaction): Promise<void> {
   // get tax rate and tax caps
-  const { tax_rate: taxRate, tax_caps: taxCaps } = await getTaxRateAndCap(height)
+  const { taxRate, taxCaps } = await getTaxRateAndCap(height)
 
   const fees = lcdTx.tx.value.fee.amount
   const feeObj = fees.reduce((acc, fee) => {
@@ -98,7 +122,6 @@ async function assignGasAndTax(height: string, lcdTx: Transaction.LcdTransaction
     taxArr.push(taxPerMsg)
     return acc
   }, feeObj)
-
   // failed tx
   if (!lcdTx.logs || lcdTx.logs.length !== taxArr.length) {
     return
