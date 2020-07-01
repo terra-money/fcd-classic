@@ -1,48 +1,55 @@
 interface LcdBlock {
+  block_id: LcdBlockId
   block: {
-    data: any
-    evidence: any
     header: LcdBlockHeader
-    last_commit: any
-  }
-  block_meta: {
-    block_id: {
-      hash: string
-      parts: {
-        hash: string
-        total: string
-      }
+    data: {
+      txs: string[]
     }
-    header: LcdBlockHeader
+    evidence: any
+    last_commit: LcdBlockLastCommit
+  }
+}
+
+interface LcdBlockLastCommit {
+  height: string
+  round: string
+  block_id: LcdBlockId
+  signatures: LcdBlockSignature[]
+}
+
+interface LcdBlockSignature {
+  block_id_flag: number
+  validator_address: string
+  timestamp: string
+  signature: string
+}
+
+interface LcdBlockId {
+  hash: string
+  parts: {
+    total: string
+    hash: string
   }
 }
 
 interface LcdBlockHeader {
-  app_hash: string
-  chain_id: string
-  consensus_hash: string
-  data_hash: string
-  evidence_hash: string
-  height: string
-  last_block_id: {
-    hash: string
-    parts: {
-      hash: string
-      total: string
-    }
-  }
-  last_commit_hash: string
-  last_results_hash: string
-  next_validators_hash: string
-  num_txs: string
-  proposer_address: string
-  time: string
-  total_txs: string
-  validators_hash: string
   version: {
     app: string
     block: string
   }
+  chain_id: string
+  height: string
+  time: string
+  last_block_id: LcdBlockId
+  last_commit_hash: string
+  data_hash: string
+  validators_hash: string
+  next_validators_hash: string
+  consensus_hash: string
+  app_hash: string
+  last_results_hash: string
+  evidence_hash: string
+  proposer_address: string
 }
 
 interface LcdValidator {
@@ -64,6 +71,7 @@ interface LcdValidatorDescription {
   identity: string
   moniker: string
   website: string
+  security_contact: string
 }
 
 interface LcdValidatorCommission {

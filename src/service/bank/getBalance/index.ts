@@ -22,7 +22,7 @@ export default async (address: string): Promise<AccountDetails> => {
   ])
 
   const account = normalizeAccount(accounts)
-  const latestBlockTimestamp = new Date(latestBlock.block_meta.header.time).getTime()
+  const latestBlockTimestamp = new Date(latestBlock.block.header.time).getTime()
   const balance = accounts && calculate({ account, delegations, unbondings, latestBlockTimestamp })
   const vesting = accounts && getVesting({ account, latestBlockTimestamp })
 
