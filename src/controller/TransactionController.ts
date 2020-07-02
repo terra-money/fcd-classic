@@ -89,7 +89,7 @@ export default class TransactionController extends KoaController {
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info
    * @apiSuccess {string} txs.tx.type Tx type
