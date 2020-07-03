@@ -75,7 +75,7 @@ export default class WasmController extends KoaController {
     success(ctx, await getContracts(page, limit, owner))
   }
   /**
-   * @api {get} /contract/:contract_address/txs Get wasm codes info
+   * @api {get} /wasm/contract/:contract_address/txs Get wasm codes info
    * @apiName getWasmContractTxs
    * @apiGroup Wasm
    *
