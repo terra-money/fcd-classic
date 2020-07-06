@@ -3,6 +3,7 @@ import { DeepPartial, getRepository } from 'typeorm'
 
 import config from 'config'
 import { ValidatorInfoEntity, ValidatorStatus } from 'orm'
+
 import * as lcd from 'lib/lcd'
 import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
 import { div, plus, times } from 'lib/math'

@@ -1,10 +1,11 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
-import { success } from 'lib/response'
 
+import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { getProposals, getProposal, getVotes, getDeposits, ProposalStatus, VoteTypes } from 'service/governance'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+
+import { getProposals, getProposal, getVotes, getDeposits, ProposalStatus, VoteTypes } from 'service/governance'
 
 const Joi = Validator.Joi
 

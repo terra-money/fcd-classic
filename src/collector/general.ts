@@ -3,6 +3,7 @@ import { getRepository, getConnection } from 'typeorm'
 import { subDays, startOfDay } from 'date-fns'
 
 import { GeneralInfoEntity } from 'orm'
+
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'

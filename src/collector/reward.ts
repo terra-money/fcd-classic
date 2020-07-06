@@ -1,12 +1,15 @@
+import { getRepository, EntityManager } from 'typeorm'
+import { get, mergeWith } from 'lodash'
+
 import config from 'config'
 import { TxEntity, RewardEntity, BlockEntity } from 'orm'
-import { getRepository, EntityManager } from 'typeorm'
+
 import * as lcd from 'lib/lcd'
 import logger from 'lib/logger'
 import { plus, minus } from 'lib/math'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
-import { get, mergeWith } from 'lodash'
+
 import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
 
 function getGas(tx): DenomMap {

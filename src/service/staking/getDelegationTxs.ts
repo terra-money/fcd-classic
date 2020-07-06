@@ -1,4 +1,5 @@
 import { get, flatten, take, drop, compact, filter } from 'lodash'
+
 import { getRawDelegationTxs } from './helper'
 
 export interface GetDelegationEventsParam {

@@ -5,8 +5,8 @@ import { getDateFromDateTime } from 'lib/time'
 import { collectorLogger as logger } from 'lib/logger'
 
 import config from 'config'
-
 import { DashboardEntity } from 'orm'
+
 import { getStakingReturnByDay } from './stakingReturn'
 import { getAccountCountByDay } from './accountGrowth'
 import { getBlockRewardsByDay } from './blockReward'

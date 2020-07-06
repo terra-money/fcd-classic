@@ -1,6 +1,8 @@
-import config from 'config'
-import { getQueryDateTime } from 'lib/time'
 import { getConnection } from 'typeorm'
+
+import config from 'config'
+
+import { getQueryDateTime } from 'lib/time'
 import { plus, div } from 'lib/math'
 
 const REWARD_SUM = `reward_sum`

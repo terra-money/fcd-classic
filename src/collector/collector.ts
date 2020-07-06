@@ -4,6 +4,7 @@ import { get } from 'lodash'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
+
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'

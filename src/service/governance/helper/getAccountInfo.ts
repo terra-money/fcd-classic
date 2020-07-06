@@ -1,6 +1,7 @@
 import { getRepository } from 'typeorm'
-import { ValidatorInfoEntity } from 'orm'
 import * as memoizee from 'memoizee'
+
+import { ValidatorInfoEntity } from 'orm'
 
 interface AccountInfo {
   accountAddress: string

@@ -1,7 +1,9 @@
-import config from 'config'
 import * as crypto from 'crypto'
 import * as rp from 'request-promise'
 import { compact, flatten, get as lodashGet, filter } from 'lodash'
+
+import config from 'config'
+
 import { plus, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
 

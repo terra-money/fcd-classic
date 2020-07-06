@@ -1,9 +1,9 @@
 import { getRepository, In } from 'typeorm'
 
-import { collectorLogger as logger } from 'lib/logger'
-
 import { ProposalEntity } from 'orm'
 import config from 'config'
+
+import { collectorLogger as logger } from 'lib/logger'
 
 export async function removeProposalsDeletedFromChain(proposalsInChain: LcdProposal[]) {
   logger.info('Checking for deleted proposals')
