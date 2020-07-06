@@ -47,7 +47,7 @@ const jobs = [
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
-    cron: '20 * * * * *'
+    cron: '0 30 * * * *'
   },
   {
     method: proposalCollector.run.bind(proposalCollector),

@@ -1,48 +1,14 @@
 import { startOfDay } from 'date-fns'
-import { mergeWith } from 'lodash'
+import { getRepository } from 'typeorm'
 
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
-import { getRepository } from 'typeorm'
+
 import { getValidators } from 'lib/lcd'
-import { plus, div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
-import { getBlockRewards, getAvgVotingPower, getAvgPrice } from 'service/staking'
 
-async function getValidatorReturnSum(
-  operatorAddress: string,
-  blockRewards: BlockReward[],
-  priceObj: DenomMap
-): Promise<{
-  reward: string
-  commission: string
-}> {
-  const rewardMerger = (obj, src) => {
-    return mergeWith(obj, src, (o, s) => {
-      return plus(o, s)
-    })
-  }
+import { getAvgVotingPower, getAvgPrice } from 'service/staking'
 
-  const { reward: rewardObj, commission: commissionObj } = blockRewards.reduce(
-    (acc, block) => {
-      const reward = block.reward_per_val[operatorAddress] || {}
-      const commission = block.commission_per_val[operatorAddress] || {}
-      return mergeWith(acc, { ...{ reward }, commission }, rewardMerger)
-    },
-    { reward: {} as DenomMap, commission: {} as DenomMap }
-  )
-
-  const reward = Object.keys(rewardObj).reduce((acc, denom) => {
-    const amountConvertedLuna = denom === 'uluna' ? rewardObj[denom] : div(rewardObj[denom], priceObj[denom])
-    return plus(acc, amountConvertedLuna)
-  }, '0')
-
-  const commission = Object.keys(commissionObj).reduce((acc, denom) => {
-    const amountConvertedLuna = denom === 'uluna' ? commissionObj[denom] : div(commissionObj[denom], priceObj[denom])
-    return plus(acc, amountConvertedLuna)
-  }, '0')
-
-  return { reward, commission }
-}
+import { normalizeRewardAndCommisionToLuna, getValidatorRewardAndCommissionSum } from './rewadAndCommissionSum'
 
 export async function calculateValidatorsReturn() {
   logger.info('Validator return calculator started.')
@@ -90,18 +56,24 @@ export async function calculateValidatorsReturn() {
     logger.info(`Starting return for day of ${timestamp}`)
 
     logger.info('Pulling block reward data, price info from db')
-    const blockRewards = await getBlockRewards(tsIt, tsIt + oneDayInMS)
     const priceObj = await getAvgPrice(tsIt, tsIt + oneDayInMS)
+
+    const existingValidator = await getRepository(ValidatorReturnInfoEntity).find({
+      select: ['operatorAddress'],
+      where: {
+        timestamp
+      }
+    })
+
+    const valMap = existingValidator.reduce((valMap, validator: ValidatorReturnInfoEntity) => {
+      valMap[validator.operatorAddress] = true
+      return valMap
+    })
 
     for (const validator of validatorsList) {
       logger.info(`${validator.operator_address}: calculating return`)
 
-      const infoExists = await getRepository(ValidatorReturnInfoEntity).findOne({
-        operatorAddress: validator.operator_address,
-        timestamp
-      })
-
-      if (infoExists) {
+      if (valMap[validator.operator_address]) {
         logger.info(`${validator.operator_address}: already exists in db`)
         continue
       }
@@ -109,9 +81,11 @@ export async function calculateValidatorsReturn() {
       const validatorAvgVotingPower = await getAvgVotingPower(validator.operator_address, tsIt, tsIt + oneDayInMS)
 
       if (validatorAvgVotingPower) {
-        const { reward, commission } = await getValidatorReturnSum(validator.operator_address, blockRewards, priceObj)
-        logger.info(`${validator.operator_address}: ${timestamp} 
-=> reward ${reward} with commission of ${commission}`)
+        const { reward, commission } = normalizeRewardAndCommisionToLuna(
+          await getValidatorRewardAndCommissionSum(validator.operator_address, tsIt, tsIt + oneDayInMS),
+          priceObj
+        )
+        logger.info(`${validator.operator_address}: ${timestamp} => reward ${reward} with commission of ${commission}`)
         await getRepository(ValidatorReturnInfoEntity).save({
           operatorAddress: validator.operator_address,
           timestamp,
