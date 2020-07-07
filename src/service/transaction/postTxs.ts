@@ -30,11 +30,15 @@ export async function postTxs(tx: Transaction.Value): Promise<Transaction.LcdTra
     .then((res) => {
       if (res.code) {
         if (!res.raw_log) {
-          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
+          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, res.toString())
         }
 
-        const errorLog = JSON.parse(res.raw_log)
-        throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, errorLog.message)
+        try {
+          const errorLog = JSON.parse(res.raw_log)
+          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, errorLog.message)
+        } catch (error) {
+          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, res.raw_log)
+        }
       }
 
       return res
