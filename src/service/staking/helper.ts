@@ -460,7 +460,7 @@ WHERE datetime >= '${fromStr}'
     return plus(acc, rewardSum)
   }, '0')
   const netReturn = div(rewardSum, staked)
-  const annualizedTimeSlot = div(12 * 30 * 24 * 3600 * 1000, toTs - fromTs)
+  const annualizedTimeSlot = div(365 * 24 * 3600 * 1000, toTs - fromTs)
   const annualizedReturn = times(netReturn, annualizedTimeSlot)
   return annualizedReturn
 }

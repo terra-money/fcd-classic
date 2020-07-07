@@ -3,7 +3,7 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
 import { daysBeforeTs } from 'lib/time'
 import {
   getStaking,
@@ -278,7 +278,7 @@ export default class TxController extends KoaController {
    */
   @Get('/return')
   async getTotalStakingReturn(ctx): Promise<void> {
-    const { fromTs, toTs } = daysBeforeTs(30)
+    const { fromTs, toTs } = daysBeforeTs(MOVING_AVG_WINDOW_IN_DAYS)
     success(ctx, await getTotalStakingReturn(fromTs, toTs))
   }
 
