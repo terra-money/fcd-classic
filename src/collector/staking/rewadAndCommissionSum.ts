@@ -40,7 +40,9 @@ export async function getValidatorRewardAndCommissionSum(
     fromTs,
     toTs
   )} and chain_id='${config.CHAIN_ID}' and block_id IS NOT NULL`
+
   const result = await getConnection().query(query)
+
   const sum = config.ACTIVE_DENOMS.reduce(
     (acc: RewardAndCommissionObj, denom: string) => {
       acc.reward[denom] = result[0][`${denom}_${REWARD_SUM}`]

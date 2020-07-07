@@ -31,8 +31,8 @@ export async function calculateValidatorsReturn() {
   const to = startOfDay(Date.now())
   let toTs = to.getTime()
   const oneDayInMS = 60000 * 60 * 24
-  const fiveDayInMS = oneDayInMS * 5
-  const fromTs = toTs - fiveDayInMS
+  const threeDayInMs = oneDayInMS * 5
+  const fromTs = toTs - threeDayInMs
 
   if (fromTs > latestBlockTs) {
     logger.info('Missing current block data')
