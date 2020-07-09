@@ -15,6 +15,7 @@ import { collectorLogger as logger } from 'lib/logger'
 import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
+import { saveWasmCodeAndContract } from './wasm'
 
 function getTxHashesFromBlock(block: LcdBlock): string[] {
   const txStrings = get(block, 'block.data.txs')
@@ -76,9 +77,9 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
 }
 
 export async function getBlockReward(block: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
-  const height = get(block, 'block_meta.header.height')
-  const chainId = get(block, 'block_meta.header.chain_id')
-  const timestamp = get(block, 'block_meta.header.time')
+  const height = get(block, 'block.header.height')
+  const chainId = get(block, 'block.header.chain_id')
+  const timestamp = get(block, 'block.header.time')
 
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
@@ -194,6 +195,7 @@ export async function collectBlock(): Promise<void> {
             const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
             // save transactions
             await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
+            await saveWasmCodeAndContract(transactionalEntityManager, txEntities)
           }
 
           // new block timestamp

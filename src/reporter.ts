@@ -13,7 +13,7 @@ let reportTimer: NodeJS.Timer
 
 async function getLatestBlockHeight() {
   const latestBlock = await lcd.getLatestBlock()
-  return get(latestBlock, 'block_meta.header.height')
+  return get(latestBlock, 'block.header.height')
 }
 
 async function reportLatestBlockHeight() {
