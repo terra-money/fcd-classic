@@ -69,7 +69,7 @@ export default class TxController extends KoaController {
    *
    * @apiSuccess {Object[]} periodic
    * @apiSuccess {string} periodic.denom denom name
-   * @apiSuccess {array} periodic.data
+   * @apiSuccess {Object[]} periodic.data
    * @apiSuccess {number} periodic.data.datetime unix time
    * @apiSuccess {string} periodic.data.txVolume periodic tx volume
    */
