@@ -54,7 +54,7 @@ export async function getValidatorRewardAndCommissionSum(
   return sum
 }
 
-export function normalizeRewardAndCommisionToLuna(
+export function normalizeRewardAndCommissionToLuna(
   rewardAndCommission: RewardAndCommissionObj,
   avgPriceObj: DenomMap
 ): {

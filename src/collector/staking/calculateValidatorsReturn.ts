@@ -8,7 +8,7 @@ import { collectorLogger as logger } from 'lib/logger'
 
 import { getAvgVotingPower, getAvgPrice } from 'service/staking'
 
-import { normalizeRewardAndCommisionToLuna, getValidatorRewardAndCommissionSum } from './rewadAndCommissionSum'
+import { normalizeRewardAndCommissionToLuna, getValidatorRewardAndCommissionSum } from './rewadAndCommissionSum'
 
 export async function calculateValidatorsReturn() {
   logger.info('Validator return calculator started.')
@@ -81,7 +81,7 @@ export async function calculateValidatorsReturn() {
       const validatorAvgVotingPower = await getAvgVotingPower(validator.operator_address, tsIt, tsIt + oneDayInMS)
 
       if (validatorAvgVotingPower) {
-        const { reward, commission } = normalizeRewardAndCommisionToLuna(
+        const { reward, commission } = normalizeRewardAndCommissionToLuna(
           await getValidatorRewardAndCommissionSum(validator.operator_address, tsIt, tsIt + oneDayInMS),
           priceObj
         )
