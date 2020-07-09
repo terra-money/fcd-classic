@@ -16,9 +16,12 @@ FROM node:12-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache git
+
 COPY --from=builder /app/package.json /app/yarn.lock /app/
 
-RUN yarn --prod
+RUN yarn --prod \
+    && apk del git
 
 COPY --from=builder /app/tsconfig.json /app/
 COPY --from=builder /app/static /app/static

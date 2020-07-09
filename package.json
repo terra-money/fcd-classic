@@ -119,7 +119,7 @@
     "@types/supertest": "^2.0.8",
     "@types/yargs": "^15.0.5",
     "apidoc": "^0.23.0",
-    "apidoc-swagger": "^0.3.2",
+    "apidoc-swagger": "git+https://github.com/terra-project/apidoc-swagger.git",
     "husky": "^4.2.3",
     "jest": "^26",
     "jest-circus": "^26.0.1",
