@@ -6,6 +6,7 @@ export default class WasmCodeEntity {
   @PrimaryGeneratedColumn()
   id: number
 
+  @Index('wcode_index_sender')
   @Column()
   sender: string
 
@@ -15,12 +16,14 @@ export default class WasmCodeEntity {
   @Column()
   txHash: string
 
+  @Index('wcode_index_memo')
   @Column()
   txMemo: string
 
   @Column()
   chainId: string
 
+  @Index('wcode_index_timestamp')
   @Column()
   timestamp: Date
 }

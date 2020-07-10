@@ -1,39 +1,87 @@
 import { getRepository, WhereExpression } from 'typeorm'
 
-import { TxEntity } from 'orm'
+import { WasmCodeEntity } from 'orm'
+import config from 'config'
 
-function addWasmCodeFilter(qb: WhereExpression, sender?: string) {
-  qb.where(`data->'tx'->'value'->'msg'@>'[{ "type": "wasm/StoreCode"}]'`)
-  qb.andWhere(`data->'code' is null`)
+import { APIError, ErrorTypes } from 'lib/error'
+
+import { parseWasmTxMemo, ParsedMemo } from './helpers'
+
+function addWasmCodeFilter(qb: WhereExpression, sender?: string, search?: string) {
+  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
   if (sender) {
-    qb.andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "sender": "${sender}" } }]'`)
+    qb.andWhere(`sender = :sender`, { sender })
+  }
+
+  if (search) {
+    qb.andWhere(`tx_memo ILIKE :search_str`, { search_str: `%${search}%` })
   }
 }
 
-export async function getWasmCodes(
-  page: number,
-  limit: number,
+type WasmCodeParams = {
+  page: number
+  limit: number
   sender?: string
-): Promise<{
+  search?: string
+}
+
+type WasmCodeDetails = {
+  code_id: string
+  sender: string
+  txhash: string
+  timestamp: string
+  info: ParsedMemo
+}
+
+function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
+  return {
+    code_id: code.codeId,
+    sender: code.sender,
+    timestamp: code.timestamp.toISOString(),
+    txhash: code.txHash,
+    info: parseWasmTxMemo(code.txMemo)
+  }
+}
+
+export async function getWasmCodes({
+  page,
+  limit,
+  sender,
+  search
+}: WasmCodeParams): Promise<{
   totalCnt: number
   page: number
   limit: number
-  codes: Transaction.LcdTransaction[]
+  codes: WasmCodeDetails[]
 }> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx')
-  addWasmCodeFilter(qb, sender)
+  const qb = getRepository(WasmCodeEntity).createQueryBuilder()
+
+  addWasmCodeFilter(qb, sender, search)
 
   const totalCnt = await qb.getCount()
 
   qb.skip(limit * (page - 1))
     .take(limit)
-    .orderBy(`data->'timestamp'`, 'DESC')
-
+    .orderBy(`timestamp`, 'DESC')
+  console.log(qb.getSql())
   const result = await qb.getMany()
   return {
     totalCnt,
     page,
     limit,
-    codes: result.map((tx) => tx.data as Transaction.LcdTransaction)
+    codes: result.map(getWasmCodeDetails)
   }
+}
+
+export async function getWasmCode(codeId: string): Promise<WasmCodeDetails> {
+  const code = await getRepository(WasmCodeEntity).findOne({
+    codeId,
+    chainId: config.CHAIN_ID
+  })
+
+  if (!code) {
+    throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Code not found')
+  }
+
+  return getWasmCodeDetails(code)
 }

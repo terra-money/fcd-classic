@@ -9,6 +9,7 @@ export default class WasmContractEntity {
   @Column()
   codeId: string
 
+  @Index('wcontract_index_owner')
   @Column()
   owner: string
 
@@ -21,9 +22,11 @@ export default class WasmContractEntity {
   @Column()
   txHash: string
 
+  @Index('wcontract_index_memo')
   @Column()
   txMemo: string
 
+  @Index('wcontract_index_timestamp')
   @Column()
   timestamp: Date
 
