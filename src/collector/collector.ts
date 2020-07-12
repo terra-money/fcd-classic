@@ -27,7 +27,7 @@ const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, log
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-const dashboardCollector = new Semaphore('DashbaordCollector', collectDashboard, logger)
+const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
 
 const jobs = [
   {

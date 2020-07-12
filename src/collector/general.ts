@@ -1,6 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { getRepository, getConnection } from 'typeorm'
-import { subDays, startOfDay } from 'date-fns'
+import { getRepository } from 'typeorm'
 
 import { GeneralInfoEntity } from 'orm'
 
@@ -8,24 +7,6 @@ import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
-import { getQueryDateTime } from 'lib/time'
-
-export async function getTotalAccount(timestamp?: number): Promise<number> {
-  const now = timestamp || Date.now()
-  const targetDate = getQueryDateTime(now)
-  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}') AS t;`
-  const res = await getConnection().query(query)
-  return res && res.length ? res[0].count : 0
-}
-
-export async function getActiveAccount(timestamp?: number): Promise<number> {
-  const now = timestamp || Date.now()
-  const targetDate = getQueryDateTime(now)
-  const onedayBefore = timestamp ? getQueryDateTime(subDays(now, 1)) : getQueryDateTime(startOfDay(now))
-  const query = `SELECT COUNT(*) FROM (SELECT DISTINCT account FROM account_tx WHERE timestamp <= '${targetDate}' AND timestamp >= '${onedayBefore}') AS t;`
-  const res = await getConnection().query(query)
-  return res && res.length ? res[0].count : 0
-}
 
 export async function saveGeneral() {
   const [
@@ -34,8 +15,7 @@ export async function saveGeneral() {
     seigniorageProceeds,
     communityPool,
     taxCaps,
-    { bondedTokens, notBondedTokens, issuances, stakingRatio },
-    [total, active]
+    { bondedTokens, notBondedTokens, issuances, stakingRatio }
   ] = await Promise.all([
     lcd.getTaxRate(),
     lcd.getTaxProceeds(),
@@ -57,9 +37,7 @@ export async function saveGeneral() {
     Promise.all([lcd.getStakingPool(), lcd.getAllActiveIssuance()]).then((results) => {
       const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
-    }),
-
-    Promise.all([getTotalAccount(), getActiveAccount()])
+    })
   ])
 
   const now = Date.now()
@@ -74,8 +52,8 @@ export async function saveGeneral() {
     seigniorageProceeds,
     bondedTokens,
     notBondedTokens,
-    totalAccountCount: total,
-    activeAccountCount: active,
+    totalAccountCount: 0, // TODO: legacy column. Will be removed on next release
+    activeAccountCount: 0, // TODO: legacy column. Will be removed on next release
     issuances,
     taxCaps,
     communityPool
