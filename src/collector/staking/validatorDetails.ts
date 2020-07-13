@@ -30,8 +30,8 @@ function getSelfDelegation(
     : { amount: '0', weight: '0' }
 }
 
-async function getDelegators(opertorAddress: string): Promise<Delegator[]> {
-  const lcdDelegators = await lcd.getValidatorDelegations(opertorAddress)
+async function getDelegators(operatorAddress: string): Promise<Delegator[]> {
+  const lcdDelegators = await lcd.getValidatorDelegations(operatorAddress)
 
   if (!lcdDelegators) {
     return []
@@ -149,7 +149,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 
   if (!validator) {
-    logger.info(`New validator found (operater address: ${operatorAddress}`)
+    logger.info(`New validator found (operator address: ${operatorAddress}`)
     await repo.save(repo.create(validatorDetails))
   } else {
     logger.info(`Update existing validator (op addr: ${operatorAddress}`)

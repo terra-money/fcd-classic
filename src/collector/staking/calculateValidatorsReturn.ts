@@ -5,10 +5,9 @@ import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 
 import { getValidators } from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
+import { ONE_DAY_IN_MS } from 'lib/constant'
 
-import { getAvgVotingPower, getAvgPrice } from 'service/staking'
-
-import { normalizeRewardAndCommissionToLuna, getValidatorRewardAndCommissionSum } from './rewadAndCommissionSum'
+import { getValidatorsReturnOfTheDay } from './validatorsDailyReturn'
 
 export async function calculateValidatorsReturn() {
   logger.info('Validator return calculator started.')
@@ -30,8 +29,7 @@ export async function calculateValidatorsReturn() {
 
   const to = startOfDay(Date.now())
   let toTs = to.getTime()
-  const oneDayInMS = 60000 * 60 * 24
-  const threeDayInMs = oneDayInMS * 5
+  const threeDayInMs = ONE_DAY_IN_MS * 3
   const fromTs = toTs - threeDayInMs
 
   if (fromTs > latestBlockTs) {
@@ -50,54 +48,18 @@ export async function calculateValidatorsReturn() {
   // used -10 for just to make sure it doesn't calculate for today
   toTs -= 10
 
-  for (let tsIt = fromTs; tsIt < toTs && tsIt < latestBlockTs; tsIt = tsIt + oneDayInMS) {
-    const timestamp = startOfDay(tsIt)
+  const valRetInfoEntityList: ValidatorReturnInfoEntity[] = []
 
-    logger.info(`Starting return for day of ${timestamp}`)
+  for (let tsIt = fromTs; tsIt < toTs && tsIt < latestBlockTs; tsIt = tsIt + ONE_DAY_IN_MS) {
+    const dailyEntityList = await getValidatorsReturnOfTheDay(tsIt, validatorsList)
 
-    logger.info('Pulling block reward data, price info from db')
-    const priceObj = await getAvgPrice(tsIt, tsIt + oneDayInMS)
+    valRetInfoEntityList.push(...dailyEntityList)
 
-    const existingValidator = await getRepository(ValidatorReturnInfoEntity).find({
-      select: ['operatorAddress'],
-      where: {
-        timestamp
-      }
-    })
-
-    const valMap = existingValidator.reduce((valMap, validator: ValidatorReturnInfoEntity) => {
-      valMap[validator.operatorAddress] = true
-      return valMap
-    })
-
-    for (const validator of validatorsList) {
-      logger.info(`${validator.operator_address}: calculating return`)
-
-      if (valMap[validator.operator_address]) {
-        logger.info(`${validator.operator_address}: already exists in db`)
-        continue
-      }
-
-      const validatorAvgVotingPower = await getAvgVotingPower(validator.operator_address, tsIt, tsIt + oneDayInMS)
-
-      if (validatorAvgVotingPower) {
-        const { reward, commission } = normalizeRewardAndCommissionToLuna(
-          await getValidatorRewardAndCommissionSum(validator.operator_address, tsIt, tsIt + oneDayInMS),
-          priceObj
-        )
-        logger.info(`${validator.operator_address}: ${timestamp} => reward ${reward} with commission of ${commission}`)
-        await getRepository(ValidatorReturnInfoEntity).save({
-          operatorAddress: validator.operator_address,
-          timestamp,
-          reward,
-          commission,
-          avgVotingPower: validatorAvgVotingPower
-        })
-      }
-    }
-
-    logger.info(`Calculated return for day of ${timestamp}`)
+    logger.info(`Calculated and got return for day of ${startOfDay(tsIt)}`)
   }
-
+  if (valRetInfoEntityList.length) {
+    await getRepository(ValidatorReturnInfoEntity).save(valRetInfoEntityList)
+    logger.info(`Stored daily ${valRetInfoEntityList.length} daily return`)
+  }
   logger.info('Validator return calculator completed.')
 }
