@@ -4,6 +4,7 @@ import { get } from 'lodash'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
+
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'
@@ -26,7 +27,7 @@ const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, log
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-const dashboardCollector = new Semaphore('DashbaordCollector', collectDashboard, logger)
+const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
 
 const jobs = [
   {
@@ -47,7 +48,7 @@ const jobs = [
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
-    cron: '20 * * * * *'
+    cron: '0 30 * * * *'
   },
   {
     method: proposalCollector.run.bind(proposalCollector),

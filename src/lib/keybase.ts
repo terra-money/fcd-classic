@@ -1,7 +1,8 @@
 import * as rp from 'request-promise'
-import config from 'config'
 import { get } from 'lodash'
 import * as memoizee from 'memoizee'
+
+import config from 'config'
 
 export async function getIdentity(keybaseId: string) {
   const options = {

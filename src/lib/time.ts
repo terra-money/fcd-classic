@@ -4,7 +4,7 @@ export function daysBeforeTs(daysBefore: number = 1): { fromTs: number; toTs: nu
   const to = startOfToday()
 
   return {
-    fromTs: subDays(to, 1).getTime(),
+    fromTs: subDays(to, daysBefore).getTime(),
     toTs: to.getTime()
   }
 }

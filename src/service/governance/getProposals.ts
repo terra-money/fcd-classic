@@ -1,10 +1,11 @@
 import { getRepository } from 'typeorm'
+import { filter, orderBy } from 'lodash'
 
 import { ProposalEntity } from 'orm'
+import config from 'config'
+
 import * as lcd from 'lib/lcd'
 import { getProposalBasic } from './helper'
-import { filter, orderBy } from 'lodash'
-import config from 'config'
 
 interface ProposalsReturn {
   minDeposit: Coins // proposal min deposit

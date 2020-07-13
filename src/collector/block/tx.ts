@@ -1,15 +1,15 @@
 import * as Bluebird from 'bluebird'
+import { getRepository, EntityManager } from 'typeorm'
 import { get, min, compact, flatten, uniq } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
+import config from 'config'
+
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { times, minus, plus } from 'lib/math'
 
 import { getAccountTxDocs } from './accountTx'
-import { getRepository, EntityManager } from 'typeorm'
-import config from 'config'
-import { string } from 'yargs'
 
 async function getTaxCapByDenom(denom: string, height?: string): Promise<Coin> {
   return {

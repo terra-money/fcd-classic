@@ -1,9 +1,9 @@
-import { init as initORM, AccountEntity, TxEntity } from 'orm'
-import config from 'config'
-import { uniq } from 'lodash'
-import { bulkSave } from 'collector/helper'
-
 import { getRepository } from 'typeorm'
+import { uniq } from 'lodash'
+
+import { init as initORM, AccountEntity, TxEntity } from 'orm'
+
+import { bulkSave } from 'collector/helper'
 
 const COL3 = 'columbus-3'
 const COL2 = 'columbus-2'

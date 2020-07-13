@@ -1,7 +1,9 @@
-import { getClaimTxs } from './helper'
 import { get, flatten, filter, compact } from 'lodash'
+
 import { TxEntity } from 'orm'
+
 import { sortDenoms, splitDenomAndAmount } from 'lib/common'
+import { getClaimTxs } from './helper'
 
 export interface GetClaimsParam {
   operatorAddr: string
