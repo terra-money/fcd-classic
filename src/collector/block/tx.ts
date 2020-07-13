@@ -1,15 +1,16 @@
 import * as Bluebird from 'bluebird'
+import { getRepository, EntityManager } from 'typeorm'
 import { get, min, compact, flatten, uniq } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
+import config from 'config'
+
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { times, minus, plus } from 'lib/math'
 import { getTaxRateAndCap } from 'lib/rpc'
 
 import { getAccountTxDocs } from './accountTx'
-import { getRepository, EntityManager } from 'typeorm'
-import config from 'config'
 
 export function getTax(msg, taxRate, taxCaps): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {

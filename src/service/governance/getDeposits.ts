@@ -1,7 +1,9 @@
 import { getRepository } from 'typeorm'
-import { ProposalEntity } from 'orm'
 import { get, chain, flatten, compact } from 'lodash'
+
+import { ProposalEntity } from 'orm'
 import config from 'config'
+
 import { APIError, ErrorTypes } from 'lib/error'
 import getAccountInfo from './helper/getAccountInfo'
 

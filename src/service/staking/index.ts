@@ -4,9 +4,5 @@ export { default as getValidatorDetail, getValidatorDetailUncached } from './get
 export { default as getDelegationTxs } from './getDelegationTxs'
 export { default as getClaims } from './getClaims'
 export { default as getDelegators } from './getDelegators'
-export {
-  default as getValidatorReturn,
-  getValidatorAnnualAvgReturn,
-  getBlockRewards
-} from 'service/staking/getValidatorReturn'
+export { getValidatorAnnualAvgReturn } from 'service/staking/getValidatorReturn'
 export * from './helper'

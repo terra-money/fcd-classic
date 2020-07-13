@@ -1,8 +1,9 @@
 import { getRepository } from 'typeorm'
 import { subDays } from 'date-fns'
 
-import { getLatestDateOfReward, convertDbTimestampToDate } from './helpers'
 import { RewardEntity } from 'orm'
+
+import { getLatestDateOfReward, convertDbTimestampToDate } from './helpers'
 
 interface RewardsByDateReturn {
   date: string

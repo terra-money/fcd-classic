@@ -1,6 +1,8 @@
 import { getRepository, getConnection, LessThan } from 'typeorm'
 import { subDays } from 'date-fns'
+
 import { init as initORM, GeneralInfoEntity } from 'orm'
+
 import { getQueryDateTime } from 'lib/time'
 
 async function getTotalAccount(now) {

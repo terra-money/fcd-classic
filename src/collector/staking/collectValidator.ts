@@ -1,5 +1,6 @@
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
+
 import { saveValidatorDetail } from './validatorDetails'
 
 export async function collectValidator() {

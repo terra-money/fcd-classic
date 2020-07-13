@@ -1,12 +1,14 @@
 import { getRepository } from 'typeorm'
 
-import * as lcd from 'lib/lcd'
-import { getProposalBasic, ProposalStatus } from './helper'
 import { ValidatorInfoEntity, ProposalEntity } from 'orm'
+import config from 'config'
+
+import * as lcd from 'lib/lcd'
+import { APIError, ErrorTypes } from 'lib/error'
+
+import { getProposalBasic, ProposalStatus } from './helper'
 import { generateValidatorResponse } from 'service/staking/helper'
 import { getValidatorsReturn } from 'service/staking/getValidators'
-import config from 'config'
-import { APIError, ErrorTypes } from 'lib/error'
 
 interface ProposalPramsModuleSpace {
   subspace: string // module

@@ -1,6 +1,8 @@
-import config from 'config'
 import * as rp from 'request-promise'
 import { filter, compact, get } from 'lodash'
+
+import config from 'config'
+
 import { splitDenomAndAmount } from 'lib/common'
 import { apiLogger as logger } from './logger'
 
