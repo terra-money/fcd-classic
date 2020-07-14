@@ -32,4 +32,10 @@ export default class WasmContractEntity {
 
   @Column()
   chainId: string
+
+  @Column()
+  migratable: boolean
+
+  @Column({ nullable: true })
+  migrateMsg: string
 }

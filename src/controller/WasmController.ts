@@ -74,6 +74,8 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} contracts.info.name code name
    * @apiSuccess {string} contracts.info.description description
    * @apiSuccess {string} contracts.info.memo tx memo
+   * @apiSuccess {boolean} contracts.migratable contract migratable
+   * @apiSuccess {string} contracts.migrate_msg contract migrate message
    **/
   @Get('/contracts')
   @Validate({
@@ -216,6 +218,8 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} info.name code name
    * @apiSuccess {string} info.description description
    * @apiSuccess {string} info.memo tx memo
+   * @apiSuccess {boolean} migratable contract migratable
+   * @apiSuccess {string} migrate_msg contract migrate message
    **/
   @Get('/contract/:contract_address')
   @Validate({
