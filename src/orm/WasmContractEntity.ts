@@ -33,7 +33,7 @@ export default class WasmContractEntity {
   @Column()
   chainId: string
 
-  @Column()
+  @Column({ default: false })
   migratable: boolean
 
   @Column({ nullable: true })
