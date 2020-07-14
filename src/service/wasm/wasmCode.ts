@@ -25,7 +25,7 @@ type WasmCodeParams = {
   search?: string
 }
 
-type WasmCodeDetails = {
+export type WasmCodeDetails = {
   code_id: string
   sender: string
   txhash: string
@@ -33,7 +33,7 @@ type WasmCodeDetails = {
   info: ParsedMemo
 }
 
-function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
+export function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
   return {
     code_id: code.codeId,
     sender: code.sender,

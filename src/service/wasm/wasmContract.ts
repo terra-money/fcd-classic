@@ -1,4 +1,4 @@
-import { getRepository, WhereExpression, Brackets } from 'typeorm'
+import { getRepository, Raw, FindConditions } from 'typeorm'
 
 import { WasmContractEntity } from 'orm'
 import config from 'config'
@@ -6,21 +6,39 @@ import config from 'config'
 import { APIError, ErrorTypes } from 'lib/error'
 
 import { parseWasmTxMemo, ParsedMemo } from './helpers'
+import { getWasmCodeDetails, WasmCodeDetails } from './wasmCode'
 
-function addWasmContractFilter(qb: WhereExpression, owner?: string, search?: string) {
-  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
+function buildContractFindConditions(
+  owner?: string,
+  search?: string,
+  codeId?: string
+): FindConditions<WasmContractEntity>[] {
+  const commonCondition: FindConditions<WasmContractEntity> = {
+    chainId: config.CHAIN_ID
+  }
+
   if (owner) {
-    qb.andWhere(`owner = :owner`, { owner })
+    commonCondition['owner'] = owner
   }
+
+  if (codeId) {
+    commonCondition['codeId'] = codeId
+  }
+
+  let whereCondition: FindConditions<WasmContractEntity>[] = [commonCondition]
   if (search) {
-    qb.andWhere(
-      new Brackets((innerQ: WhereExpression) => {
-        const searchStr = `%${search}%`
-        innerQ.where(`tx_memo ILIKE :searchStr`, { searchStr })
-        innerQ.orWhere(`init_msg ILIKE :searchStr`, { searchStr })
-      })
-    )
+    whereCondition = [
+      {
+        ...commonCondition,
+        txMemo: Raw((alias) => `${alias} ILIKE '%${search}%'`)
+      },
+      {
+        ...commonCondition,
+        initMsg: Raw((alias) => `${alias} ILIKE '%${search}%'`)
+      }
+    ]
   }
+  return whereCondition
 }
 
 type WasmContractDetails = {
@@ -33,6 +51,7 @@ type WasmContractDetails = {
   migratable: boolean
   migrate_msg: string
   info: ParsedMemo
+  code: WasmCodeDetails
 }
 
 function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetails {
@@ -45,7 +64,8 @@ function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetai
     contract_address: contract.contractAddress,
     migratable: contract.migratable,
     migrate_msg: contract.migrateMsg,
-    info: parseWasmTxMemo(contract.txMemo)
+    info: parseWasmTxMemo(contract.txMemo),
+    code: getWasmCodeDetails(contract.code)
   }
 }
 
@@ -54,29 +74,29 @@ type WasmContractParams = {
   limit: number
   owner?: string
   search?: string
+  codeId?: string
 }
 
 export async function getWasmContracts({
   page,
   limit,
   owner,
-  search
+  search,
+  codeId
 }: WasmContractParams): Promise<{
   totalCnt: number
   page: number
   limit: number
   contracts: WasmContractDetails[]
 }> {
-  const qb = getRepository(WasmContractEntity).createQueryBuilder()
-  addWasmContractFilter(qb, owner, search)
-
-  const totalCnt = await qb.getCount()
-
-  qb.skip(limit * (page - 1))
-    .take(limit)
-    .orderBy(`timestamp`, 'DESC')
-
-  const result = await qb.getMany()
+  const [result, totalCnt] = await getRepository(WasmContractEntity).findAndCount({
+    where: buildContractFindConditions(owner, search, codeId),
+    skip: limit * (page - 1),
+    take: limit,
+    order: {
+      timestamp: 'DESC'
+    }
+  })
   return {
     totalCnt,
     page,
@@ -94,6 +114,5 @@ export async function getWasmContract(contractAddress: string): Promise<WasmCont
   if (!contract) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Contract not found')
   }
-
   return getWasmContractDetails(contract)
 }

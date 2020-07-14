@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, Index, ManyToOne, JoinColumn, JoinTable } from 'typeorm'
+import WasmCodeEntity from './WasmCodeEntity'
 
 @Entity('wasm_contract')
 @Index('index_wasm_code_chain_id_contract_address', ['chainId', 'contractAddress'], { unique: true })
@@ -38,4 +39,13 @@ export default class WasmContractEntity {
 
   @Column({ nullable: true })
   migrateMsg: string
+
+  @ManyToOne(() => WasmCodeEntity, (code) => code, {
+    eager: true
+  })
+  @JoinColumn([
+    { name: 'code_id', referencedColumnName: 'codeId' },
+    { name: 'chain_id', referencedColumnName: 'chainId' }
+  ])
+  code: WasmCodeEntity
 }

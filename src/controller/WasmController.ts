@@ -76,20 +76,31 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} contracts.info.memo tx memo
    * @apiSuccess {boolean} contracts.migratable contract migratable
    * @apiSuccess {string} contracts.migrate_msg contract migrate message
+   * @apiSuccess {Object} contracts.code code details info
+   * @apiSuccess {string} contracts.code.txhash
+   * @apiSuccess {string} contracts.code.timestamp
+   * @apiSuccess {string} contracts.code.sender
+   * @apiSuccess {string} contracts.code.code_id sent code id
+   * @apiSuccess {Object} contracts.code.info code info
+   * @apiSuccess {string} contracts.code.info.name code name
+   * @apiSuccess {string} contracts.code.info.description description
+   * @apiSuccess {string} contracts.code.info.repo_url code repo url
+   * @apiSuccess {string} contracts.code.info.memo tx memo
    **/
   @Get('/contracts')
   @Validate({
     query: {
       owner: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('contract owner'),
       search: Joi.string().description('full text search query'),
+      code_id: Joi.string().regex(/^\d+$/).description('Code id'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async wasmContracts(ctx) {
-    const { owner, page, limit, search } = ctx.query
-    success(ctx, await getWasmContracts({ page, limit, owner, search }))
+    const { owner, page, limit, search, code_id } = ctx.query
+    success(ctx, await getWasmContracts({ page, limit, owner, search, codeId: code_id }))
   }
   /**
    * @api {get} /wasm/contract/:contract_address/txs Get wasm codes info
@@ -220,6 +231,16 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} info.memo tx memo
    * @apiSuccess {boolean} migratable contract migratable
    * @apiSuccess {string} migrate_msg contract migrate message
+   * @apiSuccess {Object} code code details info
+   * @apiSuccess {string} code.txhash
+   * @apiSuccess {string} code.timestamp
+   * @apiSuccess {string} code.sender
+   * @apiSuccess {string} code.code_id sent code id
+   * @apiSuccess {Object} code.info code info
+   * @apiSuccess {string} code.info.name code name
+   * @apiSuccess {string} code.info.description description
+   * @apiSuccess {string} code.info.repo_url code repo url
+   * @apiSuccess {string} code.info.memo tx memo
    **/
   @Get('/contract/:contract_address')
   @Validate({
