@@ -9,8 +9,7 @@ RUN yarn
 
 COPY . .
 
-RUN yarn run apidoc \
-    && yarn run mergeswagger -o swagger.json
+RUN npm run apidoc
 
 FROM node:12-alpine
 
@@ -24,8 +23,9 @@ RUN yarn --prod \
     && apk del git
 
 COPY --from=builder /app/tsconfig.json /app/
-COPY --from=builder /app/static /app/static
 COPY --from=builder /app/src/ /app/src/
+COPY --from=builder /app/static/ /app/static/
+COPY entrypoint.sh /app/entrypoint.sh
 
-ENTRYPOINT [ "npm", "run" ]
+ENTRYPOINT [ "/app/entrypoint.sh" ]
 CMD [ "--help" ]
