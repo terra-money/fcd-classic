@@ -3,6 +3,7 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 import { TERRA_ACCOUNT_REGEX, TERRA_CHAIN_REGEX } from 'lib/constant'
+import config from 'config'
 
 const Joi = Validator.Joi
 
@@ -157,7 +158,7 @@ export default class TransactionController extends KoaController {
         .regex(/\d{1,16}/),
       order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').regex(TERRA_CHAIN_REGEX),
+      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),

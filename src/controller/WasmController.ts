@@ -59,6 +59,7 @@ export default class WasmController extends KoaController {
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [search] full text search query in name and description
+   * @apiParam {number} [code_id] code id
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
