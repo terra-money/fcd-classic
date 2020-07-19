@@ -1,5 +1,6 @@
 import * as memoizee from 'memoizee'
 import { ProposalEntity } from 'orm'
+
 import getAccountInfo from './getAccountInfo'
 
 export enum ProposalStatus {

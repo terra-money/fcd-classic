@@ -2,7 +2,7 @@ import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-j
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
-import { TERRA_ACCOUNT_REGEX, TERRA_CHAIN_REGEX } from 'lib/constant'
+import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import config from 'config'
 
 const Joi = Validator.Joi
