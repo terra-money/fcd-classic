@@ -152,10 +152,14 @@ export class NodeWatcher {
   /**
    * start listening to socket for data
    */
-  async watch() {
+  async watch(detach: boolean = false) {
     this.logger.info('Starting watcher')
     this.initConnection()
     this.client.connect(this.url)
+
+    if (detach) {
+      return
+    }
 
     while (this.connected || this.retryCount < this.retryAttempt) {
       await delay(RETRY_TIMER_IN_MS)
