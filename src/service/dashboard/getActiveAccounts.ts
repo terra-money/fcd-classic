@@ -1,9 +1,11 @@
 import { startOfToday, subDays } from 'date-fns'
 import { getConnection } from 'typeorm'
-import * as memoizee from 'memoizee'
 
-import { getQueryDateTime } from 'lib/time'
 import { DashboardEntity } from 'orm'
+
+import { localCache } from 'lib/cache'
+import { getQueryDateTime } from 'lib/time'
+
 import { getDashboardHistory } from './dashboardHistory'
 
 async function getTotalActiveAccountUncached(daysBefore?: number): Promise<number> {
@@ -20,7 +22,7 @@ async function getTotalActiveAccountUncached(daysBefore?: number): Promise<numbe
   return result.length ? Number(result[0].total_active_account) : 0
 }
 
-const getTotalActiveAccount = memoizee(getTotalActiveAccountUncached, {
+const getTotalActiveAccount = localCache(getTotalActiveAccountUncached, {
   promise: true,
   maxAge: 60 * 60 * 1000, // 1 hour cache
   preFetch: 0.75 // fetch again after 45 mins

@@ -1,10 +1,10 @@
-import * as memoizee from 'memoizee'
 import { find, chain, keyBy } from 'lodash'
 
 import * as lcd from 'lib/lcd'
 import getDelegations from 'lib/getDelegations'
 import { plus, div } from 'lib/math'
 import { sortDenoms } from 'lib/common'
+import { localCache } from 'lib/cache'
 
 import { getBalance } from '../bank'
 import getValidators from './getValidators'
@@ -151,4 +151,4 @@ export async function getStakingUncached(address: string): Promise<GetStakingRet
   }
 }
 
-export default memoizee(getStakingUncached, { promise: true, maxAge: 10 * 1000 })
+export default localCache(getStakingUncached, { promise: true, maxAge: 10 * 1000 })

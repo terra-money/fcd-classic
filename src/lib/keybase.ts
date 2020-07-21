@@ -1,8 +1,9 @@
 import * as rp from 'request-promise'
 import { get } from 'lodash'
-import * as memoizee from 'memoizee'
 
 import config from 'config'
+
+import { localCache } from 'lib/cache'
 
 export async function getIdentity(keybaseId: string) {
   const options = {
@@ -29,4 +30,4 @@ async function getAvatar(keybaseId: string): Promise<string | undefined> {
   return getAvatarFromIdentity(identity)
 }
 
-export default memoizee(getAvatar, { promise: true, maxAge: 3600000 /* 6 minutes */ })
+export default localCache(getAvatar, { promise: true, maxAge: 3600000 /* 6 minutes */ })

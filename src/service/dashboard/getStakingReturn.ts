@@ -1,9 +1,11 @@
-import * as memoizee from 'memoizee'
 import { chain } from 'lodash'
 
 import { DashboardEntity } from 'orm'
+
 import { plus, div, times, minus } from 'lib/math'
 import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
+import { localCache } from 'lib/cache'
+
 import { getDashboardHistory } from './dashboardHistory'
 
 interface StakingDailyReturn {
@@ -51,4 +53,4 @@ async function getStakingReturnUncached(count?: number): Promise<StakingDailyRet
 }
 
 // We will clear memoization at the beginning of each days
-export default memoizee(getStakingReturnUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
+export default localCache(getStakingReturnUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })

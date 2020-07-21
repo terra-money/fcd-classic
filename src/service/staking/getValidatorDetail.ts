@@ -1,13 +1,14 @@
 import { getRepository } from 'typeorm'
-import * as memoizee from 'memoizee'
+import { filter } from 'lodash'
 
 import config from 'config'
 import { ValidatorInfoEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
-import { filter } from 'lodash'
 import { sortDenoms } from 'lib/common'
 import { div, plus } from 'lib/math'
+import { localCache } from 'lib/cache'
+
 import { getBalance } from 'service/bank'
 
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
@@ -116,7 +117,7 @@ export async function getValidatorDetailUncached(
   return result
 }
 
-export const getValidatorDetail = memoizee(getValidatorDetailUncached, {
+export const getValidatorDetail = localCache(getValidatorDetailUncached, {
   promise: true,
   maxAge: 300 * 1000 /* 5 minutes */
 })
