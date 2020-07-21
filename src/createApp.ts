@@ -93,20 +93,7 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
       ctx.set('Pragma', 'no-cache')
       ctx.set('Expires', '0')
     })
-    .use(
-      cors({
-        origin: (ctx) => {
-          const requestOrigin = ctx.get('Origin')
-
-          if (process.env.NODE_ENV !== 'production') {
-            return requestOrigin
-          }
-
-          return CORS_REGEXP.test(requestOrigin) ? requestOrigin : ''
-        },
-        credentials: true
-      })
-    )
+    .use(cors())
     .use(
       bodyParser({
         formLimit: '512kb',
