@@ -21,18 +21,16 @@ function failedRawLogToLogs(
   try {
     parsed = JSON.parse(rawLog)
   } catch (e) {
-    // do nothing
+    parsed = rawLog
   }
 
-  return (
-    parsed && [
-      {
-        log: parsed,
-        success: false,
-        msg_index: '0'
-      }
-    ]
-  )
+  return [
+    {
+      log: parsed,
+      success: false,
+      msg_index: '0'
+    }
+  ]
 }
 
 export default function parseTx(account: string | undefined) {
