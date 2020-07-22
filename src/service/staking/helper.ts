@@ -11,7 +11,7 @@ import { div, plus, minus, times } from 'lib/math'
 import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
 import getAvatar from 'lib/keybase'
 import { getQueryDateTime } from 'lib/time'
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 
 import getDelegationTxs from './getDelegationTxs'
 import { GetClaimsParam } from './getClaims'
@@ -402,7 +402,7 @@ export async function getAvgVotingPowerUncached(
   return getWeightedVotingPower(votingPowerNow)
 }
 
-export const getAvgVotingPower = localCache(getAvgVotingPowerUncached, { promise: true, maxAge: 60 * 60 * 1000 })
+export const getAvgVotingPower = memoizeCache(getAvgVotingPowerUncached, { promise: true, maxAge: 60 * 60 * 1000 })
 
 export async function getAvgPrice(fromTs: number, toTs: number): Promise<DenomMap> {
   const fromStr = getQueryDateTime(startOfDay(fromTs))
@@ -465,7 +465,7 @@ WHERE datetime >= '${fromStr}'
   return annualizedReturn
 }
 
-export const getTotalStakingReturn = localCache(getTotalStakingReturnUncached, {
+export const getTotalStakingReturn = memoizeCache(getTotalStakingReturnUncached, {
   promise: true,
   maxAge: 60 * 60 * 1000
 })

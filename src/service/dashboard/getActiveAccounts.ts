@@ -3,7 +3,7 @@ import { getConnection } from 'typeorm'
 
 import { DashboardEntity } from 'orm'
 
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 import { getQueryDateTime } from 'lib/time'
 
 import { getDashboardHistory } from './dashboardHistory'
@@ -22,7 +22,7 @@ async function getTotalActiveAccountUncached(daysBefore?: number): Promise<numbe
   return result.length ? Number(result[0].total_active_account) : 0
 }
 
-const getTotalActiveAccount = localCache(getTotalActiveAccountUncached, {
+const getTotalActiveAccount = memoizeCache(getTotalActiveAccountUncached, {
   promise: true,
   maxAge: 60 * 60 * 1000, // 1 hour cache
   preFetch: 0.75 // fetch again after 45 mins

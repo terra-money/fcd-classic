@@ -1,6 +1,6 @@
 import { ProposalEntity } from 'orm'
 
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 
 import getAccountInfo from './getAccountInfo'
 
@@ -34,7 +34,7 @@ function transformProposalType(proposalType: string): string {
   return typeToTypestr[proposalType] || proposalType
 }
 
-export const getProposalBasic = localCache(getProposalBasicUncached, {
+export const getProposalBasic = memoizeCache(getProposalBasicUncached, {
   promise: true,
   maxAge: 300 * 1000 /* 5 minutes */
 })

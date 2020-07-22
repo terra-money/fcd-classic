@@ -4,7 +4,7 @@ import * as lcd from 'lib/lcd'
 import getDelegations from 'lib/getDelegations'
 import { plus, div } from 'lib/math'
 import { sortDenoms } from 'lib/common'
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 
 import { getBalance } from '../bank'
 import getValidators from './getValidators'
@@ -151,4 +151,4 @@ export async function getStakingUncached(address: string): Promise<GetStakingRet
   }
 }
 
-export default localCache(getStakingUncached, { promise: true, maxAge: 10 * 1000 })
+export default memoizeCache(getStakingUncached, { promise: true, maxAge: 10 * 1000 })

@@ -4,7 +4,7 @@ import { DashboardEntity } from 'orm'
 
 import { plus, div, times, minus } from 'lib/math'
 import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 
 import { getDashboardHistory } from './dashboardHistory'
 
@@ -53,4 +53,4 @@ async function getStakingReturnUncached(count?: number): Promise<StakingDailyRet
 }
 
 // We will clear memoization at the beginning of each days
-export default localCache(getStakingReturnUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
+export default memoizeCache(getStakingReturnUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })

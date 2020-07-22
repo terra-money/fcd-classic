@@ -7,7 +7,7 @@ import { ValidatorInfoEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { sortDenoms } from 'lib/common'
 import { div, plus } from 'lib/math'
-import { localCache } from 'lib/cache'
+import memoizeCache from 'lib/memoizeCache'
 
 import { getBalance } from 'service/bank'
 
@@ -117,7 +117,7 @@ export async function getValidatorDetailUncached(
   return result
 }
 
-export const getValidatorDetail = localCache(getValidatorDetailUncached, {
+export const getValidatorDetail = memoizeCache(getValidatorDetailUncached, {
   promise: true,
   maxAge: 300 * 1000 /* 5 minutes */
 })
