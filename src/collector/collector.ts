@@ -30,7 +30,6 @@ const validatorCollector = new Semaphore('ValidatorCollector', collectValidator,
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
-const watcherCollector = new Semaphore('WatcherCollector', rpcEventWatcher, logger)
 
 const jobs = [
   {
@@ -60,10 +59,6 @@ const jobs = [
   {
     method: dashboardCollector.run.bind(dashboardCollector),
     cron: '0 1 * * * *'
-  },
-  {
-    method: watcherCollector.run.bind(watcherCollector),
-    cron: '0 * * * * *'
   }
 ]
 
@@ -74,9 +69,9 @@ async function createJobs() {
 }
 
 const init = async () => {
-  await initORM()
-
   initializeSentry()
+  await initORM()
+  await rpcEventWatcher()
 }
 
 init()

@@ -2,11 +2,11 @@ import { client, connection, IMessage } from 'websocket'
 import { Logger } from 'winston'
 import { delay } from 'bluebird'
 
-const RETRY_TIMER_IN_MS = 5000 // 5 sec
+const RETRY_TIMER_IN_MS = 3000 // 3 seconds
 
-type WatcherConfig = {
+type RPCWatcherConfig = {
   url: string
-  retryAttempt: number
+  maxRetryAttempt?: number
   logger: Logger
 }
 
@@ -22,49 +22,43 @@ export type RpcResponse = {
 type Callback = (response: RpcResponse) => void
 type SubscriptionEntity = { query: string; callback: Callback }
 
-export class NodeWatcher {
-  client = new client()
-  connection: connection
-  subscribers: SubscriptionEntity[] = []
+export default class RPCWatcher {
+  private client = new client()
+  private connection: connection
+  private subscribers: SubscriptionEntity[] = []
 
-  connected: boolean = false
+  private connected: boolean = false
 
-  logger: Logger
+  private logger: Logger
 
-  url: string
-  retryAttempt: number
-  retryCount: number = 0
+  private url: string
+  private maxRetryAttempt: number
+  private retryCount: number = 0
 
-  constructor(config: WatcherConfig) {
+  constructor(config: RPCWatcherConfig) {
     this.url = config.url
-    this.retryAttempt = config.retryAttempt
+    this.maxRetryAttempt = config.maxRetryAttempt || 0
     this.logger = config.logger
   }
-  /**
-   * Register the subscriber to the watcher
-   * @param query
-   * @param callback
-   */
-  registerSubscriber(query: string, callback: Callback) {
-    this.subscribers.push({
-      query,
-      callback
-    })
-  }
+
   /**
    * Retry to connect to the socket
    */
   private retryConnect() {
-    if (this.retryCount < this.retryAttempt) {
+    if (!this.maxRetryAttempt || this.retryCount < this.maxRetryAttempt) {
       const retryDelay = RETRY_TIMER_IN_MS * (this.retryCount + 1)
       this.logger.info(`Retrying connection after ${retryDelay / 1000} seconds`)
+
       delay(retryDelay).then(() => {
         this.logger.info(`Reconnect attempt: ${this.retryCount + 1}`)
         this.client.connect(this.url)
         this.retryCount = this.retryCount + 1
       })
+    } else {
+      this.logger.error('maximum retry attempt exceed!')
     }
   }
+
   /**
    * Process response message
    * @param data Response data from socket
@@ -86,30 +80,31 @@ export class NodeWatcher {
       this.logger.error(error)
     }
   }
+
   /**
    * Handle socket error event
    * @param error
    */
   private errorEventProcessor(error: Error) {
     this.logger.error('Failure in watcher, closing the connection')
-    if (this.connected) {
-      this.connection.close()
-      this.connected = false
-    } else {
+
+    if (!this.close()) {
       this.closeEventProcessor()
     }
   }
+
   /**
    * Handle socket closing event
    */
   private closeEventProcessor() {
     this.logger.info('Socket closed.')
     this.connected = false
-    if (this.retryAttempt) {
-      this.logger.info('Attempting reconnect....')
+
+    if (this.maxRetryAttempt) {
       this.retryConnect()
     }
   }
+
   /**
    * Add listener to connection
    */
@@ -119,19 +114,6 @@ export class NodeWatcher {
     this.connection.on('close', this.closeEventProcessor.bind(this))
   }
 
-  /**
-   * Initialize the connection
-   */
-  private initConnection() {
-    this.client.on('connect', (newConnection) => {
-      this.connected = true
-      this.retryCount = 0
-      this.connection = newConnection
-      this.addListeners()
-      this.addSubscription()
-    })
-    this.client.on('connectFailed', this.errorEventProcessor.bind(this))
-  }
   /**
    * Subscribe query
    */
@@ -149,29 +131,54 @@ export class NodeWatcher {
       )
     })
   }
+
+  /**
+   * Initialize the connection
+   */
+  private initConnection() {
+    this.client.on('connect', (newConnection) => {
+      this.connected = true
+      this.retryCount = 0
+      this.connection = newConnection
+      this.addListeners()
+      this.addSubscription()
+    })
+    this.client.on('connectFailed', this.errorEventProcessor.bind(this))
+  }
+
+  /**
+   * Register the subscriber to the watcher
+   * @param query
+   * @param callback
+   */
+  registerSubscriber(query: string, callback: Callback) {
+    this.subscribers.push({
+      query,
+      callback
+    })
+  }
+
   /**
    * start listening to socket for data
    */
-  async watch(detach: boolean = false) {
+  async start(detach: boolean = false) {
     this.logger.info('Starting watcher')
     this.initConnection()
     this.client.connect(this.url)
-
-    if (detach) {
-      return
-    }
-
-    while (this.connected || this.retryCount < this.retryAttempt) {
-      await delay(RETRY_TIMER_IN_MS)
-    }
   }
+
   /**
    * Close connection
    */
-  close() {
-    this.retryAttempt = 0
+  close(): boolean {
+    this.maxRetryAttempt = 0
+
     if (this.connected) {
       this.connection.close()
+      this.connected = false
+      return true
     }
+
+    return false
   }
 }
