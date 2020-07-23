@@ -2,7 +2,7 @@ FROM node:12 as builder
 
 WORKDIR /app
 
-COPY package.json* ./
+COPY package*.json ./
 
 RUN npm ci
 
@@ -16,7 +16,7 @@ WORKDIR /app
 
 RUN apk add --no-cache git
 
-COPY --from=builder /app/package.json /app/package-lock.lock /app/
+COPY --from=builder /app/package.json /app/package-lock.json /app/
 
 RUN npm ci --only=production \
     && apk del git
