@@ -1,6 +1,8 @@
 import { getRepository, Between } from 'typeorm'
-import { GeneralInfoEntity } from 'orm'
 import { orderBy } from 'lodash'
+
+import { GeneralInfoEntity } from 'orm'
+
 import { getQueryDateRangeFrom } from 'lib/time'
 
 /**
