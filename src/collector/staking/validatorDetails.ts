@@ -111,7 +111,8 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   let rewardPoolTotal = '0'
   const rewardPool = lcdRewardPool
     ? lcdRewardPool.map(({ denom, amount }: LcdRewardPoolItem) => {
-        const adjustedAmount = denom === 'uluna' ? amount : activePrices[denom] ? div(amount, activePrices[denom]) : 0
+        const adjustedAmount: string =
+          denom === 'uluna' ? amount : activePrices[denom] ? div(amount, activePrices[denom]) : '0'
         rewardPoolTotal = plus(rewardPoolTotal, adjustedAmount)
         return { denom, amount, adjustedAmount }
       })
