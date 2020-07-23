@@ -1,8 +1,9 @@
 import { getRepository } from 'typeorm'
-import { DenomEntity, RichListEntity } from 'orm'
 import { orderBy, reverse, get, chain } from 'lodash'
 import * as globby from 'globby'
 import * as fs from 'fs'
+
+import { DenomEntity, RichListEntity } from 'orm'
 
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'

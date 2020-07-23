@@ -215,7 +215,7 @@ async function getUpdatedTxCountAccountEntity(
   let account = await getRepository(AccountEntity).findOne({ address })
 
   if (!account) {
-    logger.info(`CreateAcccount - ${address}`)
+    logger.info(`CreateAccount - ${address}`)
     account = new AccountEntity()
     account.address = address
     account.createdAt = txDate
@@ -230,7 +230,7 @@ async function getUpdatedTxCountAccountEntity(
   return account
 }
 
-function getUnixqueAccountsByTx(accountTxDocs: AccountTxEntity[]): string[] {
+function getUniqueAccountsByTx(accountTxDocs: AccountTxEntity[]): string[] {
   return uniq(accountTxDocs.map((accountTxDoc) => accountTxDoc.account))
 }
 
@@ -242,7 +242,7 @@ interface NewTxCountTimeByAccount {
 type TxCountAndTimeObject = { [accountAddress: string]: NewTxCountTimeByAccount }
 
 function getNewTxInfoByAccount(accountTxDocsArray: AccountTxEntity[][]): TxCountAndTimeObject {
-  const uniqueAccountsPerTxs: string[][] = accountTxDocsArray.map((accountTxs) => getUnixqueAccountsByTx(accountTxs))
+  const uniqueAccountsPerTxs: string[][] = accountTxDocsArray.map((accountTxs) => getUniqueAccountsByTx(accountTxs))
   const accountNewTxCountObj: TxCountAndTimeObject = {}
 
   uniqueAccountsPerTxs.map((accountsPerTx, txIndex) => {

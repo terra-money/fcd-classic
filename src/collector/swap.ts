@@ -8,7 +8,7 @@ import { collectorLogger as logger } from 'lib/logger'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { div, plus, minus, times } from 'lib/math'
 
-import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, bulkSave, getAllActivePrices } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, getAllActivePrices } from './helper'
 
 async function getSpread(denom: string, price: string) {
   const swapRequestParams = {

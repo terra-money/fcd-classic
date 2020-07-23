@@ -1,5 +1,6 @@
-import { getDashboardHistory } from './dashboardHistory'
 import { DashboardEntity } from 'orm'
+
+import { getDashboardHistory } from './dashboardHistory'
 
 export default async function getRegisteredAccounts(daysBefore?: number): Promise<AccountStatReturn> {
   let prevDaysHistory
@@ -18,7 +19,7 @@ export default async function getRegisteredAccounts(daysBefore?: number): Promis
     }
   }
 
-  const cumulativeRegestered: CountInfoByDate[] = dashboards.map((item: DashboardEntity) => ({
+  const cumulativeRegistered: CountInfoByDate[] = dashboards.map((item: DashboardEntity) => ({
     datetime: item.timestamp.getTime(),
     value: item.totalAccount
   }))
@@ -33,6 +34,6 @@ export default async function getRegisteredAccounts(daysBefore?: number): Promis
   return {
     total: dashboards[dashboards.length - 1].totalAccount - (daysBefore ? dashboards[index].totalAccount : 0),
     periodic: periodicRegistered.slice(1),
-    cumulative: cumulativeRegestered.slice(1)
+    cumulative: cumulativeRegistered.slice(1)
   }
 }
