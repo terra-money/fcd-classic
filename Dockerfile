@@ -2,10 +2,9 @@ FROM node:12 as builder
 
 WORKDIR /app
 
-COPY package.json ./
-COPY yarn.lock ./
+COPY package.json* ./
 
-RUN yarn
+RUN npm ci
 
 COPY . .
 
@@ -17,9 +16,9 @@ WORKDIR /app
 
 RUN apk add --no-cache git
 
-COPY --from=builder /app/package.json /app/yarn.lock /app/
+COPY --from=builder /app/package.json /app/package-lock.lock /app/
 
-RUN yarn --prod \
+RUN npm ci --only=production \
     && apk del git
 
 COPY --from=builder /app/tsconfig.json /app/

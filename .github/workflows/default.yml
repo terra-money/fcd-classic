@@ -18,7 +18,7 @@ jobs:
 
       - name: Audit
         continue-on-error: true
-        run: yarn audit
+        run: npm audit
 
   delivery:
     runs-on: ubuntu-latest
