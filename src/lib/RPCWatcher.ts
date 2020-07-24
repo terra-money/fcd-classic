@@ -12,7 +12,7 @@ type RPCWatcherConfig = {
 
 export type RpcResponse = {
   jsonrpc: string
-  id: number
+  id: number | string
   result: {
     query?: string
     data?: any
@@ -39,6 +39,14 @@ export default class RPCWatcher {
     this.url = config.url
     this.maxRetryAttempt = config.maxRetryAttempt || 0
     this.logger = config.logger
+  }
+
+  private parseResponseIdToNumber(data: RpcResponse): number {
+    const id = parseInt(data.id.toString(), 10) // return NaN for invalid string
+    if (id === NaN) {
+      return this.subscribers.length
+    }
+    return id
   }
 
   /**
@@ -70,6 +78,9 @@ export default class RPCWatcher {
     }
     try {
       const resp: RpcResponse = JSON.parse(data.utf8Data)
+      // parsing needed for earlier version of tendermint v0.33
+      // it returns string formatted response id ID#event
+      resp.id = this.parseResponseIdToNumber(resp)
       if (resp.id < this.subscribers.length) {
         this.subscribers[resp.id].callback(resp)
       } else {
