@@ -211,13 +211,14 @@ export async function collectBlock(): Promise<void> {
 
   while (nextSyncHeight <= latestHeight) {
     const lcdBlock = await lcd.getBlock(nextSyncHeight)
-    if (!lcdBlock) {
-    }
+
     lastSyncedBlock = await saveBlockInformation(lcdBlock, lastSyncedBlock)
+
     // Exit the loop after transaction error whether there's more blocks or not
     if (!lastSyncedBlock) {
       break
     }
+
     nextSyncHeight = nextSyncHeight + 1
   }
 }
