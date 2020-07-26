@@ -28,7 +28,7 @@ async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
   return chain(unvested.map(unvestedMapper)).compact().value()
 }
 
-async function saveUnvested() {
+export async function saveUnvested() {
   const docs = await getUnvested()
 
   if (!docs || docs.length === 0) {
@@ -36,9 +36,5 @@ async function saveUnvested() {
   }
 
   await bulkSave(docs)
-}
-
-export default async function setUnvested() {
-  await saveUnvested()
-  logger.info(`Save richlist - success.`)
+  logger.info(`Save Unvested - success.`)
 }
