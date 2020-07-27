@@ -50,6 +50,8 @@ export default class TreasuryController extends KoaController {
    * @apiGroup Treasury
    *
    * @apiParam {string} denom Coin denomination
+   * @apiParam {number} [page=1] Page number
+   * @apiParam {number} [limit=1000] Page size
    *
    * @apiSuccess {Object[]}  accounts List of accounts
    * @apiSuccess {Number}    accounts.account
@@ -59,13 +61,15 @@ export default class TreasuryController extends KoaController {
   @Get('/richlist/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name')
+      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name'),
+      page: Joi.number().default(1).min(1).description('Page number'),
+      limit: Joi.number().default(1000).min(1).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getRichList(ctx) {
     const { denom } = ctx.params
-    success(ctx, await getRichList(denom))
+    success(ctx, await getRichList(denom, +ctx.request.query.page, +ctx.request.query.limit))
   }
 
   /**

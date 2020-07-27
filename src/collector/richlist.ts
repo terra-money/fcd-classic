@@ -1,26 +1,15 @@
+import * as Bluebird from 'bluebird'
 import { getRepository } from 'typeorm'
 import { DenomEntity, RichListEntity } from 'orm'
-import { orderBy, reverse } from 'lodash'
+import { orderBy, reverse, chunk } from 'lodash'
 import * as globby from 'globby'
 import * as fs from 'fs'
+import * as byline from 'byline'
 
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import { getTotalSupply } from 'service/treasury'
 import { bulkSave } from './helper'
-
-function generateRichListEntity(lines: string[], denom: string, totalSupply: string): RichListEntity[] {
-  return lines.map((line) => {
-    const entity = new RichListEntity()
-    const [account, amount] = line.split(',')
-    entity.denom = denom
-    entity.account = account
-    entity.amount = amount
-    entity.percentage = Number(div(amount, totalSupply))
-
-    return entity
-  })
-}
 
 async function getRichList(denom: string): Promise<RichListEntity[]> {
   logger.info(`Parsing rich list entity from tracking file.`)
@@ -34,31 +23,19 @@ async function getRichList(denom: string): Promise<RichListEntity[]> {
 
   return new Promise((resolve) => {
     const entities: RichListEntity[] = []
-    const stream = fs.createReadStream(recentFile, 'utf8')
-    // incomplete string contains the incomplete part of a line in data stream
-    let incompleteLine = ''
-    stream.on('data', (data: string) => {
-      const lineString = incompleteLine + data
-      const lines = lineString.split('\n').filter(Boolean)
+    const stream = byline(fs.createReadStream(recentFile, 'utf8'))
 
-      if (lines.length > 0) {
-        // skipped the last line as it might contains incomplete data.
-        incompleteLine = lines[lines.length - 1]
-        lines.pop()
-      }
-
-      if (lines.length > 0) {
-        entities.push(...generateRichListEntity(lines, denom, totalSupply))
-      }
+    stream.on('data', (line) => {
+      const entity = new RichListEntity()
+      const [account, amount] = line.split(',')
+      entity.denom = denom
+      entity.account = account
+      entity.amount = amount
+      entity.percentage = Number(div(amount, totalSupply))
+      entities.push(entity)
     })
 
     stream.on('end', () => {
-      if (incompleteLine.length) {
-        const lines = incompleteLine.split('\n').filter(Boolean)
-        if (lines.length > 0) {
-          entities.push(...generateRichListEntity(lines, denom, totalSupply))
-        }
-      }
       resolve(entities)
     })
   })
@@ -72,7 +49,11 @@ async function saveRichListByDenom(denom: string) {
   }
 
   await getRepository(RichListEntity).delete({ denom })
-  await bulkSave(docs)
+
+  console.log(`${denom} ${docs.length}`)
+
+  await Bluebird.mapSeries(chunk(docs, 10000), bulkSave)
+
   logger.info(`Saved ${docs.length} richlist for ${denom}`)
 }
 
