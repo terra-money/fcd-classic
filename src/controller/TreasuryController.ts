@@ -62,6 +62,8 @@ export default class TreasuryController extends KoaController {
   @Validate({
     params: {
       denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name'),
+    },
+    query: {
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(1000).min(1).description('Items per page')
     },
