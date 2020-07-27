@@ -78,14 +78,14 @@ export default class TransactionController extends KoaController {
    *
    * @apiParam {string} [account] Account address
    * @apiParam {string} [action] Tx type
-   * @apiParam {string} [page=1] Page
-   * @apiParam {string} [limit=10] Limit
+   * @apiParam {number} [page=1] Page
+   * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
    * @apiParam {string} [order] 'asc' or 'desc'
    * @apiParam {string} [chainId=columbus-3] ChainId filter
-   * @apiParam {string} [from] timestamp filter (from)
-   * @apiParam {string} [to] timestamp ilter (to)
+   * @apiParam {number} [from] timestamp filter (from)
+   * @apiParam {number} [to] timestamp ilter (to)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -246,12 +246,12 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} account Account address
-   * @apiParam {string} [page=1] Page
-   * @apiParam {string} [limit=10] Limit
+   * @apiParam {number} [page=1] Page
+   * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
    * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {string} [from] Start time (milisecond)
-   * @apiParam {string} [to] End time (milisecond)
+   * @apiParam {number} [from] Start time (milisecond)
+   * @apiParam {number} [to] End time (milisecond)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
