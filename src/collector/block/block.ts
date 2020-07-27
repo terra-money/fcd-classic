@@ -2,15 +2,17 @@ import * as Bluebird from 'bluebird'
 import * as sentry from '@sentry/node'
 import { get } from 'lodash'
 import { getTime, getMinutes } from 'date-fns'
-import config from 'config'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
+
+import config from 'config'
 import { BlockEntity, BlockRewardEntity } from 'orm'
-import * as lcd from 'lib/lcd'
-import * as rpc from 'lib/rpc'
-import { saveTxs, generateTxEntities } from './tx'
 import { splitDenomAndAmount } from 'lib/common'
 import { plus } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
+import * as lcd from 'lib/lcd'
+import * as rpc from 'lib/rpc'
+
+import { saveTxs, generateTxEntities } from './tx'
 
 import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
@@ -50,7 +52,7 @@ async function getRecentlySyncedBlock(): Promise<BlockEntity | undefined> {
 function getBlockEntity(
   blockHeight: number,
   block: LcdBlock,
-  blockreward: BlockRewardEntity
+  blockReward: BlockRewardEntity
 ): DeepPartial<BlockEntity> {
   const chainId = get(block, 'block.header.chain_id')
   const timestamp = get(block, 'block.header.time')
@@ -60,7 +62,7 @@ function getBlockEntity(
     height: blockHeight,
     data: block,
     timestamp,
-    reward: blockreward
+    reward: blockReward
   }
   return blockEntity
 }
@@ -138,94 +140,85 @@ export function isNewMinuteBlock(prevBlock: BlockEntity | undefined, newBlock: B
 }
 
 interface NewBlockInfo {
-  hasMoreBlocks: boolean
-  lastSyncedBlock?: BlockEntity
-  lcdBlock?: LcdBlock
+  recentlySyncedHeight: number
+  latestHeight: number
 }
-export async function getLastestBlockInfo(): Promise<NewBlockInfo> {
+export async function getLatestBlockInfo(): Promise<NewBlockInfo> {
   const recentlySyncedBlock = await getRecentlySyncedBlock()
-  const recentlySyncedBlockNumber = recentlySyncedBlock ? recentlySyncedBlock.height : 0
-  let hasMoreBlocks = false
-  let lcdBlock: LcdBlock | undefined
+  const recentlySyncedHeight = recentlySyncedBlock ? recentlySyncedBlock.height : 0
   const latestBlock = await lcd.getLatestBlock()
-  const latestBlockHeight = Number(get(latestBlock, 'block.header.height'))
-
-  if (latestBlockHeight <= recentlySyncedBlockNumber) {
-    return { hasMoreBlocks, lastSyncedBlock: recentlySyncedBlock }
-  }
-
-  const newBlockNumber = recentlySyncedBlockNumber + 1
-
-  if (newBlockNumber === latestBlockHeight) {
-    lcdBlock = latestBlock
-  } else {
-    hasMoreBlocks = true
-    lcdBlock = await lcd.getBlock(newBlockNumber)
-  }
+  const latestHeight = Number(get(latestBlock, 'block.header.height'))
 
   return {
-    hasMoreBlocks,
-    lcdBlock,
-    lastSyncedBlock: recentlySyncedBlock
+    recentlySyncedHeight,
+    latestHeight
   }
+}
+
+async function saveBlockInformation(
+  lcdBlock: LcdBlock,
+  lastSyncedBlock: BlockEntity | undefined
+): Promise<BlockEntity | undefined> {
+  const height: string = lcdBlock.block_meta.header.height
+  logger.info(`collectBlock: begin transaction for block ${height}`)
+
+  const result: BlockEntity | undefined = await getManager()
+    .transaction(async (transactionalEntityManager: EntityManager) => {
+      // Save block rewards
+      const newBlockReward = await transactionalEntityManager
+        .getRepository(BlockRewardEntity)
+        .save(await getBlockReward(lcdBlock))
+      // new block height
+      const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
+      // Save block entity
+      const newBlockEntity = await transactionalEntityManager
+        .getRepository(BlockEntity)
+        .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
+      // get block tx hashes
+      const txHashes = getTxHashesFromBlock(lcdBlock)
+
+      if (txHashes) {
+        const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
+        // save transactions
+        await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
+      }
+
+      // new block timestamp
+      const newBlockTimeStamp = isNewMinuteBlock(lastSyncedBlock, newBlockEntity)
+
+      if (newBlockTimeStamp) {
+        await setReward(transactionalEntityManager, newBlockTimeStamp)
+        await setSwap(transactionalEntityManager, newBlockTimeStamp)
+        await setNetwork(transactionalEntityManager, newBlockTimeStamp)
+      }
+      return newBlockEntity
+    })
+    .then((block: BlockEntity) => {
+      logger.info('collectBlock: transaction finished')
+      return block
+    })
+    .catch((err) => {
+      sentry.captureException(err)
+      logger.error(err)
+      return undefined
+    })
+  return result
 }
 
 export async function collectBlock(): Promise<void> {
-  let hasNextBlocks = true
+  const { recentlySyncedHeight, latestHeight } = await getLatestBlockInfo()
+  let nextSyncHeight = recentlySyncedHeight + 1
+  let lastSyncedBlock = await getRecentlySyncedBlock()
 
-  while (hasNextBlocks) {
-    const { hasMoreBlocks, lcdBlock, lastSyncedBlock } = await getLastestBlockInfo()
-
-    if (lcdBlock) {
-      const height: string = lcdBlock.block_meta.header.height
-      logger.info(`collectBlock: begin transaction for block ${height}`)
-
-      const result: boolean = await getManager()
-        .transaction(async (transactionalEntityManager: EntityManager) => {
-          // Save block rewards
-          const newBlockRewad = await transactionalEntityManager
-            .getRepository(BlockRewardEntity)
-            .save(await getBlockReward(lcdBlock))
-          // new block height
-          const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
-          // Save block entity
-          const newBlockEntity = await transactionalEntityManager
-            .getRepository(BlockEntity)
-            .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockRewad))
-          // get block tx hashes
-          const txHashes = getTxHashesFromBlock(lcdBlock)
-
-          if (txHashes) {
-            const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
-            // save transactions
-            await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
-          }
-
-          // new block timestamp
-          const newBlockTimeStamp = isNewMinuteBlock(lastSyncedBlock, newBlockEntity)
-
-          if (newBlockTimeStamp) {
-            await setReward(transactionalEntityManager, newBlockTimeStamp)
-            await setSwap(transactionalEntityManager, newBlockTimeStamp)
-            await setNetwork(transactionalEntityManager, newBlockTimeStamp)
-          }
-        })
-        .then(() => {
-          logger.info('collectBlock: transaction finished')
-          return true
-        })
-        .catch((err) => {
-          sentry.captureException(err)
-          logger.error(err)
-          return false
-        })
-
-      // Exit the loop after transaction error whether there's more blocks or not
-      if (!result) {
-        break
-      }
+  while (nextSyncHeight <= latestHeight) {
+    const lcdBlock = await lcd.getBlock(nextSyncHeight)
+    if (!lcdBlock) {
     }
-
-    hasNextBlocks = hasMoreBlocks
+    lastSyncedBlock = await saveBlockInformation(lcdBlock, lastSyncedBlock)
+    // Exit the loop after transaction error whether there's more blocks or not
+    if (!lastSyncedBlock) {
+      break
+    }
+    nextSyncHeight = nextSyncHeight + 1
   }
 }

@@ -1,9 +1,10 @@
+import { getRepository, MoreThan } from 'typeorm'
+
+import { TxEntity, AccountTxEntity } from 'orm'
+
 export * from './block'
 export * from './tx'
 export * from './accountTx'
-
-import { getRepository, MoreThan } from 'typeorm'
-import { TxEntity, AccountTxEntity } from 'orm'
 
 async function getRecentlySyncedTx(): Promise<number> {
   const latestSynced = await getRepository(AccountTxEntity).find({

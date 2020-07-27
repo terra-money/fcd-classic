@@ -89,7 +89,7 @@
     "koa-router": "^9",
     "koa-static": "^5.0.0",
     "koa2-swagger-ui": "^3.0.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "memoizee": "^0.4.14",
     "node-cron": "^2.0.3",
     "parse-duration": "^0.4.4",

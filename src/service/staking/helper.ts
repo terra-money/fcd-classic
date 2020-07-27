@@ -1,8 +1,9 @@
 import { get, orderBy, flatten } from 'lodash'
-import { TxEntity, ValidatorInfoEntity } from 'orm'
 import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
 import * as memoizee from 'memoizee'
 import { startOfDay } from 'date-fns'
+
+import { TxEntity, ValidatorInfoEntity } from 'orm'
 
 import { APIError, ErrorTypes } from 'lib/error'
 import * as lcd from 'lib/lcd'
@@ -11,6 +12,7 @@ import { div, plus, minus, times } from 'lib/math'
 import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
 import getAvatar from 'lib/keybase'
 import { getQueryDateTime } from 'lib/time'
+
 import getDelegationTxs from './getDelegationTxs'
 import { GetClaimsParam } from './getClaims'
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
@@ -458,7 +460,7 @@ WHERE datetime >= '${fromStr}'
     return plus(acc, rewardSum)
   }, '0')
   const netReturn = div(rewardSum, staked)
-  const annualizedTimeSlot = div(12 * 30 * 24 * 3600 * 1000, toTs - fromTs)
+  const annualizedTimeSlot = div(365 * 24 * 3600 * 1000, toTs - fromTs)
   const annualizedReturn = times(netReturn, annualizedTimeSlot)
   return annualizedReturn
 }

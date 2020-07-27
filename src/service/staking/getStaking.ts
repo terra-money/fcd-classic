@@ -1,9 +1,11 @@
 import * as memoizee from 'memoizee'
 import { find, chain, keyBy } from 'lodash'
+
 import * as lcd from 'lib/lcd'
 import getDelegations from 'lib/getDelegations'
 import { plus, div } from 'lib/math'
 import { sortDenoms } from 'lib/common'
+
 import { getBalance } from '../bank'
 import getValidators from './getValidators'
 import { getUndelegateSchedule } from './helper'

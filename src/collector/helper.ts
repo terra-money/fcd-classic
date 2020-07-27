@@ -1,6 +1,7 @@
 import { WhereExpression, getRepository, getConnection } from 'typeorm'
 
 import { PriceEntity } from 'orm'
+
 import { times, div } from 'lib/math'
 import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 

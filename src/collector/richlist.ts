@@ -8,6 +8,7 @@ import * as byline from 'byline'
 
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
+
 import { getTotalSupply } from 'service/treasury'
 import { bulkSave } from './helper'
 
