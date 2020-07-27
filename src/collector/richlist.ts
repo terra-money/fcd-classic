@@ -49,11 +49,7 @@ async function saveRichListByDenom(denom: string) {
   }
 
   await getRepository(RichListEntity).delete({ denom })
-
-  console.log(`${denom} ${docs.length}`)
-
   await Bluebird.mapSeries(chunk(docs, 10000), bulkSave)
-
   logger.info(`Saved ${docs.length} richlist for ${denom}`)
 }
 
