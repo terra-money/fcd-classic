@@ -2,10 +2,8 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 
 import config from 'config'
 
-import { exportController } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { apiLogger as logger } from 'lib/logger'
 
 import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
 
