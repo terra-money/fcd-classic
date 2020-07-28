@@ -1,16 +1,20 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
+import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import { apiLogger as logger } from 'lib/logger'
 
 import { getProposals, getProposal, getVotes, getDeposits, ProposalStatus, VoteTypes } from 'service/governance'
 
 const Joi = Validator.Joi
 
-@Controller('/gov')
-export default class GovernanceController extends KoaController {
+const CONTROLLER_ID = 'gov'
+
+@Controller(`/${CONTROLLER_ID}`)
+class GovernanceController extends KoaController {
   /**
    * @api {get} /gov/proposals Get proposal list
    * @apiName getProposallist
@@ -238,3 +242,5 @@ export default class GovernanceController extends KoaController {
     )
   }
 }
+
+export default controllerExporter(CONTROLLER_ID, GovernanceController, logger)

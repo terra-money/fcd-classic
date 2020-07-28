@@ -1,3 +1,5 @@
+import { compact } from 'lodash'
+
 import DashboardController from './DashboardController'
 import BankController from './BankController'
 import TransactionController from './TransactionController'
@@ -6,13 +8,14 @@ import StakingController from './StakingController'
 import GovernanceController from './GovernanceController'
 import TreasuryController from './TreasuryController'
 
-const controllers = [
-  new BankController(),
-  new DashboardController(),
-  new GovernanceController(),
-  new MarketController(),
-  new StakingController(),
-  new TransactionController(),
-  new TreasuryController()
-]
+const controllers = compact([
+  BankController,
+  DashboardController,
+  GovernanceController,
+  MarketController,
+  StakingController,
+  TransactionController,
+  TreasuryController
+])
+
 export default controllers

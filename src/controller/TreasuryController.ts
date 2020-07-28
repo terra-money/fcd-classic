@@ -1,13 +1,20 @@
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+
+import config from 'config'
+
+import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
+import { apiLogger as logger } from 'lib/logger'
+
 import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
-import config from 'config'
 
 const Joi = Validator.Joi
 
+const CONTROLLER_ID = 'treasury'
+
 @Controller('')
-export default class TreasuryController extends KoaController {
+class TreasuryController extends KoaController {
   /**
    * @api {get} /taxproceeds Get taxproceeds
    * @apiName getTaxProceeds
@@ -95,3 +102,5 @@ export default class TreasuryController extends KoaController {
     success(ctx, await getCirculatingSupply(denom))
   }
 }
+
+export default controllerExporter(CONTROLLER_ID, TreasuryController, logger)

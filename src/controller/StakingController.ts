@@ -1,10 +1,13 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
+import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
 import { daysBeforeTs } from 'lib/time'
+import { apiLogger as logger } from 'lib/logger'
+
 import {
   getStaking,
   getValidators,
@@ -18,8 +21,10 @@ import {
 
 const Joi = Validator.Joi
 
-@Controller('/staking')
-export default class TxController extends KoaController {
+const CONTROLLER_ID = 'staking'
+
+@Controller(`/${CONTROLLER_ID}`)
+class StakingController extends KoaController {
   /**
    * @api {get} /staking/validators/:operatorAddr Get validator detail
    * @apiName getValidatorDetail
@@ -420,3 +425,5 @@ export default class TxController extends KoaController {
     success(ctx, stakingReturn)
   }
 }
+
+export default controllerExporter(CONTROLLER_ID, StakingController, logger)

@@ -1,13 +1,19 @@
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
-import { getBalance } from 'service/bank'
+
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import { apiLogger as logger } from 'lib/logger'
+import { controllerExporter } from 'lib/controllerExporter'
+
+import { getBalance } from 'service/bank'
 
 const Joi = Validator.Joi
 
-@Controller('/bank')
-export default class BankController extends KoaController {
+const CONTROLLER_ID = 'bank'
+
+@Controller(`/${CONTROLLER_ID}`)
+class BankController extends KoaController {
   /**
    * @api {get} /bank/:account Get account information
    * @apiName getBank
@@ -57,3 +63,5 @@ export default class BankController extends KoaController {
     success(ctx, await getBalance(account))
   }
 }
+
+export default controllerExporter(CONTROLLER_ID, BankController, logger)

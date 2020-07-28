@@ -1,6 +1,10 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+
 import { success } from 'lib/response'
+import { apiLogger as logger } from 'lib/logger'
+import { controllerExporter } from 'lib/controllerExporter'
+
 import {
   getGeneralInfo,
   getTransactionVol,
@@ -15,8 +19,10 @@ import {
 
 const Joi = Validator.Joi
 
-@Controller('/dashboard')
-export default class TxController extends KoaController {
+const CONTROLLER_ID = 'dashboard'
+
+@Controller(`/${CONTROLLER_ID}`)
+class DashboardController extends KoaController {
   /**
    * @api {get} /dashboard Get information to be used on the dashboard
    * @apiName getDashboard
@@ -246,3 +252,5 @@ export default class TxController extends KoaController {
     success(ctx, await getRegisteredAccounts(+ctx.request.query.count))
   }
 }
+
+export default controllerExporter(CONTROLLER_ID, DashboardController, logger)

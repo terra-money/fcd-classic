@@ -14,7 +14,8 @@ const {
   ACTIVE_DENOMS,
   ACTIVE_CURRENCY,
   DISABLE_API,
-  DISABLE_SOCKET
+  DISABLE_SOCKET,
+  MODULES
 } = process.env
 
 const config = {
@@ -40,7 +41,8 @@ const config = {
   ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'umnt'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
-    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt']
+    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt'],
+  MODULES: MODULES ? MODULES : ['bank', 'dashboard', 'gov', 'market', 'staking', 'treasury', 'transaction']
 }
 
 export default config
