@@ -21,9 +21,6 @@ export default class BlockEntity {
   @Column({ nullable: true })
   timestamp: Date
 
-  @Column({ type: 'jsonb' })
-  public data: object
-
   @OneToMany(() => TxEntity, (txs) => txs.block, {
     cascade: true
   })

@@ -6,30 +6,30 @@ export default async function getTransactionVol(count = 0): Promise<TxVolumeRetu
   const dashboardHistory = await getDashboardHistory(count)
 
   const periodicDenomObj: DenomTxVolumeObject = {}
-  const cummulativeDenomObj: DenomTxVolumeObject = {}
+  const cumulativeDenomObj: DenomTxVolumeObject = {}
 
   dashboardHistory.forEach((item: DashboardEntity) => {
     Object.keys(item.txVolume).forEach((denom: string) => {
       if (!periodicDenomObj[denom]) {
         periodicDenomObj[denom] = [] as TxVolume[]
-        cummulativeDenomObj[denom] = [] as TxVolume[]
+        cumulativeDenomObj[denom] = [] as TxVolume[]
       }
       periodicDenomObj[denom].push({
         datetime: item.timestamp.getTime(),
         txVolume: item.txVolume[denom]
       })
-      const arrLenght = cummulativeDenomObj[denom].length
-      cummulativeDenomObj[denom].push({
+      const arrLength = cumulativeDenomObj[denom].length
+      cumulativeDenomObj[denom].push({
         datetime: item.timestamp.getTime(),
-        txVolume: plus(item.txVolume[denom], arrLenght > 0 ? cummulativeDenomObj[denom][arrLenght - 1].txVolume : '0')
+        txVolume: plus(item.txVolume[denom], arrLength > 0 ? cumulativeDenomObj[denom][arrLength - 1].txVolume : '0')
       })
     })
   })
 
   const periodic = Object.keys(periodicDenomObj).map((denom: string) => ({ denom, data: periodicDenomObj[denom] }))
-  const cumulative = Object.keys(cummulativeDenomObj).map((denom: string) => ({
+  const cumulative = Object.keys(cumulativeDenomObj).map((denom: string) => ({
     denom,
-    data: cummulativeDenomObj[denom]
+    data: cumulativeDenomObj[denom]
   }))
 
   return { periodic, cumulative }

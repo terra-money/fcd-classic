@@ -41,11 +41,11 @@ type Params = {
 }
 
 export default (params: Params): Balance[] => {
-  const { account, delegations, unbondings, latestBlockTimestamp } = params
+  const { account, unbondings, latestBlockTimestamp } = params
 
   /* normailze */
   const { value, vesting_schedules } = account
-  const { original_vesting, delegated_free, delegated_vesting } = account
+  const { original_vesting, delegated_vesting } = account
   const { coins } = value
 
   /* map */

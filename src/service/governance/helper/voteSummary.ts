@@ -1,8 +1,9 @@
+import { flatten, filter, reverse, uniqBy } from 'lodash'
 import * as Bluebird from 'bluebird'
+
 import * as lcd from 'lib/lcd'
 import { plus, times, minus } from 'lib/math'
 import { convertValAddressToAccAddress } from 'lib/common'
-import { flatten, filter, reverse, uniqBy } from 'lodash'
 import { errorReport } from 'lib/errorReporting'
 
 function tallying(votes): TallyingInfo {

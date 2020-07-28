@@ -1,5 +1,6 @@
-import { getDelegators } from './helper'
 import { chain } from 'lodash'
+
+import { getDelegators } from './helper'
 
 export interface GetDelegatorsParam {
   operatorAddr: string

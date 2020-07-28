@@ -60,7 +60,6 @@ function getBlockEntity(
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
     height: blockHeight,
-    data: block,
     timestamp,
     reward: blockReward
   }
@@ -129,8 +128,8 @@ export async function getBlockReward(block: LcdBlock): Promise<DeepPartial<Block
 }
 
 export function isNewMinuteBlock(prevBlock: BlockEntity | undefined, newBlock: BlockEntity): number {
-  const prevBlockTime = get(prevBlock, 'data.block.header.time')
-  const newBlockTime = get(newBlock, 'data.block.header.time')
+  const prevBlockTime = prevBlock ? prevBlock.timestamp : undefined
+  const newBlockTime = newBlock.timestamp
 
   if (prevBlockTime && getMinutes(prevBlockTime) !== getMinutes(newBlockTime)) {
     return getTime(newBlockTime)
@@ -212,13 +211,14 @@ export async function collectBlock(): Promise<void> {
 
   while (nextSyncHeight <= latestHeight) {
     const lcdBlock = await lcd.getBlock(nextSyncHeight)
-    if (!lcdBlock) {
-    }
+
     lastSyncedBlock = await saveBlockInformation(lcdBlock, lastSyncedBlock)
+
     // Exit the loop after transaction error whether there's more blocks or not
     if (!lastSyncedBlock) {
       break
     }
+
     nextSyncHeight = nextSyncHeight + 1
   }
 }
