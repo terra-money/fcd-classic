@@ -55,7 +55,7 @@ async function saveRichListByDenom(denom: string) {
   logger.info(`Saved ${docs.length} richlist for ${denom}`)
 }
 
-export async function saveRichList() {
+export async function collectRichList() {
   logger.info('Start saving rich list')
   const denoms = await getRepository(DenomEntity).find({
     active: true

@@ -29,7 +29,7 @@ async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
   return chain(unvested.map(unvestedMapper)).compact().value()
 }
 
-export async function saveUnvested() {
+export async function collectUnvested() {
   const docs = await getUnvested()
 
   if (!docs || docs.length === 0) {
