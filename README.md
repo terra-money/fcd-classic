@@ -79,6 +79,8 @@ module.exports = {
 | ACTIVE_CURRENCY     | Active Currencies               | ["luna","sdt","krt","ust","mnt"]             | API                                |
 | DISABLE_API         | Disable REST APIs               | false                                        | API                                |
 | DISABLE_SOCKET      | Dsiable Web Socket              | false                                        | API                                |
+| MODULES             | List of modules to expose API   | ['bank', 'dashboard', 'gov', 'market', 'staking', 'treasury', 'transaction'] | API|
+
 
 > In Terra we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
