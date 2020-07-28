@@ -15,7 +15,6 @@
     "collector": "better-npm-run collector-prod",
     "vscoldev": "better-npm-run val-col-dev",
     "vscolprod": "better-npm-run val-col-prod",
-    "tracking": "better-npm-run tracking",
     "stability": "better-npm-run stability",
     "apidoc": "apidoc -f \".*\\\\.ts$\" -i src/controller -o static/",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
@@ -47,12 +46,6 @@
     },
     "val-col-prod": {
       "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/validatorCollector.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "tracking": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/tracking.ts",
       "env": {
         "NODE_ENV": "production"
       }
