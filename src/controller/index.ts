@@ -23,8 +23,8 @@ const controllers = [
     const controller = new prototype()
 
     controller.routes = controller.routes.filter((route) => {
-      for (let i = 0; i < config.ROUTE_IGNORE.length; i += 1) {
-        if (config.ROUTE_IGNORE[i].test(`${controller.prefix}${route.path}`)) {
+      for (let i = 0; i < config.EXCLUDED_ROUTES.length; i += 1) {
+        if (config.EXCLUDED_ROUTES[i].test(`${controller.prefix}${route.path}`)) {
           return false
         }
       }

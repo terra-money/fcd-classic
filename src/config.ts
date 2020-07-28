@@ -15,7 +15,7 @@ const {
   ACTIVE_CURRENCY,
   DISABLE_API,
   DISABLE_SOCKET,
-  ROUTE_IGNORE
+  EXCLUDED_ROUTES
 } = process.env
 
 const config = {
@@ -42,10 +42,10 @@ const config = {
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
     : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt'],
-  ROUTE_IGNORE: ROUTE_IGNORE
-    ? (JSON.parse(ROUTE_IGNORE) as string[]).map((regExp) => new RegExp(regExp))
+  EXCLUDED_ROUTES: EXCLUDED_ROUTES
+    ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp))
     : [
-        /* /^\/staking\// */
+        /* /\/wasm\// */
       ]
 }
 
