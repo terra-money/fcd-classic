@@ -1,12 +1,10 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
-import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
 import { daysBeforeTs } from 'lib/time'
-import { apiLogger as logger } from 'lib/logger'
 
 import {
   getStaking,
@@ -426,4 +424,4 @@ class StakingController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, StakingController, logger)
+export default StakingController

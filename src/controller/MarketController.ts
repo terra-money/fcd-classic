@@ -3,12 +3,10 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 
 import config from 'config'
 
-import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { getPrice, getSwapRate } from 'service/market'
 import { TimeIntervals } from 'lib/common'
-import { apiLogger as logger } from 'lib/logger'
 
 const Joi = Validator.Joi
 
@@ -74,4 +72,4 @@ class MarketController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, MarketController, logger)
+export default MarketController

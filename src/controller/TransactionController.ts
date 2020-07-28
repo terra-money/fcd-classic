@@ -1,16 +1,12 @@
 import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-joi-controllers'
 
-import { controllerExporter } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, TERRA_CHAIN_REGEX } from 'lib/constant'
-import { apiLogger as logger } from 'lib/logger'
 
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
-
-const CONTROLLER_ID = 'transaction'
 
 @Controller('')
 class TransactionController extends KoaController {
@@ -318,4 +314,4 @@ class TransactionController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, TransactionController, logger)
+export default TransactionController

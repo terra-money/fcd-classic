@@ -2,8 +2,6 @@ import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
 
 import { success } from 'lib/response'
-import { apiLogger as logger } from 'lib/logger'
-import { controllerExporter } from 'lib/controllerExporter'
 
 import {
   getGeneralInfo,
@@ -253,4 +251,4 @@ class DashboardController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, DashboardController, logger)
+export default DashboardController

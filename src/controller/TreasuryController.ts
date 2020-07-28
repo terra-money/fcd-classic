@@ -2,7 +2,7 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 
 import config from 'config'
 
-import { controllerExporter } from 'lib/controllerExporter'
+import { exportController } from 'lib/controllerExporter'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { apiLogger as logger } from 'lib/logger'
@@ -10,8 +10,6 @@ import { apiLogger as logger } from 'lib/logger'
 import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
 
 const Joi = Validator.Joi
-
-const CONTROLLER_ID = 'treasury'
 
 @Controller('')
 class TreasuryController extends KoaController {
@@ -103,4 +101,4 @@ class TreasuryController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, TreasuryController, logger)
+export default TreasuryController

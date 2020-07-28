@@ -3,8 +3,6 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
-import { apiLogger as logger } from 'lib/logger'
-import { controllerExporter } from 'lib/controllerExporter'
 
 import { getBalance } from 'service/bank'
 
@@ -64,4 +62,4 @@ class BankController extends KoaController {
   }
 }
 
-export default controllerExporter(CONTROLLER_ID, BankController, logger)
+export default BankController
