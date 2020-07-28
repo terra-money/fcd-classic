@@ -9,11 +9,11 @@ import { saveUnvested } from './unvested'
 const jobs = [
   {
     method: saveRichList,
-    cron: '1 * * * * *'
+    cron: '1 1 */1 * * *'
   },
   {
     method: saveUnvested,
-    cron: '1 * * * * *'
+    cron: '1 1 */1 * * *'
   }
 ]
 
