@@ -3,16 +3,16 @@ import { init as initORM } from 'orm'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
-import setRichList from './richlist'
-import setUnvested from './unvested'
+import { saveRichList } from './richlist'
+import { saveUnvested } from './unvested'
 
 const jobs = [
   {
-    method: setRichList,
+    method: saveRichList,
     cron: '1 1 */1 * * *'
   },
   {
-    method: setUnvested,
+    method: saveUnvested,
     cron: '1 1 */1 * * *'
   }
 ]
