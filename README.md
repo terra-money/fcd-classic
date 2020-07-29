@@ -7,7 +7,7 @@
   - Takes block and tx from LCD and stores into the database in a usable form
   - Stores issuance, network and staking information to database every minute
   - Collect & cache validator info and store in db
-  - Calculate validaor daily return
+  - Calculate validator daily return
   - Collect & cache proposal info
 * ### Rest API server
   * Serves data via RESTFul API
@@ -118,14 +118,13 @@ module.exports = {
   - Generate by `yarn run swagger`
   - Access UI from: `http://localhost:3060/swagger`
   - Access the definition from: `http://localhost:3060/static/swagger.json` 
-  - Use `yarn run swagger --host hostname` for different host name
 * Generate swagger for [`AWS`](https://aws.amazon.com/api-gateway/) api gateway
   - ```sh
     yarn run swagger -- --apigateway
     ```
   - Generated file can be directly imported to aws api gateway
   - ```diff 
-    - NB : its uses empty schema for reponse object as api gateway support object and properties name only having alphanum. 
+    - NB : its uses empty schema for response object as api gateway support object and properties name only having alphanum. 
     ```
 
 * Generate combined swagger for lcd and fcd
