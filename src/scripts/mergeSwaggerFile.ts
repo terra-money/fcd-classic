@@ -91,13 +91,13 @@ function normalizeSwagger(doc: Swagger): Swagger {
 async function getLcdSwaggerObject(): Promise<Swagger> {
   try {
     const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
-    return normalizeSwagger(doc)
+    return filterExcludedRoutes(normalizeSwagger(doc))
   } catch (err) {
     throw err
   }
 }
 
-function getFcdSwaggerObject(): Swagger {
+export function getFcdSwaggerObject(): Swagger {
   const options = {
     simulate: true,
     src: path.join(__dirname, '..', 'controller'),
@@ -106,7 +106,7 @@ function getFcdSwaggerObject(): Swagger {
   }
   const api = createApidocSwagger(options)
   if (api['swaggerData']) {
-    return normalizeSwagger(JSON.parse(api['swaggerData']))
+    return filterExcludedRoutes(normalizeSwagger(JSON.parse(api['swaggerData'])))
   }
   throw new Error('Could not generate fcd swagger')
 }
@@ -135,7 +135,7 @@ export function isRouteExcluded(url: string): boolean {
   return false
 }
 
-function filterExcludedRoutes(swagger: Swagger): Swagger {
+export function filterExcludedRoutes(swagger: Swagger): Swagger {
   for (const path of Object.keys(swagger.paths)) {
     if (isRouteExcluded(path)) {
       delete swagger.paths[path]
@@ -168,7 +168,7 @@ async function mergeSwagger() {
   const dest = path.join(__dirname, '..', '..', 'static')
 
   let combinedSwagger = await getMergedSwagger()
-  combinedSwagger = filterExcludedRoutes(combinedSwagger)
+
   if (argv.apigateway) {
     combinedSwagger = convertSwaggerForApiGateway(combinedSwagger)
   }

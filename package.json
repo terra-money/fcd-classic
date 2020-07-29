@@ -17,7 +17,7 @@
     "vscolprod": "better-npm-run val-col-prod",
     "stability": "better-npm-run stability",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "apidoc-swagger -i src/controller -o static/ --basepath /v1",
+    "swagger": "ts-node --files -r tsconfig-paths/register src/scripts/populateSwagger.ts",
     "mergeswagger": "ts-node --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
     "testurls": "ts-node --files -r tsconfig-paths/register src/scripts/testUrls.ts",
     "apidoc": "ts-node --files -r tsconfig-paths/register src/scripts/populateApiDoc.ts"
