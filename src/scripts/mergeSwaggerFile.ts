@@ -5,6 +5,7 @@ import { createApidocSwagger, convertSwaggerForApiGateway } from 'apidoc-swagger
 import * as path from 'path'
 
 import * as yargs from 'yargs'
+import config from 'config'
 
 const LCD_SWAGGER_URL = 'https://lcd.terra.dev/swagger-ui/swagger.yaml'
 
@@ -125,6 +126,24 @@ function resolveBasePath(swagger: Swagger): Swagger {
   return Object.assign({}, swagger, { paths: resoledPath })
 }
 
+export function isRouteExcluded(url: string): boolean {
+  for (const exclusionRegEx of config.EXCLUDED_ROUTES) {
+    if (exclusionRegEx.test(url)) {
+      return true
+    }
+  }
+  return false
+}
+
+function filterExcludedRoutes(swagger: Swagger): Swagger {
+  for (const path of Object.keys(swagger.paths)) {
+    if (isRouteExcluded(path)) {
+      delete swagger.paths[path]
+    }
+  }
+  return swagger
+}
+
 export async function getMergedSwagger() {
   const lcd = resolveBasePath(await getLcdSwaggerObject())
   const fcd = resolveBasePath(getFcdSwaggerObject())
@@ -149,7 +168,7 @@ async function mergeSwagger() {
   const dest = path.join(__dirname, '..', '..', 'static')
 
   let combinedSwagger = await getMergedSwagger()
-
+  combinedSwagger = filterExcludedRoutes(combinedSwagger)
   if (argv.apigateway) {
     combinedSwagger = convertSwaggerForApiGateway(combinedSwagger)
   }
