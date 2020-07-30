@@ -9,7 +9,7 @@ import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 const Joi = Validator.Joi
 
 @Controller('')
-class TransactionController extends KoaController {
+export default class TransactionController extends KoaController {
   /**
    * @api {get} /tx/:txhash Get Tx
    * @apiName getTx
@@ -87,11 +87,11 @@ class TransactionController extends KoaController {
    * @apiParam {string} [order] 'asc' or 'desc'
    * @apiParam {string} [chainId=columbus-3] ChainId filter
    * @apiParam {number} [from] timestamp filter (from)
-   * @apiParam {number} [to] timestamp ilter (to)
+   * @apiParam {number} [to] timestamp filter (to)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info
    * @apiSuccess {string} txs.tx.type Tx type
@@ -252,12 +252,12 @@ class TransactionController extends KoaController {
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
    * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {number} [from] Start time (milisecond)
-   * @apiParam {number} [to] End time (milisecond)
+   * @apiParam {number} [from] Start time (millisecond)
+   * @apiParam {number} [to] End time (millisecond)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {string} txs.timestamp tx time
    * @apiSuccess {string} txs.txhash tx hash
@@ -313,5 +313,3 @@ class TransactionController extends KoaController {
     )
   }
 }
-
-export default TransactionController

@@ -19,10 +19,8 @@ import {
 
 const Joi = Validator.Joi
 
-const CONTROLLER_ID = 'staking'
-
-@Controller(`/${CONTROLLER_ID}`)
-class StakingController extends KoaController {
+@Controller(`/staking`)
+export default class StakingController extends KoaController {
   /**
    * @api {get} /staking/validators/:operatorAddr Get validator detail
    * @apiName getValidatorDetail
@@ -136,11 +134,11 @@ class StakingController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/delegations Get validator's delegations
+   * @api {get} /staking/validators/:operatorAddr/delegations Get validators delegations
    * @apiName getValidatorDelegations
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -183,11 +181,11 @@ class StakingController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/claims Get validator's claims
+   * @api {get} /staking/validators/:operatorAddr/claims Get validators claims
    * @apiName getValidatorClaims
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -229,11 +227,11 @@ class StakingController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/delegators Get validator's delegators
+   * @api {get} /staking/validators/:operatorAddr/delegators Get validators delegators
    * @apiName getValidatorDelegators
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -401,11 +399,11 @@ class StakingController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/return/:operatorAddr Get validator's staking return
+   * @api {get} /staking/return/:operatorAddr Get validators staking return
    * @apiName getValidatorStakingReturn
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    *
    * @apiSuccess {number} - Annualized staking return
    *
@@ -423,5 +421,3 @@ class StakingController extends KoaController {
     success(ctx, stakingReturn)
   }
 }
-
-export default StakingController

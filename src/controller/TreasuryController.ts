@@ -10,7 +10,7 @@ import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } fro
 const Joi = Validator.Joi
 
 @Controller('')
-class TreasuryController extends KoaController {
+export default class TreasuryController extends KoaController {
   /**
    * @api {get} /taxproceeds Get taxproceeds
    * @apiName getTaxProceeds
@@ -98,5 +98,3 @@ class TreasuryController extends KoaController {
     success(ctx, await getCirculatingSupply(denom))
   }
 }
-
-export default TreasuryController

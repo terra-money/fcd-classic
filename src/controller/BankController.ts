@@ -8,10 +8,8 @@ import { getBalance } from 'service/bank'
 
 const Joi = Validator.Joi
 
-const CONTROLLER_ID = 'bank'
-
-@Controller(`/${CONTROLLER_ID}`)
-class BankController extends KoaController {
+@Controller(`/bank`)
+export default class BankController extends KoaController {
   /**
    * @api {get} /bank/:account Get account information
    * @apiName getBank
@@ -61,5 +59,3 @@ class BankController extends KoaController {
     success(ctx, await getBalance(account))
   }
 }
-
-export default BankController

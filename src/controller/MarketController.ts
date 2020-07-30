@@ -10,10 +10,8 @@ import { TimeIntervals } from 'lib/common'
 
 const Joi = Validator.Joi
 
-const CONTROLLER_ID = 'market'
-
-@Controller(`/${CONTROLLER_ID}`)
-class MarketController extends KoaController {
+@Controller(`/market`)
+export default class MarketController extends KoaController {
   /**
    * @api {get} /market/price Get price history
    * @apiName getMarketPrice
@@ -71,5 +69,3 @@ class MarketController extends KoaController {
     success(ctx, await getSwapRate(base))
   }
 }
-
-export default MarketController
