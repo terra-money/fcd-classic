@@ -1,9 +1,12 @@
 import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-joi-controllers'
+
+import config from 'config'
+
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
-import config from 'config'
+
+import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
 
@@ -79,14 +82,14 @@ export default class TransactionController extends KoaController {
    *
    * @apiParam {string} [account] Account address
    * @apiParam {string} [action] Tx type
-   * @apiParam {string} [page=1] Page
-   * @apiParam {string} [limit=10] Limit
+   * @apiParam {number} [page=1] Page
+   * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
    * @apiParam {string} [order] 'asc' or 'desc'
    * @apiParam {string} [chainId=columbus-3] ChainId filter
-   * @apiParam {string} [from] timestamp filter (from)
-   * @apiParam {string} [to] timestamp ilter (to)
+   * @apiParam {number} [from] timestamp filter (from)
+   * @apiParam {number} [to] timestamp filter (to)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -247,16 +250,16 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} account Account address
-   * @apiParam {string} [page=1] Page
-   * @apiParam {string} [limit=10] Limit
+   * @apiParam {number} [page=1] Page
+   * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
    * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {string} [from] Start time (milisecond)
-   * @apiParam {string} [to] End time (milisecond)
+   * @apiParam {number} [from] Start time (millisecond)
+   * @apiParam {number} [to] End time (millisecond)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {string} txs.timestamp tx time
    * @apiSuccess {string} txs.txhash tx hash

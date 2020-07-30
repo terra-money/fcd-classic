@@ -1,8 +1,11 @@
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+
+import config from 'config'
+
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
+
 import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
-import config from 'config'
 
 const Joi = Validator.Joi
 
@@ -50,6 +53,8 @@ export default class TreasuryController extends KoaController {
    * @apiGroup Treasury
    *
    * @apiParam {string} denom Coin denomination
+   * @apiParam {number{1..}} [page=1] Page number
+   * @apiParam {number{1-10000}} [limit=1000] Page size
    *
    * @apiSuccess {Object[]}  accounts List of accounts
    * @apiSuccess {Number}    accounts.account
@@ -61,11 +66,15 @@ export default class TreasuryController extends KoaController {
     params: {
       denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name')
     },
+    query: {
+      page: Joi.number().default(1).min(1).description('Page number'),
+      limit: Joi.number().default(1000).min(1).max(10000).description('Items per page')
+    },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getRichList(ctx) {
     const { denom } = ctx.params
-    success(ctx, await getRichList(denom))
+    success(ctx, await getRichList(denom, +ctx.request.query.page, +ctx.request.query.limit))
   }
 
   /**

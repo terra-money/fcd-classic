@@ -12,6 +12,8 @@ import { collectValidator, calculateValidatorsReturn } from './staking'
 import { collectProposal } from './gov'
 import { collectDashboard } from './dashboard'
 import { rpcEventWatcher } from './watcher'
+import { collectRichList } from './richlist'
+import { collectUnvested } from './unvested'
 
 import Semaphore from './Semaphore'
 
@@ -30,6 +32,8 @@ const validatorCollector = new Semaphore('ValidatorCollector', collectValidator,
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
+const richListCollector = new Semaphore('RichListCollector', collectRichList, logger)
+const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger)
 
 const jobs = [
   {
@@ -50,7 +54,7 @@ const jobs = [
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
-    cron: '0 30 * * * *'
+    cron: '0 0 2 * * *'
   },
   {
     method: proposalCollector.run.bind(proposalCollector),
@@ -58,7 +62,15 @@ const jobs = [
   },
   {
     method: dashboardCollector.run.bind(dashboardCollector),
-    cron: '0 1 * * * *'
+    cron: '0 0 2 * * *'
+  },
+  {
+    method: richListCollector.run.bind(richListCollector),
+    cron: '0 0 2 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
+  },
+  {
+    method: vestingCollector.run.bind(vestingCollector),
+    cron: '0 0 2 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
   }
 ]
 

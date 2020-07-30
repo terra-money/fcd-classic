@@ -15,13 +15,12 @@
     "collector": "better-npm-run collector-prod",
     "vscoldev": "better-npm-run val-col-dev",
     "vscolprod": "better-npm-run val-col-prod",
-    "tracking": "better-npm-run tracking",
     "stability": "better-npm-run stability",
-    "apidoc": "apidoc -f \".*\\\\.ts$\" -i src/controller -o static/",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "apidoc-swagger -i src/controller -o static/ --basepath /v1",
+    "swagger": "ts-node --files -r tsconfig-paths/register src/scripts/populateSwagger.ts",
     "mergeswagger": "ts-node --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
-    "testurls": "ts-node --files -r tsconfig-paths/register src/scripts/testUrls.ts"
+    "testurls": "ts-node --files -r tsconfig-paths/register src/scripts/testUrls.ts",
+    "apidoc": "ts-node --files -r tsconfig-paths/register src/scripts/populateApiDoc.ts"
   },
   "betterScripts": {
     "api-dev": {
@@ -51,12 +50,6 @@
         "NODE_ENV": "production"
       }
     },
-    "tracking": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/tracking.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
     "stability": {
       "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/stability/stabilityChecker.ts",
       "env": {
@@ -73,6 +66,7 @@
     "better-npm-run": "^0.1.1",
     "bignumber.js": "^9.0.0",
     "bluebird": "^3.5.5",
+    "byline": "^5.0.0",
     "date-fns": "^1.30.1",
     "date-fns-timezone": "^0.1.4",
     "globby": "^11.0.0",
@@ -119,7 +113,8 @@
     "@types/memoizee": "^0.4.3",
     "@types/supertest": "^2.0.8",
     "@types/yargs": "^15.0.5",
-    "apidoc": "^0.24.0",
+    "apidoc-core": "^0.11.1",
+    "apidoc-swagger": "git+https://github.com/terra-project/apidoc-swagger.git",
     "husky": "^4.2.3",
     "jest": "^26",
     "jest-circus": "^26.0.1",

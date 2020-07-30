@@ -5,5 +5,6 @@ export const TERRA_ACCOUNT_REGEX = /^terra1[a-z0-9]{38}$/
 export const TERRA_OPERATOR_ADD_REGEX = /^terravaloper1[a-z0-9]{38}$/
 export const MOVING_AVG_WINDOW_IN_DAYS = 7
 export const DAYS_IN_YEAR = 365
+export const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}(terra\.money|terra\.dev|station\.terra-project\.now\.sh)(?::\d{4,5})?(?:\/|$)/
 export const ONE_DAY_IN_MS = 60000 * 60 * 24
 export const LOCAL_TERRA_CHAIN_ID = 'localterra'

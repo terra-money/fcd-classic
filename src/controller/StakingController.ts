@@ -5,6 +5,7 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
 import { daysBeforeTs } from 'lib/time'
+
 import {
   getStaking,
   getValidators,
@@ -18,8 +19,8 @@ import {
 
 const Joi = Validator.Joi
 
-@Controller('/staking')
-export default class TxController extends KoaController {
+@Controller(`/staking`)
+export default class StakingController extends KoaController {
   /**
    * @api {get} /staking/validators/:operatorAddr Get validator detail
    * @apiName getValidatorDetail
@@ -133,11 +134,11 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/delegations Get validator's delegations
+   * @api {get} /staking/validators/:operatorAddr/delegations Get validators delegations
    * @apiName getValidatorDelegations
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -180,11 +181,11 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/claims Get validator's claims
+   * @api {get} /staking/validators/:operatorAddr/claims Get validators claims
    * @apiName getValidatorClaims
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -226,11 +227,11 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/delegators Get validator's delegators
+   * @api {get} /staking/validators/:operatorAddr/delegators Get validators delegators
    * @apiName getValidatorDelegators
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
@@ -398,11 +399,11 @@ export default class TxController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/return/:operatorAddr Get validator's staking return
+   * @api {get} /staking/return/:operatorAddr Get validators staking return
    * @apiName getValidatorStakingReturn
    * @apiGroup Staking
    *
-   * @apiParam {string} operatorAddr validator's operator address
+   * @apiParam {string} operatorAddr validators operator address
    *
    * @apiSuccess {number} - Annualized staking return
    *

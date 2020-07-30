@@ -1,8 +1,9 @@
 import got from 'got'
-import { FCD_PORT, FCD_PM2_PROCESS_NAME } from './constants'
-import { create, update } from './pagerduty'
 import { exec } from 'child_process'
 import { get } from 'lodash'
+
+import { FCD_PORT, FCD_PM2_PROCESS_NAME } from './constants'
+import { create, update } from './pagerduty'
 
 let alive = true
 let incidentId: string | undefined

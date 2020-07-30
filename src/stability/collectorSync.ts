@@ -2,9 +2,11 @@ import { exec } from 'child_process'
 import * as Bluebird from 'bluebird'
 import got from 'got'
 import { get } from 'lodash'
-import { BlockEntity, TxEntity } from 'orm'
 import { getRepository, FindConditions } from 'typeorm'
+
 import config from 'config'
+import { BlockEntity } from 'orm'
+
 import {
   COLLECTOR_PM2_PROCESS_NAME,
   CHAIN_ID,
@@ -66,20 +68,6 @@ const isBlockCorrectlySynced = async (lastSavedBlock: BlockEntity): Promise<bool
   return syncGap <= BLOCK_SYNC_ALERT_THRESHOLD
 }
 
-const isTxCorrectlySynced = async (lastSavedBlock: BlockEntity): Promise<boolean> => {
-  const blockTxs = await getRepository(TxEntity).find({
-    where: {
-      block: lastSavedBlock.id
-    }
-  })
-
-  const blockNumTx = Number(get(lastSavedBlock.data, 'block.header.num_txs'))
-  const savedNumTx = blockTxs.length
-  console.log(`height: ${lastSavedBlock.height}, # of tx match: ${blockNumTx === savedNumTx}`)
-
-  return blockNumTx === savedNumTx
-}
-
 async function getLatestBlockFromDb(): Promise<BlockEntity | undefined> {
   const where: FindConditions<BlockEntity> = {
     chainId: CHAIN_ID
@@ -122,7 +110,6 @@ export default async (): Promise<void> => {
   }
 
   const blockCorrectlySynced = await isBlockCorrectlySynced(savedBlocks[0])
-  const txCorrectlySynced = await isTxCorrectlySynced(savedBlocks[2])
 
   if (!blockCorrectlySynced && !incidentId['block']) {
     await alert('block', `A block sync problem has occurred.`)
@@ -130,9 +117,5 @@ export default async (): Promise<void> => {
 
   if (blockCorrectlySynced && incidentId['block']) {
     await resolve('block')
-  }
-
-  if (!txCorrectlySynced && !incidentId['tx']) {
-    console.error(`A tx sync problem has occurred. (Block height: ${savedBlocks[1].height})`)
   }
 }

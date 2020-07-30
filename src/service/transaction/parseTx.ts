@@ -21,6 +21,7 @@ function failedRawLogToLogs(
   try {
     parsed = JSON.parse(rawLog)
   } catch (e) {
+    // its not a json parsable, so using the raw log directly
     parsed = rawLog
   }
 

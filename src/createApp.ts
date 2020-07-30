@@ -20,7 +20,6 @@ import controllers from 'controller'
 
 const koaSwagger = require('koa2-swagger-ui')
 
-const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}(terra\.money|terra\.dev|station\.terra-project\.now\.sh)(?::\d{4,5})?(?:\/|$)/
 const API_VERSION_PREFIX = '/v1'
 
 function getRootApp(): Koa {
