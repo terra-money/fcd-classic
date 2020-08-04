@@ -54,7 +54,7 @@ const jobs = [
   },
   {
     method: returnCalculator.run.bind(returnCalculator),
-    cron: '0 0 2 * * *'
+    cron: '0 10 0 * * *'
   },
   {
     method: proposalCollector.run.bind(proposalCollector),
@@ -62,15 +62,15 @@ const jobs = [
   },
   {
     method: dashboardCollector.run.bind(dashboardCollector),
-    cron: '0 0 2 * * *'
+    cron: '0 20 0 * * *'
   },
   {
     method: richListCollector.run.bind(richListCollector),
-    cron: '0 0 2 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
+    cron: '0 0 13 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
   },
   {
     method: vestingCollector.run.bind(vestingCollector),
-    cron: '0 0 2 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
+    cron: '0 0 13 * * *' // used 2am daily rather midnight cause some rich list file generated after 1am daily. its rare though
   }
 ]
 
