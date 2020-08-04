@@ -1,10 +1,13 @@
 import { get, mergeWith, merge, compact, filter } from 'lodash'
-import { TxEntity, SwapEntity } from 'orm'
 import { getRepository, EntityManager } from 'typeorm'
+
+import { TxEntity, SwapEntity } from 'orm'
+
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { div, plus, minus, times } from 'lib/math'
+
 import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, bulkSave, getAllActivePrices } from './helper'
 
 async function getSpread(denom: string, price: string) {

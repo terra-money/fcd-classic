@@ -6,6 +6,7 @@ import { times, div, plus } from 'lib/math'
 import { getDateFromDateTime } from 'lib/time'
 
 import { GeneralInfoEntity } from 'orm'
+
 import { convertDbTimestampToDate, getPriceObjKey, getLatestDateOfGeneralInfo } from './helpers'
 import { getRewardsSumByDateDenom } from './rewardsInfo'
 import { getPriceHistory } from 'service/dashboard'
@@ -53,7 +54,7 @@ async function getAvgBondedTokensByDate(
   return bondedTokensObj
 }
 
-async function getRewadsInLunaByDate(
+async function getRewardsInLunaByDate(
   daysBefore?: number
 ): Promise<{
   [date: string]: DailyReturnInfo
@@ -98,7 +99,7 @@ async function getRewadsInLunaByDate(
 
 export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
   const bondedTokensObj = await getAvgBondedTokensByDate(daysBefore)
-  const rewardObj = await getRewadsInLunaByDate(daysBefore)
+  const rewardObj = await getRewardsInLunaByDate(daysBefore)
 
   const stakingReturns = Object.keys(rewardObj).reduce((acc, date) => {
     const staked = bondedTokensObj[date]

@@ -1,6 +1,7 @@
-import { get } from 'lodash'
-import * as lcd from 'lib/lcd'
 import * as memoizee from 'memoizee'
+import { get } from 'lodash'
+
+import * as lcd from 'lib/lcd'
 
 async function getMoniker(valAddr: string): Promise<string> {
   const validator = await lcd.getValidator(valAddr)

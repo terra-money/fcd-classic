@@ -1,13 +1,13 @@
 import { getRepository, In } from 'typeorm'
 
-import { collectorLogger as logger } from 'lib/logger'
-
 import { ProposalEntity } from 'orm'
 import config from 'config'
 
+import { collectorLogger as logger } from 'lib/logger'
+
 export async function removeProposalsDeletedFromChain(proposalsInChain: LcdProposal[]) {
   logger.info('Checking for deleted proposals')
-  const idsOnChain = proposalsInChain.map((propoal: LcdProposal) => propoal.id)
+  const idsOnChain = proposalsInChain.map((proposal: LcdProposal) => proposal.id)
 
   const proposalsInDb = await getRepository(ProposalEntity).find({
     select: ['id', 'proposalId'],

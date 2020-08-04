@@ -1,5 +1,6 @@
-import { init as initORM, TxEntity, BlockEntity } from 'orm'
 import { getRepository, IsNull } from 'typeorm'
+
+import { init as initORM, TxEntity, BlockEntity } from 'orm'
 
 async function setBlockId(tx, height) {
   const block = await getRepository(BlockEntity).findOne({ height })

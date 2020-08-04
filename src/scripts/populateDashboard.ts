@@ -4,8 +4,8 @@ import { startOfDay, startOfToday } from 'date-fns'
 import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
 
 import config from 'config'
-
 import { DashboardEntity, init as initORM } from 'orm'
+
 import {
   getBlockRewardsByDay,
   getStakingReturnByDay,

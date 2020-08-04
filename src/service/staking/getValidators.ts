@@ -1,8 +1,10 @@
 import { orderBy } from 'lodash'
 import { getRepository, getConnection } from 'typeorm'
-import config from 'config'
+
 import { generateValidatorResponse } from './helper'
+
 import { ValidatorInfoEntity } from 'orm'
+import config from 'config'
 
 export async function getValidatorsReturn(): Promise<{ [operatorAddress: string]: ValidatorAnnualReturn }> {
   const rawQuery = `

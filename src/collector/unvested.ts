@@ -3,6 +3,7 @@ import * as globby from 'globby'
 import * as fs from 'fs'
 
 import { UnvestedEntity } from 'orm'
+
 import { collectorLogger as logger } from 'lib/logger'
 import { bulkSave } from './helper'
 
@@ -28,7 +29,7 @@ async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
   return chain(unvested.map(unvestedMapper)).compact().value()
 }
 
-async function saveUnvested() {
+export async function saveUnvested() {
   const docs = await getUnvested()
 
   if (!docs || docs.length === 0) {
@@ -36,9 +37,5 @@ async function saveUnvested() {
   }
 
   await bulkSave(docs)
-}
-
-export default async function setUnvested() {
-  await saveUnvested()
-  logger.info(`Save richlist - success.`)
+  logger.info(`Save Unvested - success.`)
 }

@@ -1,13 +1,15 @@
-import config from 'config'
+import { getRepository } from 'typeorm'
 import * as memoizee from 'memoizee'
 
+import config from 'config'
 import { ValidatorInfoEntity } from 'orm'
-import { getRepository } from 'typeorm'
+
 import * as lcd from 'lib/lcd'
 import { filter } from 'lodash'
 import { sortDenoms } from 'lib/common'
 import { div, plus } from 'lib/math'
 import { getBalance } from 'service/bank'
+
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
 import { getCommissions, getMyDelegation, getUndelegateSchedule, generateValidatorResponse } from './helper'
 

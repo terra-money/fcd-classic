@@ -27,5 +27,5 @@ COPY --from=builder /app/tsconfig.json /app/
 COPY --from=builder /app/static /app/static
 COPY --from=builder /app/src/ /app/src/
 
-ENTRYPOINT [ "yarn", "run" ]
+ENTRYPOINT [ "npm", "run" ]
 CMD [ "--help" ]
