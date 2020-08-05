@@ -42,7 +42,7 @@ export async function saveGeneral() {
   ])
 
   const now = Date.now()
-  const datetime = getStartOfPreviousMinuteTs(now)
+  const datetime = new Date(getStartOfPreviousMinuteTs(now))
 
   const genInfo: DeepPartial<GeneralInfoEntity> = {
     datetime,
