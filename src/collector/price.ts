@@ -1,5 +1,6 @@
 import { PriceEntity } from 'orm'
 import { getRepository } from 'typeorm'
+import { startOfMinute } from 'date-fns'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
@@ -9,7 +10,7 @@ async function insertPrice(denom: string, price: string) {
   const now = Date.now()
   await getRepository(PriceEntity)
     .save({
-      datetime: new Date(now - (now % 60000)),
+      datetime: startOfMinute(now),
       denom,
       price: parseFloat(price)
     })

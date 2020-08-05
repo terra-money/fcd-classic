@@ -5,6 +5,7 @@ import { getRepository, EntityManager } from 'typeorm'
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { plus } from 'lib/math'
+import { getStartOfPreviousMinuteTs } from 'lib/time'
 
 import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, bulkSave, getAllActivePrices } from './helper'
 
@@ -100,7 +101,7 @@ export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[
 
   const [activeIssuances, activePrices, volumeObj] = await Promise.all([
     lcd.getAllActiveIssuance(),
-    getAllActivePrices(now - (now % 60000) - 60000),
+    getAllActivePrices(getStartOfPreviousMinuteTs(now)),
     getTxVol(timestamp)
   ])
 
@@ -109,7 +110,7 @@ export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[
   return Object.keys(activeIssuances).map((denom) => {
     const network = new NetworkEntity()
     network.denom = denom
-    network.datetime = new Date(now - (now % 60000) - 60000)
+    network.datetime = new Date(getStartOfPreviousMinuteTs(now))
     network.supply = activeIssuances[denom]
     network.marketCap = marketCapObj[denom]
     network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'

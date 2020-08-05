@@ -7,6 +7,7 @@ import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { div, plus, minus, times } from 'lib/math'
+import { getStartOfPreviousMinuteTs } from 'lib/time'
 
 import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, getAllActivePrices } from './helper'
 
@@ -180,7 +181,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
     fee: {}
   })
 
-  const allActivePrices = await getAllActivePrices(now - (now % 60000) - 60000)
+  const allActivePrices = await getAllActivePrices(getStartOfPreviousMinuteTs(now))
   const swapValuesWithUSDValues = getAllUSDValue(swapValues, allActivePrices)
   const swapSpread = await getSwapSpread(allActivePrices)
 
@@ -188,7 +189,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
   const docs = Object.keys(issuances).map((denom) => {
     const swap = new SwapEntity()
     swap.denom = denom
-    swap.datetime = new Date(now - (now % 60000) - 60000)
+    swap.datetime = new Date(getStartOfPreviousMinuteTs(now))
     swap.spread = swapSpread[denom]
 
     if (!swapValuesWithUSDValues[denom]) {

@@ -7,6 +7,7 @@ import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
+import { getStartOfPreviousMinuteTs } from 'lib/time'
 
 export async function saveGeneral() {
   const [
@@ -41,7 +42,7 @@ export async function saveGeneral() {
   ])
 
   const now = Date.now()
-  const datetime = new Date(now - (now % 60000) - 60000)
+  const datetime = getStartOfPreviousMinuteTs(now)
 
   const genInfo: DeepPartial<GeneralInfoEntity> = {
     datetime,

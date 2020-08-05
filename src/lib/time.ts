@@ -1,4 +1,5 @@
-import { startOfToday, subDays, startOfMinute, subMinutes, format } from 'date-fns'
+import { startOfToday, subDays, startOfMinute, subMinutes, format, getTime } from 'date-fns'
+import { times } from 'lodash'
 
 export function daysBeforeTs(daysBefore: number = 1): { fromTs: number; toTs: number } {
   const to = startOfToday()
@@ -37,4 +38,8 @@ export function dateFromDateString(dateString: string) {
 
 export function getDateFromDateTime(date: Date): string {
   return format(date, 'YYYY-MM-DD')
+}
+
+export function getStartOfPreviousMinuteTs(timestamp: number): number {
+  return getTime(subMinutes(startOfMinute(timestamp), 1))
 }

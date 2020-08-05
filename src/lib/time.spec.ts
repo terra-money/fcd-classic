@@ -6,7 +6,8 @@ import {
   daysBeforeTs,
   getQueryDateTime,
   getDateRangeOfLastMinute,
-  getDateFromDateTime
+  getDateFromDateTime,
+  getStartOfPreviousMinuteTs
 } from './time'
 
 describe('time', () => {
@@ -50,5 +51,11 @@ describe('time', () => {
     const d = new Date('2020-01-30 12:23:11')
 
     expect(getDateFromDateTime(d)).toBe('2020-01-30')
+  })
+
+  test('getPreviousMinutes timestamp', () => {
+    const nowTs = new Date().getTime()
+
+    expect(getStartOfPreviousMinuteTs(nowTs)).toBe(subMinutes(startOfMinute(nowTs), 1).getTime())
   })
 })
