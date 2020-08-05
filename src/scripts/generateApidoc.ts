@@ -21,7 +21,7 @@ const packageInfo = {
   version: '1.0.0',
   description: 'Terra FCD API Docs',
   title: 'Terra FCD API Docs',
-  url: process.env.FCD_URL || 'https://fcd.terra.dev/v1'
+  url: `${process.env.FCD_URL}/v1` || 'https://fcd.terra.dev/v1'
 }
 
 const argv = yargs.options({
