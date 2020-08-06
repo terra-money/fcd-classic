@@ -1,5 +1,7 @@
-import * as memoizee from 'memoizee'
 import { ProposalEntity } from 'orm'
+
+import memoizeCache from 'lib/memoizeCache'
+
 import getAccountInfo from './getAccountInfo'
 
 export enum ProposalStatus {
@@ -32,7 +34,7 @@ function transformProposalType(proposalType: string): string {
   return typeToTypestr[proposalType] || proposalType
 }
 
-export const getProposalBasic = memoizee(getProposalBasicUncached, {
+export const getProposalBasic = memoizeCache(getProposalBasicUncached, {
   promise: true,
   maxAge: 300 * 1000 /* 5 minutes */
 })

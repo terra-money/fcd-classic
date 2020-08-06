@@ -6,6 +6,12 @@ import { plus, times, minus } from 'lib/math'
 import { convertValAddressToAccAddress } from 'lib/common'
 import { errorReport } from 'lib/errorReporting'
 
+type ValidatorVotingPower = {
+  accountAddress: string
+  operatorAddress: string
+  votingPower: string
+}
+
 function tallying(votes): TallyingInfo {
   const initial = {
     Yes: '0',
@@ -28,9 +34,12 @@ function tallying(votes): TallyingInfo {
   return { total, distribution }
 }
 
-function getVotersVotingPowerArr(validatorsVotingPower, delegations) {
+function getVotersVotingPowerArr(
+  validatorsVotingPower: ValidatorVotingPower[],
+  delegations: LcdDelegation[]
+): ValidatorVotingPower[] {
   delegations.forEach((delegation) => {
-    const { delegator_address: delegatorAddress, validator_address: validatorAddress, balance } = delegation
+    const { delegator_address: delegatorAddress, validator_address: validatorAddress, shares } = delegation
     const validator = filter(validatorsVotingPower, { operatorAddress: validatorAddress })[0]
     const delegator = filter(validatorsVotingPower, { accountAddress: delegatorAddress })[0]
 
@@ -38,13 +47,14 @@ function getVotersVotingPowerArr(validatorsVotingPower, delegations) {
       errorReport(new Error(`ProposalVote: GET Validator Info Failed. ${validatorAddress}`))
     }
 
-    validator.votingPower = minus(validator.votingPower, balance)
+    validator.votingPower = minus(validator.votingPower, shares)
     if (delegator) {
-      delegator.votingPower = plus(delegator.votingPower, balance)
+      delegator.votingPower = plus(delegator.votingPower, shares)
     } else {
       validatorsVotingPower.push({
+        operatorAddress: validatorAddress,
         accountAddress: delegatorAddress,
-        votingPower: balance
+        votingPower: shares
       })
     }
   })
@@ -69,7 +79,7 @@ export function getVoteCounts(votes: LcdProposalVote[]): VoteCount {
   }, initial)
 }
 
-export async function getValidatorsVotingPower() {
+export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]> {
   const [votingPower, validators] = await Promise.all([lcd.getVotingPower(), lcd.getValidators()])
 
   return validators.map((item) => {
@@ -114,12 +124,11 @@ export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary
     return
   }
 
-  const uniqueVotes = uniqBy(reverse(votes), 'voter') // can vote multiple times
-  const votersDelegations = flatten(await Bluebird.map(uniqueVotes, (vote) => lcd.getDelegations(vote.voter)))
+  const uniqueUserVotes = uniqBy(reverse(votes), 'voter') // can vote multiple times, doing reverse will took the latest votes
+  const votersDelegations = flatten(await Bluebird.map(uniqueUserVotes, (vote) => lcd.getDelegations(vote.voter)))
   const validatorsVotingPower = await getValidatorsVotingPower()
   const votersVotingPowerArr = getVotersVotingPowerArr(validatorsVotingPower, votersDelegations)
-
-  uniqueVotes.forEach((vote) => {
+  uniqueUserVotes.forEach((vote) => {
     const votingPower = filter(votersVotingPowerArr, { accountAddress: vote.voter })[0]
 
     if (!votingPower) {
@@ -129,8 +138,8 @@ export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary
     vote['votingPower'] = votingPower.votingPower
   })
 
-  const { distribution, total } = await getVoteDistributionAndTotal(proposal, uniqueVotes)
-  const count = getVoteCounts(uniqueVotes)
+  const { distribution, total } = await getVoteDistributionAndTotal(proposal, uniqueUserVotes)
+  const count = getVoteCounts(uniqueUserVotes)
 
   const votesObj = votes.reduce((acc, vote: LcdProposalVote) => {
     acc[vote.voter] = vote.option

@@ -14,7 +14,8 @@ const {
   ACTIVE_DENOMS,
   ACTIVE_CURRENCY,
   DISABLE_API,
-  DISABLE_SOCKET
+  DISABLE_SOCKET,
+  EXCLUDED_ROUTES
 } = process.env
 
 const config = {
@@ -40,7 +41,12 @@ const config = {
   ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'umnt'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
-    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt']
+    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt'],
+  EXCLUDED_ROUTES: EXCLUDED_ROUTES
+    ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp))
+    : [
+        /* /\/wasm\// */
+      ]
 }
 
 export default config

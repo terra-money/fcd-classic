@@ -7,14 +7,13 @@
   - Takes block and tx from LCD and stores into the database in a usable form
   - Stores issuance, network and staking information to database every minute
   - Collect & cache validator info and store in db
-  - Calculate validaor daily return
+  - Calculate validator daily return
   - Collect & cache proposal info
 * ### Rest API server
   * Serves data via RESTFul API
 
 ## Prerequisites
 1. `Node.js` >= 12
-1. `yarn` >= 1.0
 1. `PostgreSQL` == 10.x || 11.x
 
 ### Terra Core
@@ -32,7 +31,7 @@ $ git clone https://github.com/terra-project/fcd.git
 
 ### 2. Install packages
 ```bash
-yarn
+npm i
 ```
 
 ### 3. Setup Database
@@ -79,6 +78,8 @@ module.exports = {
 | ACTIVE_CURRENCY     | Active Currencies               | ["luna","sdt","krt","ust","mnt"]             | API                                |
 | DISABLE_API         | Disable REST APIs               | false                                        | API                                |
 | DISABLE_SOCKET      | Dsiable Web Socket              | false                                        | API                                |
+| EXCLUDED_ROUTES     | List of regular expression string for excluding routes | []                    | API                                |
+
 
 > In Terra we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
@@ -86,55 +87,54 @@ module.exports = {
 ### Developement
 * Collector
   ```bash
-  yarn run coldev
+  npm run coldev
   ```
 * API
   ```bash
-  yarn run dev
+  npm run dev
   ```
 * Test
   ```bash
-  yarn run test
+  npm run test
   ```
   * Tests are designed to use soju network
 
 ### Production
 * Collector
   ```bash
-  yarn run collector
+  npm run collector
   ```
 * API
   ```bash
-  yarn start
+  npm start
   ```
 
 ### Documentation
 * apiDoc (https://apidocjs.com)
-  - Generate by `yarn run apidoc`
+  - Generate by `npm run apidoc`
   - Access UI from: `http://localhost:3060/apidoc`
 * Swagger 2.0 (https://swagger.io)
-  - Generate by `yarn run swagger`
+  - Generate by `npm run swagger`
   - Access UI from: `http://localhost:3060/swagger`
   - Access the definition from: `http://localhost:3060/static/swagger.json` 
-  - Use `yarn run swagger --host hostname` for different host name
 * Generate swagger for [`AWS`](https://aws.amazon.com/api-gateway/) api gateway
   - ```sh
-    yarn run swagger -- --apigateway
+    npm run swagger -- --apigateway
     ```
   - Generated file can be directly imported to aws api gateway
   - ```diff 
-    - NB : its uses empty schema for reponse object as api gateway support object and properties name only having alphanum. 
+    - NB : its uses empty schema for response object as api gateway support object and properties name only having alphanum. 
     ```
 
 * Generate combined swagger for lcd and fcd
   - ```sh
-    yarn run mergeswagger -- -o filename
+    npm run mergeswagger -- -o filename
     ```
   - Combined swagger file will be saved in `static` directory in project `root`
   - If no filename provided as command line argument then default saved file name is `combined-swagger.json`
   - To generate combined swagger for Amazon api gateway add `--apigateway`
     - Ex: ```
-            yarn run mergeswagger -- -o filename --apigateway
+            npm run mergeswagger -- -o filename --apigateway
           ```
 
 ## To run whole ecosystem locally with docker (WIP)

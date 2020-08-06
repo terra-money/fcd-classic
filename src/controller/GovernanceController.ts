@@ -9,16 +9,16 @@ import { getProposals, getProposal, getVotes, getDeposits, ProposalStatus, VoteT
 
 const Joi = Validator.Joi
 
-@Controller('/gov')
+@Controller(`/gov`)
 export default class GovernanceController extends KoaController {
   /**
    * @api {get} /gov/proposals Get proposal list
-   * @apiName getProposallist
+   * @apiName getProposalList
    * @apiGroup Governance
    *
    * @apiParam {string} [status] 'deposit', 'voting', 'passed', 'rejected'
    *
-   * @apiSuccess {Object[]} minDeposit Minimum deposit minimun proposal deposit
+   * @apiSuccess {Object[]} minDeposit Minimum deposit minimum proposal deposit
    * @apiSuccess {string} minDeposit.denom denom name
    * @apiSuccess {string} minDeposit.amount amount
    * @apiSuccess {string} maxDepositPeriod Deposit period

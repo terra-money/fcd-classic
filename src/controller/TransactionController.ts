@@ -1,8 +1,12 @@
 import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-joi-controllers'
+
+import config from 'config'
+
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
+import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
-import { TERRA_ACCOUNT_REGEX, TERRA_CHAIN_REGEX } from 'lib/constant'
 
 const Joi = Validator.Joi
 
@@ -85,11 +89,11 @@ export default class TransactionController extends KoaController {
    * @apiParam {string} [order] 'asc' or 'desc'
    * @apiParam {string} [chainId=columbus-3] ChainId filter
    * @apiParam {number} [from] timestamp filter (from)
-   * @apiParam {number} [to] timestamp ilter (to)
+   * @apiParam {number} [to] timestamp filter (to)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info
    * @apiSuccess {string} txs.tx.type Tx type
@@ -157,7 +161,7 @@ export default class TransactionController extends KoaController {
         .regex(/\d{1,16}/),
       order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').regex(TERRA_CHAIN_REGEX),
+      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -250,12 +254,12 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
    * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {number} [from] Start time (milisecond)
-   * @apiParam {number} [to] End time (milisecond)
+   * @apiParam {number} [from] Start time (millisecond)
+   * @apiParam {number} [to] End time (millisecond)
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
-   * @apiSuccess {number} limt Per page item limit
+   * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {string} txs.timestamp tx time
    * @apiSuccess {string} txs.txhash tx hash

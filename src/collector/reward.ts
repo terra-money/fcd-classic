@@ -8,7 +8,7 @@ import * as lcd from 'lib/lcd'
 import logger from 'lib/logger'
 import { plus, minus } from 'lib/math'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
-import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
+import { getDateRangeOfLastMinute, getQueryDateTime, getStartOfPreviousMinuteTs } from 'lib/time'
 
 import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
 
@@ -131,13 +131,13 @@ export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> 
   const [issuances, rewards, activePrices] = await Promise.all([
     lcd.getAllActiveIssuance(),
     getFees(timestamp),
-    getAllActivePrices(timestamp - (timestamp % 60000) - 60000)
+    getAllActivePrices(getStartOfPreviousMinuteTs(timestamp))
   ])
 
   return Object.keys(issuances).map((denom) => {
     const reward = new RewardEntity()
     reward.denom = denom
-    reward.datetime = new Date(timestamp - (timestamp % 60000) - 60000)
+    reward.datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
     reward.tax = get(rewards, `tax.${denom}`) ? get(rewards, `tax.${denom}`) : '0'
     reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
     reward.gas = get(rewards, `gas.${denom}`) ? get(rewards, `gas.${denom}`) : '0'

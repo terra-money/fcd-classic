@@ -1,8 +1,11 @@
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+
+import config from 'config'
+
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
+
 import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
-import config from 'config'
 
 const Joi = Validator.Joi
 

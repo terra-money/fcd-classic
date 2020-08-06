@@ -3,10 +3,11 @@ import * as yaml from 'js-yaml'
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { createApidocSwagger, convertSwaggerForApiGateway } from 'apidoc-swagger'
 import * as path from 'path'
-
 import * as yargs from 'yargs'
 
-const LCD_SWAGGER_URL = 'https://lcd.terra.dev/swagger-ui/swagger.yaml'
+import config from 'config'
+
+const LCD_SWAGGER_URL = `${config.LCD_URI}/swagger-ui/swagger.yaml`
 
 interface Info {
   title: string
@@ -90,13 +91,13 @@ function normalizeSwagger(doc: Swagger): Swagger {
 async function getLcdSwaggerObject(): Promise<Swagger> {
   try {
     const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
-    return normalizeSwagger(doc)
+    return filterExcludedRoutes(normalizeSwagger(doc))
   } catch (err) {
     throw err
   }
 }
 
-function getFcdSwaggerObject(): Swagger {
+export function getFcdSwaggerObject(): Swagger {
   const options = {
     simulate: true,
     src: path.join(__dirname, '..', 'controller'),
@@ -105,7 +106,7 @@ function getFcdSwaggerObject(): Swagger {
   }
   const api = createApidocSwagger(options)
   if (api['swaggerData']) {
-    return normalizeSwagger(JSON.parse(api['swaggerData']))
+    return filterExcludedRoutes(normalizeSwagger(JSON.parse(api['swaggerData'])))
   }
   throw new Error('Could not generate fcd swagger')
 }
@@ -123,6 +124,24 @@ function resolveBasePath(swagger: Swagger): Swagger {
   }
   delete swagger.basePath
   return Object.assign({}, swagger, { paths: resoledPath })
+}
+
+export function isRouteExcluded(url: string): boolean {
+  for (const exclusionRegEx of config.EXCLUDED_ROUTES) {
+    if (exclusionRegEx.test(url)) {
+      return true
+    }
+  }
+  return false
+}
+
+export function filterExcludedRoutes(swagger: Swagger): Swagger {
+  for (const path of Object.keys(swagger.paths)) {
+    if (isRouteExcluded(path)) {
+      delete swagger.paths[path]
+    }
+  }
+  return swagger
 }
 
 export async function getMergedSwagger() {

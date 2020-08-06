@@ -19,14 +19,10 @@ import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
 
 function getTxHashesFromBlock(block: LcdBlock): string[] {
-  const numTxs = Number(get(block, 'block.header.num_txs'))
-
-  if (!numTxs || numTxs === 0) {
+  const txStrings = get(block, 'block.data.txs')
+  if (!txStrings || !txStrings.length) {
     return []
   }
-
-  const txStrings = get(block, 'block.data.txs')
-
   const hashes = txStrings.map(lcd.getTxHash)
   return hashes
 }
@@ -81,9 +77,9 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
 }
 
 export async function getBlockReward(block: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
-  const height = get(block, 'block_meta.header.height')
-  const chainId = get(block, 'block_meta.header.chain_id')
-  const timestamp = get(block, 'block_meta.header.time')
+  const height = get(block, 'block.header.height')
+  const chainId = get(block, 'block.header.chain_id')
+  const timestamp = get(block, 'block.header.time')
 
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
@@ -158,7 +154,7 @@ async function saveBlockInformation(
   lcdBlock: LcdBlock,
   lastSyncedBlock: BlockEntity | undefined
 ): Promise<BlockEntity | undefined> {
-  const height: string = lcdBlock.block_meta.header.height
+  const height: string = lcdBlock.block.header.height
   logger.info(`collectBlock: begin transaction for block ${height}`)
 
   const result: BlockEntity | undefined = await getManager()

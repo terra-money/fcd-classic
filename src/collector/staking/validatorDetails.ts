@@ -118,12 +118,16 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
       })
     : []
 
+  const { details, identity, moniker, website } = lcdValidator.description
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
     chainId: config.CHAIN_ID,
     operatorAddress,
     consensusPubkey,
     accountAddress: accountAddr,
-    ...lcdValidator.description,
+    details,
+    identity,
+    moniker,
+    website,
     tokens: lcdValidator.tokens,
     delegatorShares: lcdValidator.delegator_shares,
     unbondingHeight: +lcdValidator.unbonding_height,
@@ -145,7 +149,6 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
-
   const repo = getRepository(ValidatorInfoEntity)
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 

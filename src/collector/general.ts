@@ -1,5 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { getRepository } from 'typeorm'
+import { getRepository, DeepPartial } from 'typeorm'
 
 import { GeneralInfoEntity } from 'orm'
 
@@ -7,6 +7,7 @@ import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
+import { getStartOfPreviousMinuteTs } from 'lib/time'
 
 export async function saveGeneral() {
   const [
@@ -41,9 +42,9 @@ export async function saveGeneral() {
   ])
 
   const now = Date.now()
-  const datetime = new Date(now - (now % 60000) - 60000)
+  const datetime = new Date(getStartOfPreviousMinuteTs(now))
 
-  await getRepository(GeneralInfoEntity).save({
+  const genInfo: DeepPartial<GeneralInfoEntity> = {
     datetime,
     currentEpoch: undefined,
     taxRate: taxRate ? Number(taxRate) : NaN,
@@ -57,7 +58,17 @@ export async function saveGeneral() {
     issuances,
     taxCaps,
     communityPool
+  }
+
+  const prevGenInfo = await getRepository(GeneralInfoEntity).findOne({
+    datetime
   })
+
+  if (prevGenInfo) {
+    await getRepository(GeneralInfoEntity).update(prevGenInfo.id, genInfo)
+  } else {
+    await getRepository(GeneralInfoEntity).save(genInfo)
+  }
 }
 
 export async function collectorGeneral() {

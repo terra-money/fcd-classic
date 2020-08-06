@@ -1,6 +1,7 @@
-import * as memoizee from 'memoizee'
 import { getConnection } from 'typeorm'
+
 import { getQueryDateRangeFrom } from 'lib/time'
+import memoizeCache from 'lib/memoizeCache'
 
 export const getPriceObjKey = (date: string, denom: string): string => `${date}${denom}`
 
@@ -29,6 +30,6 @@ export async function getPriceHistoryUncached(dayCount?: number): Promise<{ [key
   }, {})
 }
 
-const getPriceHistory = memoizee(getPriceHistoryUncached, { promise: true, maxAge: 3600, preFetch: 0.66 })
+const getPriceHistory = memoizeCache(getPriceHistoryUncached, { promise: true, maxAge: 3600, preFetch: 0.66 })
 
 export default getPriceHistory

@@ -1,7 +1,6 @@
 import * as rp from 'request-promise'
 import { get } from 'lodash'
-import * as memoizee from 'memoizee'
-
+import memoizeCache from 'lib/memoizeCache'
 import config from 'config'
 
 export async function getIdentity(keybaseId: string) {
@@ -29,4 +28,4 @@ async function getAvatar(keybaseId: string): Promise<string | undefined> {
   return getAvatarFromIdentity(identity)
 }
 
-export default memoizee(getAvatar, { promise: true, maxAge: 3600000 /* 6 minutes */ })
+export default memoizeCache(getAvatar, { promise: true, maxAge: 3600000 /* 6 minutes */ })

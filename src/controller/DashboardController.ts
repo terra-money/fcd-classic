@@ -1,6 +1,8 @@
 import 'koa-body'
 import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+
 import { success } from 'lib/response'
+
 import {
   getGeneralInfo,
   getTransactionVol,
@@ -15,8 +17,8 @@ import {
 
 const Joi = Validator.Joi
 
-@Controller('/dashboard')
-export default class TxController extends KoaController {
+@Controller(`/dashboard`)
+export default class DashboardController extends KoaController {
   /**
    * @api {get} /dashboard Get information to be used on the dashboard
    * @apiName getDashboard
@@ -94,7 +96,7 @@ export default class TxController extends KoaController {
    * @apiSuccess {Number} cumulative.datetime unix timestamp
    * @apiSuccess {Number} cumulative.blockReward cumulative reward
    *
-   * @apiSuccess {Object[]} periodic periodic hostory
+   * @apiSuccess {Object[]} periodic periodic history
    * @apiSuccess {Number} periodic.datetime unix timestamp
    * @apiSuccess {Number} periodic.blockReward periodic reward on that timestamp
    */
@@ -139,7 +141,7 @@ export default class TxController extends KoaController {
    * @apiSuccess {Object[]} segniorage return history
    * @apiSuccess {Number} segniorage.datetime unix timestamp
    * @apiSuccess {Number} segniorage.dailyReturn daily return
-   * @apiSuccess {Number} segniorage.annualizedReturn annualize return
+   * @apiSuccess {Number} segniorage.annualizedReturn annualized return
    *
    */
   @Get('/staking_return')
@@ -242,7 +244,7 @@ export default class TxController extends KoaController {
       count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
-  async registereddAccounts(ctx): Promise<void> {
+  async registeredAccounts(ctx): Promise<void> {
     success(ctx, await getRegisteredAccounts(+ctx.request.query.count))
   }
 }

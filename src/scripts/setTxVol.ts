@@ -3,6 +3,7 @@ import { getRepository } from 'typeorm'
 
 import { init as initORM, NetworkEntity } from 'orm'
 import * as lcd from 'lib/lcd'
+import { getStartOfPreviousMinuteTs } from 'lib/time'
 
 import { getTxVol, getMarketCap } from 'collector/network'
 import { getAllActivePrices } from 'collector/helper'
@@ -47,13 +48,13 @@ async function main() {
 
     while (datetime < end) {
       const volumeObj = await getTxVol(datetime)
-      const activePrices = await getAllActivePrices(datetime - (datetime % 60000) - 60000)
+      const activePrices = await getAllActivePrices(getStartOfPreviousMinuteTs(datetime))
       const marketCapObj = getMarketCap(activeIssuances, activePrices)
 
       const docs = actives.map((denom) => {
         const network = new NetworkEntity()
         network.denom = denom
-        network.datetime = new Date(datetime - (datetime % 60000) - 60000)
+        network.datetime = new Date(getStartOfPreviousMinuteTs(datetime))
         network.supply = activeIssuances[denom]
         network.marketCap = marketCapObj[denom]
         network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'

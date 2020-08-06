@@ -1,7 +1,8 @@
 import { getRepository } from 'typeorm'
-import * as memoizee from 'memoizee'
 
 import { ValidatorInfoEntity } from 'orm'
+
+import memoizeCache from 'lib/memoizeCache'
 
 interface AccountInfo {
   accountAddress: string
@@ -31,6 +32,6 @@ async function getAccountInfoUncached(accAddress: string): Promise<AccountInfo> 
   return result
 }
 
-const getAccountInfo = memoizee(getAccountInfoUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
+const getAccountInfo = memoizeCache(getAccountInfoUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
 
 export default getAccountInfo

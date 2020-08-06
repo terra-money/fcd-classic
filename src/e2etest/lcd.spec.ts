@@ -129,7 +129,6 @@ describe('LCD', () => {
 
   test('getBlock: success', async () => {
     await expect(lcd.getBlock(1)).resolves.toMatchObject({
-      block_meta: {},
       block: {}
     })
   })

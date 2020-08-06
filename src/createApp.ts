@@ -95,6 +95,9 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
     .use(cors())
     .use(
       bodyParser({
+        formLimit: '512kb',
+        jsonLimit: '512kb',
+        textLimit: '512kb',
         multipart: true,
         onError: (error) => {
           throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, '', error.message, error)
