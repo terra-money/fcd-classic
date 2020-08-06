@@ -1,6 +1,8 @@
 import * as rp from 'request-promise'
 import { get } from 'lodash'
+
 import memoizeCache from 'lib/memoizeCache'
+
 import config from 'config'
 
 export async function getIdentity(keybaseId: string) {
