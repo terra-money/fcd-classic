@@ -165,7 +165,7 @@ export default class TransactionController extends KoaController {
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -290,7 +290,7 @@ export default class TransactionController extends KoaController {
       from: Joi.number().description('From timestamp unix time'),
       to: Joi.number().description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

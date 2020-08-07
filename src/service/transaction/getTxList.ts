@@ -1,7 +1,7 @@
 import { get, chain } from 'lodash'
 import { getRepository, getConnection, FindConditions } from 'typeorm'
 
-import { BlockEntity, AccountEntity } from 'orm'
+import { BlockEntity, AccountEntity, TxEntity } from 'orm'
 import config from 'config'
 
 import { getQueryDateTime } from 'lib/time'
@@ -26,24 +26,27 @@ interface GetTxsReturn {
   txs: ParsedTxInfo[] | Transaction.LcdTransaction[]
 }
 
-export async function getTxFromMemo(data: GetTxListParam): Promise<GetTxsReturn> {
-  if (!data.memo) {
+export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn> {
+  if (!param.memo) {
     throw new Error(`memo is required.`)
   }
 
-  const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const query = `
-SELECT data
-FROM tx
-WHERE data->'tx'->'value'->>'memo'='${data.memo}'
-ORDER BY DATA->'timestamp' ${order}`
-  const txs = await getConnection().query(query)
+  const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+
+  const qb = getRepository(TxEntity)
+    .createQueryBuilder()
+    .where(`data->'tx'->'value'->>'memo' ILIKE :memo`, { memo: `%${param.memo}%` })
+    .orderBy(`data->'timestamp'`, order)
+    .offset((param.page - 1) * param.limit)
+    .limit(param.limit)
+
+  const txs = await qb.getMany()
 
   return {
     totalCnt: txs.length,
-    page: data.page,
-    limit: data.limit,
-    txs: txs.map((tx) => tx.data)
+    page: param.page,
+    limit: param.limit,
+    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
   }
 }
 
@@ -63,7 +66,9 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
     order: {
       id: 'DESC'
     },
-    relations: ['txs']
+    relations: ['txs'],
+    skip: 0,
+    take: 1
   })
   const blockWithTxs = blocksWithTxs.length > 0 ? blocksWithTxs[0] : undefined
 
