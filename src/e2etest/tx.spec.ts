@@ -245,4 +245,22 @@ describe('Transaction', () => {
       .get(`/v1/msgs?account=${VALID_ACCOUNT}_&to=1587808652000&from=1587804294000`)
       .expect(400)
   })
+
+  test('get txs with invalid max return count', async () => {
+    const { body } = await agent.get(`/v1/txs?page=1&limit=200`).expect(400)
+  })
+
+  test('get parsed txs with invalid max return count', async () => {
+    const { body } = await agent.get(`/v1/msgs?page=1&limit=200`).expect(400)
+  })
+
+  test('get txs with sql injection', async () => {
+    const { body } = await agent.get(`/v1/txs?memo=SELECT USER`).expect(200)
+    expect(body.txs.length).toBe(0)
+  })
+
+  test('get txs with memo', async () => {
+    const { body } = await agent.get(`/v1/txs?memo=faucet`).expect(200)
+    expect(body.txs.length).toBeGreaterThan(0)
+  })
 })
