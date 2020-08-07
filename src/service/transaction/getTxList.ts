@@ -35,7 +35,7 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
 
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
-    .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: `${param.memo}` })
+    .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: param.memo })
     .orderBy(`data->'timestamp'`, order)
     .offset((param.page - 1) * param.limit)
     .limit(param.limit)
