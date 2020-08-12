@@ -40,10 +40,18 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     .offset((param.page - 1) * param.limit)
     .limit(param.limit)
 
-  const txs = await qb.getMany()
+  if (param.from) {
+    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
+  }
+
+  if (param.to) {
+    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(param.to) })
+  }
+
+  const [txs, total] = await qb.getManyAndCount()
 
   return {
-    totalCnt: txs.length,
+    totalCnt: total,
     page: param.page,
     limit: param.limit,
     txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
@@ -161,16 +169,27 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 async function getTxs(data: GetTxListParam): Promise<GetTxsReturn> {
   const offset = data.limit * (data.page - 1)
   const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const orderAndPageClause = ` ORDER BY timestamp ${order} OFFSET ${offset} LIMIT ${data.limit}`
 
-  const query = `SELECT data FROM tx WHERE chain_id='${config.CHAIN_ID}' ${orderAndPageClause}`
-  const txs = await getConnection().query(query)
+  const qb = getRepository(TxEntity)
+    .createQueryBuilder()
+    .where('chain_id = :chainId', { chainId: config.CHAIN_ID })
+    .skip(offset)
+    .take(data.limit)
+    .orderBy('timestamp', order)
 
+  if (data.from) {
+    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(data.from) })
+  }
+
+  if (data.to) {
+    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(data.to) })
+  }
+  const [txs, total] = await qb.getManyAndCount()
   return {
-    totalCnt: txs.length,
+    totalCnt: total,
     page: data.page,
     limit: data.limit,
-    txs: txs.map((tx) => tx.data)
+    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
   }
 }
 
