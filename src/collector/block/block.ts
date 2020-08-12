@@ -13,6 +13,7 @@ import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 
 import { saveTxs, generateTxEntities } from './tx'
+import { saveWasmCodeAndContract } from './wasm'
 
 import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
@@ -176,6 +177,8 @@ async function saveBlockInformation(
         const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
         // save transactions
         await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
+        // save wasm
+        await saveWasmCodeAndContract(transactionalEntityManager, txEntities)
       }
 
       // new block timestamp
@@ -193,8 +196,15 @@ async function saveBlockInformation(
       return block
     })
     .catch((err) => {
-      sentry.captureException(err)
       logger.error(err)
+      if (
+        err instanceof Error &&
+        typeof err.message === 'string' &&
+        err.message.includes('transaction not found on node')
+      ) {
+        return undefined
+      }
+      sentry.captureException(err)
       return undefined
     })
   return result
