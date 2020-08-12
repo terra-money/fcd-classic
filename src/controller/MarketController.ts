@@ -34,7 +34,7 @@ export default class MarketController extends KoaController {
     query: {
       interval: Joi.string().required().valid(Object.values(TimeIntervals)).description('Time interval'),
       denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denoms string'),
-      count: Joi.string().min(0).default(50).description('Price data points count')
+      count: Joi.string().min(0).max(1000).default(50).description('Price data points count')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

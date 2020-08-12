@@ -51,6 +51,8 @@ interface GetRawDelegationTxsParam {
   operatorAddr: string
   from?: string
   to?: string
+  page: number
+  limit: number
 }
 
 export function getUptime(signingInfo: LcdValidatorSigningInfo): number {
@@ -218,13 +220,15 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
 }
 
 export async function getRawDelegationTxs(data: GetRawDelegationTxsParam) {
+  const offset = (data.page - 1) * data.limit
+
   const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
   addDelegateFilterToQuery(qb, data.operatorAddr)
 
   data.from && qb.andWhere(`timestamp >= '${data.from}'`)
   data.to && qb.andWhere(`timestamp < '${data.to}'`)
 
-  qb.take(10000).orderBy(`data->'timestamp'`, 'DESC')
+  qb.skip(offset).take(data.limit).orderBy(`data->'timestamp'`, 'DESC')
   const [txs, totalCnt] = await qb.getManyAndCount()
 
   return {
