@@ -22,6 +22,8 @@ async function getTotalActiveAccountUncached(daysBefore?: number): Promise<numbe
   return result.length ? Number(result[0].total_active_account) : 0
 }
 
+// TODO: Need a way to invalidate cache after 00:00
+
 const getTotalActiveAccount = memoizeCache(getTotalActiveAccountUncached, {
   promise: true,
   maxAge: 60 * 60 * 1000, // 1 hour cache

@@ -1,5 +1,4 @@
 import { startOfToday, subDays, startOfMinute, subMinutes, format, getTime } from 'date-fns'
-import { times } from 'lodash'
 
 export function daysBeforeTs(daysBefore: number = 1): { fromTs: number; toTs: number } {
   const to = startOfToday()
@@ -17,7 +16,7 @@ export function getQueryDateTime(timestamp: number | Date): string {
 export function getQueryDateRangeFrom(daysBefore: number): DateRange {
   const today = startOfToday()
   return {
-    from: format(subDays(today, daysBefore), 'YYYY-MM-DD'),
+    from: format(subDays(today, daysBefore).getTime() || 0, 'YYYY-MM-DD'),
     to: format(today, 'YYYY-MM-DD')
   }
 }

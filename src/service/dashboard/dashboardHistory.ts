@@ -9,7 +9,8 @@ export async function getDashboardHistory(daysBefore?: number): Promise<Dashboar
     chainId: config.CHAIN_ID
   }
 
-  if (daysBefore) {
+  if (daysBefore && !isNaN(subDays(startOfToday(), daysBefore).getTime())) {
+    // resolve invalid date issue
     whereClause['timestamp'] = MoreThanOrEqual(subDays(startOfToday(), daysBefore))
   }
 
