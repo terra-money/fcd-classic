@@ -3,6 +3,8 @@ import * as path from 'path'
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs'
 import * as yargs from 'yargs'
 
+import config from 'config'
+
 import { apiLogger as logger } from 'lib/logger'
 
 import { isRouteExcluded } from './mergeSwaggerFile'
@@ -21,7 +23,7 @@ const packageInfo = {
   version: '1.0.0',
   description: 'Terra FCD API Docs',
   title: 'Terra FCD API Docs',
-  url: `${process.env.FCD_URL}/v1` || 'https://fcd.terra.dev/v1'
+  url: `${config.FCD_URI}/v1` || 'https://fcd.terra.dev/v1'
 }
 
 const argv = yargs.options({
