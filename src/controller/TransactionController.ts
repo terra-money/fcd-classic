@@ -158,12 +158,12 @@ export default class TransactionController extends KoaController {
       action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
       block: Joi.string()
         .allow('')
-        .regex(/\d{1,16}/),
+        .regex(/^\d{1,16}$/),
       order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
       chainId: Joi.string().allow('').valid(config.CHAIN_ID),
-      from: Joi.number().description('From timestamp unix time'),
-      to: Joi.number().description('To timestamp unix time'),
+      from: Joi.number().min(0).description('From timestamp unix time'),
+      to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).max(100).description('Items per page')
     },
@@ -287,8 +287,8 @@ export default class TransactionController extends KoaController {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
       action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
       order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
-      from: Joi.number().description('From timestamp unix time'),
-      to: Joi.number().description('to timestamp unix time'),
+      from: Joi.number().min(0).description('From timestamp unix time'),
+      to: Joi.number().min(0).description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).max(100).description('Items per page')
     },

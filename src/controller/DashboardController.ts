@@ -138,10 +138,10 @@ export default class DashboardController extends KoaController {
    *
    * @apiParam {number} [count] number of previous days history from today
    *
-   * @apiSuccess {Object[]} segniorage return history
-   * @apiSuccess {Number} segniorage.datetime unix timestamp
-   * @apiSuccess {Number} segniorage.dailyReturn daily return
-   * @apiSuccess {Number} segniorage.annualizedReturn annualized return
+   * @apiSuccess {Object[]} seigniorage return history
+   * @apiSuccess {Number} seigniorage.datetime unix timestamp
+   * @apiSuccess {Number} seigniorage.dailyReturn daily return
+   * @apiSuccess {Number} seigniorage.annualizedReturn annualized return
    *
    */
   @Get('/staking_return')
@@ -198,7 +198,7 @@ export default class DashboardController extends KoaController {
       count: Joi.number().default(0).min(0).description('Number days history')
     }
   })
-  async getAccountGrth(ctx): Promise<void> {
+  async getAccountGrowth(ctx): Promise<void> {
     success(ctx, await getAccountGrowth(+ctx.request.query.count))
   }
   /**
