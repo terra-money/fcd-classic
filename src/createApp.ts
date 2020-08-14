@@ -7,7 +7,6 @@ import * as cors from '@koa/cors'
 import * as helmet from 'koa-helmet'
 import * as serve from 'koa-static'
 import * as mount from 'koa-mount'
-import * as addTrailingSlashes from 'koa-add-trailing-slashes'
 import { configureRoutes } from 'koa-joi-controllers'
 
 import config from 'config'
@@ -41,7 +40,7 @@ function getApiDocApp(): Koa {
   // static
   const app = new Koa()
 
-  app.use(addTrailingSlashes()).use(
+  app.use(
     serve(path.resolve(__dirname, '..', 'static'), {
       maxage: 86400 * 1000
     })
