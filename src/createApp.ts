@@ -21,6 +21,10 @@ const koaSwagger = require('koa2-swagger-ui')
 
 const API_VERSION_PREFIX = '/v1'
 
+const notFoundMiddleware: Koa.Middleware = (ctx) => {
+  ctx.status = 404
+}
+
 function getRootApp(): Koa {
   // root app only contains the health check route
   const app = new Koa()
@@ -36,30 +40,68 @@ function getRootApp(): Koa {
   return app
 }
 
-function getApiDocApp(): Koa {
+function createApiDocApp(): Koa {
   // static
   const app = new Koa()
 
-  app.use(
-    serve(path.resolve(__dirname, '..', 'static'), {
-      maxage: 86400 * 1000
-    })
-  )
+  app
+    .use(
+      serve(path.resolve(__dirname, '..', 'static'), {
+        maxage: 86400 * 1000
+      })
+    )
+    .use(notFoundMiddleware)
+
   return app
 }
 
-function getSwaggerApp(): Koa {
+function createSwaggerApp(): Koa {
   // swagger ui
   const app = new Koa()
 
-  app.use(
-    koaSwagger({
-      routePrefix: '/',
-      swaggerOptions: {
-        url: '/static/swagger.json'
-      }
+  app
+    .use(
+      koaSwagger({
+        routePrefix: '/',
+        swaggerOptions: {
+          url: '/static/swagger.json'
+        }
+      })
+    )
+    .use(notFoundMiddleware)
+
+  return app
+}
+
+function createAPIApp(): Koa {
+  const app = new Koa()
+
+  app
+    .use(errorHandler(error))
+    .use(async (ctx, next) => {
+      await next()
+
+      ctx.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+      ctx.set('Pragma', 'no-cache')
+      ctx.set('Expires', '0')
     })
-  )
+    .use(
+      bodyParser({
+        formLimit: '512kb',
+        jsonLimit: '512kb',
+        textLimit: '512kb',
+        multipart: true,
+        onError: (error) => {
+          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, '', error.message, error)
+        }
+      })
+    )
+
+  // add controllers
+  configureRoutes(app, controllers)
+
+  app.use(notFoundMiddleware)
+
   return app
 }
 
@@ -74,43 +116,22 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
 
   logger.info('Adding REST API')
   app.proxy = true
-  const apiDocApp = getApiDocApp()
-  const swaggerApp = getSwaggerApp()
+
+  const apiDocApp = createApiDocApp()
+  const swaggerApp = createSwaggerApp()
+  const apiApp = createAPIApp()
 
   app
     .use(morgan('common'))
     .use(helmet())
+    .use(cors())
     .use(mount('/static', apiDocApp))
     .use(mount('/apidoc', apiDocApp))
     .use(mount('/swagger', swaggerApp))
-    .use(errorHandler(error))
-    .use(async (ctx, next) => {
-      await next()
+    .use(mount(API_VERSION_PREFIX, apiApp))
 
-      ctx.set('Cache-Control', 'no-store, no-cache, must-revalidate')
-      ctx.set('Pragma', 'no-cache')
-      ctx.set('Expires', '0')
-    })
-    .use(cors())
-    .use(
-      bodyParser({
-        formLimit: '512kb',
-        jsonLimit: '512kb',
-        textLimit: '512kb',
-        multipart: true,
-        onError: (error) => {
-          throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, '', error.message, error)
-        }
-      })
-    )
-
-  // add API
-  configureRoutes(app, controllers, API_VERSION_PREFIX)
-
-  // routes && init
-  const router = new Router()
-  router.all(
-    '(.*)',
+  // proxy to lcd
+  app.use(
     proxy({
       host: config.BYPASS_URI,
       changeOrigin: true,
@@ -120,9 +141,6 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
       }
     })
   )
-
-  app.use(router.routes())
-  app.use(router.allowedMethods())
 
   return app
 }
