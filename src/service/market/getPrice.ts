@@ -35,7 +35,7 @@ type PriceByInterval = {
   time_div: number
 }
 
-async function getPriceAvg(params: GetPriceParams): Promise<PriceByInterval[]> {
+async function getAvgPriceByInterval(params: GetPriceParams): Promise<PriceByInterval[]> {
   const now = Date.now()
   const msc = Math.max(MIN_DURATION, parseDuration(params.interval) || MIN_DURATION)
   const intervalInSec = msc / 1000
@@ -43,24 +43,29 @@ async function getPriceAvg(params: GetPriceParams): Promise<PriceByInterval[]> {
   const maxTimeStamp = now + msc * 2 // to make sure not to end up in zero segment of time diff
   const minTimeStamp = latestTimestamp - msc * params.count
 
-  const subTimeQ = `trunc((((
-    DATE_PART('day', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp) * 24 
-    + DATE_PART('hour', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp)) * 60
-    + DATE_PART('minute', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp)) * 60 
-    + DATE_PART('second', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp))/(${intervalInSec}))`
+  const subTimeQ = `TRUNC((((
+    DATE_PART('DAY', $1::TIMESTAMP - datetime::TIMESTAMP) * 24 
+    + DATE_PART('HOUR', $1::TIMESTAMP - datetime::TIMESTAMP)) * 60
+    + DATE_PART('MINUTE', $1::TIMESTAMP - datetime::TIMESTAMP)) * 60 
+    + DATE_PART('SECOND', $1::TIMESTAMP - datetime::TIMESTAMP))/($2))`
 
-  const rawQ = `select denom, avg(price.price) as price, min(datetime) as datetime, ${subTimeQ} as time_div 
-    from price where denom = '${params.denom}' and datetime >= '${getQueryDateTime(minTimeStamp)}' 
-    group by denom, time_div order by time_div desc`
+  const rawQ = `SELECT denom, AVG(price.price) AS price, MIN(datetime) AS datetime, ${subTimeQ} AS time_div 
+    FROM price WHERE denom = $3 AND datetime >= $4 
+    GROUP BY denom, time_div ORDER BY time_div DESC`
 
-  const prices: PriceByInterval[] = await getConnection().query(rawQ)
+  const prices: PriceByInterval[] = await getConnection().query(rawQ, [
+    getQueryDateTime(maxTimeStamp),
+    intervalInSec,
+    params.denom,
+    getQueryDateTime(minTimeStamp)
+  ])
 
   return prices.length <= params.count ? prices : drop(prices, prices.length - params.count)
 }
 
 export default async function getPrice(params: GetPriceParams): Promise<GetPriceReturn> {
   const { denom, interval } = params
-  const prices = await getPriceAvg(params)
+  const prices = await getAvgPriceByInterval(params)
   const lastPrice = await getRepository(PriceEntity).findOne({
     where: {
       denom
@@ -74,9 +79,8 @@ export default async function getPrice(params: GetPriceParams): Promise<GetPrice
 
   const oneDayVariationRate = lastPrice && oneDayVariation ? div(oneDayVariation, lastPrice.price) : undefined
 
-  // 봉의 시간으로 변경해서 리턴해줌
+  // Return as interval begin time
   const pricesWithTargetDatetime: PriceDataByDate[] = prices.map((price: PriceByInterval) => {
-    console.log(new Date(price.datetime))
     return {
       denom: price.denom,
       datetime: getTargetDatetime(new Date(price.datetime), interval),
