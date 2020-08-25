@@ -44,10 +44,10 @@ async function getPriceAvg(params: GetPriceParams): Promise<PriceByInterval[]> {
   const minTimeStamp = latestTimestamp - msc * params.count
 
   const subTimeQ = `trunc((((
-    DATE_PART('day', '${getQueryDateTime(now)}'::timestamp - datetime::timestamp) * 24 
-    + DATE_PART('hour', '${getQueryDateTime(now)}'::timestamp - datetime::timestamp)) * 60
-    + DATE_PART('minute', '${getQueryDateTime(now)}'::timestamp - datetime::timestamp)) * 60 
-    + DATE_PART('second', '${getQueryDateTime(now)}'::timestamp - datetime::timestamp))/(${intervalInSec}))`
+    DATE_PART('day', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp) * 24 
+    + DATE_PART('hour', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp)) * 60
+    + DATE_PART('minute', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp)) * 60 
+    + DATE_PART('second', '${getQueryDateTime(maxTimeStamp)}'::timestamp - datetime::timestamp))/(${intervalInSec}))`
 
   const rawQ = `select denom, avg(price.price) as price, min(datetime) as datetime, ${subTimeQ} as time_div 
     from price where denom = '${params.denom}' and datetime >= '${getQueryDateTime(minTimeStamp)}' 
