@@ -20,7 +20,7 @@
 1. You __must__ use [columbus-3-tracking](https://github.com/terra-project/core/tree/columbus-3-tracking) for calculating taxes. This branch adds TaxCaps, TaxRate event in BeginBlocker
 1. `terrad start --tracking` parameter creates the Richlist in the /tmp at the beginning of each day. The more accounts you have, the longer it takes, so you don't have to use them if you don't need it.
 1. Setup a LCD
-1. Configure firewall ([Reference](https://docs.terra.money/docs/node-production#firewall-configuration)
+1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration)
 
 ## Project setup
 
@@ -34,7 +34,7 @@ $ git clone https://github.com/terra-project/fcd.git
 npm i
 ```
 
-### 3. Setup Database
+### 3. Setup the database
 FCD requires PostgreSQL as a backend database and [TypeORM](https://github.com/typeorm/typeorm) as an ORM.
 
 #### Create a new database for FCD
@@ -81,9 +81,9 @@ module.exports = {
 | EXCLUDED_ROUTES     | List of regular expression string for excluding routes | []                    | API                                |
 
 
-> In Terra we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
+> In Terra, we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
-## Usage
+## Running modules
 ### Developement
 * Collector
   ```bash
@@ -109,39 +109,28 @@ module.exports = {
   npm start
   ```
 
-### Documentation
-* apiDoc (https://apidocjs.com)
+## APIDoc & Swagger
+### apiDoc (https://apidocjs.com)
   - Generate by `npm run apidoc`
   - Access UI from: `http://localhost:3060/apidoc`
-* Swagger 2.0 (https://swagger.io)
+### Swagger 2.0 (https://swagger.io)
   - Generate by `npm run swagger`
   - Access UI from: `http://localhost:3060/swagger`
   - Access the definition from: `http://localhost:3060/static/swagger.json` 
-* Generate swagger for [`AWS`](https://aws.amazon.com/api-gateway/) api gateway
-  - ```sh
-    npm run swagger -- --apigateway
-    ```
-  - Generated file can be directly imported to aws api gateway
-  - ```diff 
-    - NB : its uses empty schema for response object as api gateway support object and properties name only having alphanum. 
-    ```
-
-* Generate combined swagger for lcd and fcd
-  - ```sh
-    npm run mergeswagger -- -o filename
-    ```
-  - Combined swagger file will be saved in `static` directory in project `root`
-  - If no filename provided as command line argument then default saved file name is `combined-swagger.json`
-  - To generate combined swagger for Amazon api gateway add `--apigateway`
-    - Ex: ```
-            npm run mergeswagger -- -o filename --apigateway
-          ```
-
-## To run whole ecosystem locally with docker (WIP)
-### Requirements
-1. docker-ce
-2. docker-compose
-### Run from project root
-```bash
-docker-compose up -d --build
+### Generate swagger for [`AWS`](https://aws.amazon.com/api-gateway/) api gateway
+```sh
+npm run swagger -- --apigateway
 ```
+* Generated file can be directly imported to aws api gateway
+* NB : its uses empty schema for response object as api gateway support object and properties name only having alphanum. 
+
+### Generate combined swagger for lcd and fcd
+```sh
+npm run mergeswagger -- -o filename
+```
+* Combined swagger file will be saved in `static` directory in project `root`
+* If no filename provided as command line argument then default saved file name is `combined-swagger.json`
+* To generate combined swagger for AWS API Gateway add `--apigateway` parameter
+
+## Find LocalTerra to run whole ecosystem locally
+https://github.com/terra-project/localterra
