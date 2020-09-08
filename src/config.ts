@@ -1,3 +1,5 @@
+import { string } from 'yargs'
+
 const {
   SERVER_PORT,
   CHAIN_ID,
@@ -15,7 +17,8 @@ const {
   ACTIVE_CURRENCY,
   DISABLE_API,
   DISABLE_SOCKET,
-  EXCLUDED_ROUTES
+  EXCLUDED_ROUTES,
+  MIN_GAS_PRICES
 } = process.env
 
 const config = {
@@ -46,7 +49,16 @@ const config = {
     ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp))
     : [
         /* /\/wasm\// */
-      ]
+      ],
+  MIN_GAS_PRICES: MIN_GAS_PRICES
+    ? (JSON.parse(MIN_GAS_PRICES) as CoinByDenoms)
+    : ({
+        uluna: '0.015',
+        usdr: '0.015',
+        uusd: '0.015',
+        ukrw: '0.015',
+        umnt: '0.015'
+      } as CoinByDenoms)
 }
 
 export default config

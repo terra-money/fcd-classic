@@ -314,4 +314,19 @@ export default class TransactionController extends KoaController {
       })
     )
   }
+  /**
+   * @api {get} /txs/gas_prices Get gas prices
+   * @apiName getGasPrices
+   * @apiGroup Transactions
+   *
+   * @apiSuccess {string} uluna gas price in uluna
+   * @apiSuccess {string} usdr gas price in usdr
+   * @apiSuccess {string} uusd gas price in uusd
+   * @apiSuccess {string} ukrw gas price in ukrw
+   * @apiSuccess {string} umnt gas price in umnt
+   */
+  @Get('/txs/gas_prices')
+  async getGasPrices(ctx): Promise<void> {
+    success(ctx, config.MIN_GAS_PRICES)
+  }
 }
