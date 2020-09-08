@@ -1,9 +1,8 @@
-import { getRepository, In, getConnection } from 'typeorm'
+import { getRepository, getConnection } from 'typeorm'
 import { PriceEntity } from 'orm'
 import { default as parseDuration } from 'parse-duration'
-import { drop, min } from 'lodash'
 
-import { getTargetDatetime, getOnedayBefore } from './helper'
+import { getOnedayBefore } from './helper'
 import { minus, div } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 
@@ -37,12 +36,13 @@ function getMinimumTimestampOfSearchScope(params: GetPriceParams): number {
 }
 
 async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
+  const { denom, count, interval } = params
   const minTimestamp = getMinimumTimestampOfSearchScope(params)
-  const truncType = params.interval.endsWith('d') ? 'day' : 'hour'
+  const truncType = interval.endsWith('d') ? 'day' : 'hour'
 
   const rawQuery = `SELECT DATE_TRUNC($1, datetime) AS time,
-    AVG(price.price) as avg_price, 
-    MIN(datetime) as datetime FROM price 
+    AVG(price.price) AS avg_price, 
+    MIN(datetime) AS datetime FROM price 
     WHERE denom = $2 AND datetime >= $3 
     GROUP BY time 
     ORDER BY time DESC LIMIT $4`
@@ -51,10 +51,10 @@ async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<
     time: string
     avg_price: number
     datetime: string
-  }[] = await getConnection().query(rawQuery, [truncType, params.denom, getQueryDateTime(minTimestamp), params.count])
+  }[] = await getConnection().query(rawQuery, [truncType, denom, getQueryDateTime(minTimestamp), count])
   return prices
     .map((price) => ({
-      denom: params.denom,
+      denom,
       price: price.avg_price,
       datetime: new Date(price.datetime).getTime()
     }))
@@ -62,13 +62,14 @@ async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<
 }
 
 async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
+  const { denom, count, interval } = params
   const minTimestamp = getMinimumTimestampOfSearchScope(params)
-  const minuteInterval = parseInt(params.interval, 10)
+  const minuteInterval = parseInt(interval, 10)
 
   const rawQuery = `SELECT DATE_TRUNC('hour', datetime) AS time,
-    TRUNC(DATE_PART('MINUTE', datetime)/$1) as minute_part,
+    TRUNC(DATE_PART('MINUTE', datetime)/$1) AS minute_part,
     AVG(price.price) AS avg_price,
-    MIN(datetime) as datetime FROM price
+    MIN(datetime) AS datetime FROM price
     WHERE denom = $2 AND datetime >= $3
     GROUP BY time, minute_part
     ORDER BY time, minute_part DESC LIMIT $4`
@@ -78,16 +79,11 @@ async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<Pr
     minute_part: number
     avg_price: number
     datetime: string
-  }[] = await getConnection().query(rawQuery, [
-    minuteInterval,
-    params.denom,
-    getQueryDateTime(minTimestamp),
-    params.count
-  ])
+  }[] = await getConnection().query(rawQuery, [minuteInterval, denom, getQueryDateTime(minTimestamp), count])
 
   return prices
     .map((price) => ({
-      denom: params.denom,
+      denom,
       price: price.avg_price,
       datetime: new Date(price.datetime).getTime()
     }))
@@ -96,7 +92,7 @@ async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<Pr
 
 export default async function getPrice(params: GetPriceParams): Promise<GetPriceReturn> {
   const { denom, interval } = params
-  const prices = params.interval.endsWith('m')
+  const prices = interval.endsWith('m')
     ? await getAvgPriceForMinutesInterval(params)
     : await getAvgPriceForDayOrHourInterval(params)
   const lastPrice = await getRepository(PriceEntity).findOne({
