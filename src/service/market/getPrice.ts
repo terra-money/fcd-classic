@@ -72,7 +72,7 @@ async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<Pr
     MIN(datetime) AS datetime FROM price
     WHERE denom = $2 AND datetime >= $3
     GROUP BY time, minute_part
-    ORDER BY time, minute_part DESC LIMIT $4`
+    ORDER BY time DESC, minute_part DESC LIMIT $4`
 
   const prices: {
     time: string
