@@ -1,8 +1,12 @@
-import { getRepository, In } from 'typeorm'
+import { getRepository, getConnection } from 'typeorm'
 import { PriceEntity } from 'orm'
+import { default as parseDuration } from 'parse-duration'
 
-import { getQueryDatetimes, getTargetDatetime, getOnedayBefore } from './helper'
+import { getOnedayBefore } from './helper'
 import { minus, div } from 'lib/math'
+import { getQueryDateTime } from 'lib/time'
+
+const MIN_DURATION = 60000 // 1 min
 
 interface GetPriceParams {
   denom: string // denom name ukrw, uluna, usdr, uusd
@@ -23,17 +27,74 @@ interface GetPriceReturn {
   prices: PriceDataByDate[] // list of price points
 }
 
-export default async function getPrice(params: GetPriceParams): Promise<GetPriceReturn> {
-  const { denom, interval, count } = params
-  const queryDatetimes = getQueryDatetimes(interval, Math.max(1, Math.min(1000, count)))
-  const prices = await getRepository(PriceEntity).find({
-    where: {
-      denom,
-      datetime: In(queryDatetimes)
-    },
-    order: { datetime: 'ASC' }
-  })
+function getMinimumTimestampOfSearchScope(params: GetPriceParams): number {
+  const now = Date.now()
+  const interval = Math.max(MIN_DURATION, parseDuration(params.interval) || MIN_DURATION)
+  const latestTimestamp = now - (now % interval)
+  const minTimestamp = latestTimestamp - interval * (params.count + 2) // extra 2 for not to end up less segment than count
+  return minTimestamp
+}
 
+async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
+  const { denom, count, interval } = params
+  const minTimestamp = getMinimumTimestampOfSearchScope(params)
+  const truncType = interval.endsWith('d') ? 'day' : 'hour'
+
+  const rawQuery = `SELECT DATE_TRUNC($1, datetime) AS time,
+    AVG(price.price) AS avg_price, 
+    MIN(datetime) AS datetime FROM price 
+    WHERE denom = $2 AND datetime >= $3 
+    GROUP BY time 
+    ORDER BY time DESC LIMIT $4`
+
+  const prices: {
+    time: string
+    avg_price: number
+    datetime: string
+  }[] = await getConnection().query(rawQuery, [truncType, denom, getQueryDateTime(minTimestamp), count])
+  return prices
+    .map((price) => ({
+      denom,
+      price: price.avg_price,
+      datetime: new Date(price.datetime).getTime()
+    }))
+    .reverse()
+}
+
+async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
+  const { denom, count, interval } = params
+  const minTimestamp = getMinimumTimestampOfSearchScope(params)
+  const minuteInterval = parseInt(interval, 10)
+
+  const rawQuery = `SELECT DATE_TRUNC('hour', datetime) AS time,
+    TRUNC(DATE_PART('MINUTE', datetime)/$1) AS minute_part,
+    AVG(price.price) AS avg_price,
+    MIN(datetime) AS datetime FROM price
+    WHERE denom = $2 AND datetime >= $3
+    GROUP BY time, minute_part
+    ORDER BY time, minute_part DESC LIMIT $4`
+
+  const prices: {
+    time: string
+    minute_part: number
+    avg_price: number
+    datetime: string
+  }[] = await getConnection().query(rawQuery, [minuteInterval, denom, getQueryDateTime(minTimestamp), count])
+
+  return prices
+    .map((price) => ({
+      denom,
+      price: price.avg_price,
+      datetime: new Date(price.datetime).getTime()
+    }))
+    .reverse()
+}
+
+export default async function getPrice(params: GetPriceParams): Promise<GetPriceReturn> {
+  const { denom, interval } = params
+  const prices = interval.endsWith('m')
+    ? await getAvgPriceForMinutesInterval(params)
+    : await getAvgPriceForDayOrHourInterval(params)
   const lastPrice = await getRepository(PriceEntity).findOne({
     where: {
       denom
@@ -47,19 +108,10 @@ export default async function getPrice(params: GetPriceParams): Promise<GetPrice
 
   const oneDayVariationRate = lastPrice && oneDayVariation ? div(oneDayVariation, lastPrice.price) : undefined
 
-  // 봉의 시간으로 변경해서 리턴해줌
-  const pricesWithTargetDatetime: PriceDataByDate[] = prices.map((price: PriceEntity) => {
-    return {
-      denom: price.denom,
-      datetime: getTargetDatetime(price.datetime, interval),
-      price: price.price
-    }
-  })
-
   return {
     lastPrice: lastPrice ? lastPrice.price : undefined,
     oneDayVariation,
     oneDayVariationRate,
-    prices: pricesWithTargetDatetime
+    prices
   }
 }
