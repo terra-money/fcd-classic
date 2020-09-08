@@ -79,6 +79,7 @@ module.exports = {
 | DISABLE_API         | Disable REST APIs               | false                                        | API                                |
 | DISABLE_SOCKET      | Dsiable Web Socket              | false                                        | API                                |
 | EXCLUDED_ROUTES     | List of regular expression string for excluding routes | []                    | API                                |
+| MIN_GAS_PRICES      | Minimum gas price by denom object| {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"}                    | API                                |
 
 
 > In Terra, we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
