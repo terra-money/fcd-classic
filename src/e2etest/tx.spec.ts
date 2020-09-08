@@ -263,4 +263,18 @@ describe('Transaction', () => {
     const { body } = await agent.get(`/v1/txs?memo=faucet`).expect(200)
     expect(body.txs.length).toBeGreaterThan(0)
   })
+
+  test('get min gas price', async () => {
+    const { body } = await agent.get(`/v1/txs/gas_prices`).expect(200)
+    expect(body.uluna).toBeDefined()
+    expect(body.uluna).toBeString()
+    expect(body.usdr).toBeDefined()
+    expect(body.usdr).toBeString()
+    expect(body.uusd).toBeDefined()
+    expect(body.uusd).toBeString()
+    expect(body.ukrw).toBeDefined()
+    expect(body.ukrw).toBeString()
+    expect(body.umnt).toBeDefined()
+    expect(body.umnt).toBeString()
+  })
 })
