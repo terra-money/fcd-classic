@@ -228,7 +228,7 @@ export async function getRawDelegationTxs(data: GetRawDelegationTxsParam) {
   data.from && qb.andWhere(`timestamp >= '${data.from}'`)
   data.to && qb.andWhere(`timestamp < '${data.to}'`)
 
-  qb.skip(offset).take(data.limit).orderBy(`data->'timestamp'`, 'DESC')
+  qb.skip(offset).take(data.limit).orderBy('timestamp', 'DESC')
   const [txs, totalCnt] = await qb.getManyAndCount()
 
   return {
@@ -273,7 +273,7 @@ export async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
 
   qb.skip(data.limit * (data.page - 1))
     .take(data.limit)
-    .orderBy(`data->'timestamp'`, 'DESC')
+    .orderBy('timestamp', 'DESC')
   const txs = await qb.getMany()
   return { totalCnt, txs }
 }

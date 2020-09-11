@@ -31,12 +31,12 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     throw new Error(`memo is required.`)
   }
 
-  const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
     .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: param.memo })
-    .orderBy(`data->'timestamp'`, order)
+    .orderBy(`timestamp`, order)
     .offset((param.page - 1) * param.limit)
     .limit(param.limit)
 
@@ -105,7 +105,8 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
     }
   }
 
-  let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account='${data.account}'`
+  let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account='$1'`
+  const params = [data.account]
 
   if (data.from) {
     distinctQuery += ` AND timestamp >= '${getQueryDateTime(data.from)}'`
@@ -116,30 +117,36 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   }
 
   if (data.action) {
-    distinctQuery = `${distinctQuery} AND type='${data.action}'`
+    distinctQuery = `${distinctQuery} AND type='$2'`
+    params.push(data.action)
   }
 
   const totalCntQuery = `SELECT COUNT(*) FROM (${distinctQuery}) t`
-  const totalCntResult = await getConnection().query(totalCntQuery)
+  const totalCntResult = await getConnection().query(totalCntQuery, params)
   return +get(totalCntResult, '0.count', 0)
 }
 
 export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
   if (!data.account) {
-    throw new Error(`Account address is required.`)
+    throw new TypeError(`Account address is required.`)
+  }
+
+  if (!parseInt(data.limit as any, 10)) {
+    throw new TypeError('Invalid parameter: limit')
+  }
+
+  if (!parseInt(data.page as any, 10)) {
+    throw new TypeError('Invalid parameter: page')
   }
 
   const totalCnt = await getTxTotalCount(data)
 
-  const offset = data.limit * (data.page - 1)
-  const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account='${data.account}' `
-
-  const orderAndPageClause = ` ORDER BY tx_id ${order} OFFSET ${offset} LIMIT ${data.limit}`
+  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account='$1' `
+  const params = [data.account]
 
   if (data.action) {
-    distinctTxQuery += ` AND type='${data.action}'`
+    distinctTxQuery += ` AND type='$2'`
+    params.push(data.action)
   }
 
   if (data.from) {
@@ -150,11 +157,15 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
     distinctTxQuery += ` AND timestamp <= '${getQueryDateTime(data.to)}'`
   }
 
+  const offset = Math.max(0, data.limit * (data.page - 1))
+  const order: 'ASC' | 'DESC' = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+  const orderAndPageClause = ` ORDER BY tx_id ${order} OFFSET ${offset} LIMIT ${Math.max(0, data.limit)}`
+
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 
-  const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY data->'timestamp' ${order}`
+  const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
 
-  const txs = await getConnection().query(query)
+  const txs = await getConnection().query(query, params)
 
   return {
     totalCnt,

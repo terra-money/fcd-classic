@@ -35,7 +35,7 @@ export async function getContractTxs({
 
   qb.skip(limit * (page - 1))
     .take(limit)
-    .orderBy(`data->'timestamp'`, 'DESC')
+    .orderBy('timestamp', 'DESC')
 
   const result = await qb.getMany()
   return {
