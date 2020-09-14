@@ -14,7 +14,7 @@ FROM node:12-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache git
+RUN apk add --no-cache git tzdata
 
 COPY --from=builder /app/package.json /app/package-lock.json /app/
 
