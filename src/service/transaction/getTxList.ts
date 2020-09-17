@@ -105,7 +105,7 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
     }
   }
 
-  let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account='$1'`
+  let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account=$1`
   const params = [data.account]
 
   if (data.from) {
@@ -117,7 +117,7 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   }
 
   if (data.action) {
-    distinctQuery = `${distinctQuery} AND type='$2'`
+    distinctQuery = `${distinctQuery} AND type=$2`
     params.push(data.action)
   }
 
@@ -141,11 +141,11 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const totalCnt = await getTxTotalCount(data)
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account='$1' `
+  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account=$1 `
   const params = [data.account]
 
   if (data.action) {
-    distinctTxQuery += ` AND type='$2'`
+    distinctTxQuery += ` AND type=$2`
     params.push(data.action)
   }
 
@@ -165,6 +165,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
 
+  console.log(query, params)
   const txs = await getConnection().query(query, params)
 
   return {

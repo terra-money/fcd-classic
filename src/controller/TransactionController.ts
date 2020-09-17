@@ -155,7 +155,9 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address'),
-      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
+      action: Joi.string()
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .description('Tx types'),
       block: Joi.string()
         .allow('')
         .regex(/^\d{1,16}$/),
@@ -285,7 +287,9 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
-      action: Joi.string().valid('', 'send', 'receive', 'staking', 'market', 'governance').description('Tx types'),
+      action: Joi.string()
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .description('Tx types'),
       order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('to timestamp unix time'),

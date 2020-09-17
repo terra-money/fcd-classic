@@ -10,8 +10,8 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
       const fromAddress = get(msg, 'value.from_address')
       const toAddress = get(msg, 'value.to_address')
       return {
-        send: fromAddress ? [fromAddress] : [],
-        receive: toAddress ? [toAddress] : []
+        send: [fromAddress].filter(Boolean),
+        receive: [toAddress].filter(Boolean)
       }
     }
 
@@ -35,53 +35,80 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
     case 'distribution/MsgWithdrawValidatorCommission':
     case 'distribution/MsgWithdrawDelegationReward': {
       return {
-        staking: get(msg, 'value.delegator_address') ? [get(msg, 'value.delegator_address')] : []
+        staking: [get(msg, 'value.delegator_address')].filter(Boolean)
       }
     }
 
     case 'market/MsgSwap': {
       return {
-        market: get(msg, 'value.trader') ? [get(msg, 'value.trader')] : []
+        market: [get(msg, 'value.trader')].filter(Boolean)
       }
     }
 
     case 'oracle/MsgExchangeRateVote':
     case 'oracle/MsgExchangeRatePrevote': {
       return {
-        market: get(msg, 'value.feeder') ? [get(msg, 'value.feeder')] : []
+        market: [get(msg, 'value.feeder')].filter(Boolean)
       }
     }
 
     case 'budget/MsgSubmitProgram':
     case 'budget/MsgWithdrawProgram': {
       return {
-        budget: get(msg, 'value.submitter') ? [get(msg, 'value.submitter')] : []
+        budget: [get(msg, 'value.submitter')].filter(Boolean)
       }
     }
 
     case 'budget/MsgVoteProgram': {
       return {
-        budget: get(msg, 'value.voter') ? [get(msg, 'value.voter')] : []
+        budget: [get(msg, 'value.voter')].filter(Boolean)
       }
     }
 
     case 'gov/MsgDeposit': {
       return {
-        governance: get(msg, 'value.depositor') ? [get(msg, 'value.depositor')] : []
+        governance: [get(msg, 'value.depositor')].filter(Boolean)
       }
     }
 
     case 'gov/MsgVote': {
       return {
-        governance: get(msg, 'value.voter') ? [get(msg, 'value.voter')] : []
+        governance: [get(msg, 'value.voter')].filter(Boolean)
       }
     }
 
     case 'gov/MsgSubmitProposal': {
       return {
-        governance: get(msg, 'value.proposer') ? [get(msg, 'value.proposer')] : []
+        governance: [get(msg, 'value.proposer')].filter(Boolean)
       }
     }
+
+    case 'wasm/MsgStoreCode':
+      console.log('MsgStoreCode', msg)
+
+      return {
+        wasm: [get(msg, 'value.sender')].filter(Boolean)
+      }
+
+    case 'wasm/MsgInstantiateContract':
+      return {
+        wasm: [get(msg, 'value.owner')].filter(Boolean)
+      }
+
+    case 'wasm/MsgExecuteContract':
+      return {
+        wasm: [get(msg, 'value.sender')].filter(Boolean)
+      }
+
+    case 'wasm/MsgMigrateContract':
+      return {
+        wasm: [get(msg, 'value.owner')].filter(Boolean)
+      }
+
+    case 'wasm/MsgUpdateContractOwner':
+      return {
+        wasm: [get(msg, 'value.owner')].filter(Boolean)
+      }
 
     default: {
       return {}

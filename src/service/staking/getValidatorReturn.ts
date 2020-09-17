@@ -7,7 +7,7 @@ SELECT operator_address,
   COUNT(*) AS data_point_count
 FROM validator_return_info
 WHERE TIMESTAMP >= DATE(NOW() - INTERVAL '30 day')
-AND operator_address = '$1'
+AND operator_address = $1
 AND avg_voting_power > 0
 GROUP BY operator_address;`
 
