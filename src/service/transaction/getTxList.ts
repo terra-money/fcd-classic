@@ -165,7 +165,6 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
 
-  console.log(query, params)
   const txs = await getConnection().query(query, params)
 
   return {

@@ -84,8 +84,6 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
     }
 
     case 'wasm/MsgStoreCode':
-      console.log('MsgStoreCode', msg)
-
       return {
         wasm: [get(msg, 'value.sender')].filter(Boolean)
       }
