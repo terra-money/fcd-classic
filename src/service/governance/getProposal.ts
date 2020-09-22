@@ -28,14 +28,14 @@ interface GetProposalResponse extends ProposalBasic {
 }
 
 function makeContentArray(contentObj: ProposalContentValue): ProposalContent[] {
-  delete contentObj['title']
-  delete contentObj['description']
-  return Object.keys(contentObj).map((key) => {
-    return {
-      key,
-      value: contentObj[key]
-    }
-  })
+  return Object.keys(contentObj)
+    .filter((key) => key !== 'title' && key !== 'description')
+    .map((key) => {
+      return {
+        key,
+        value: contentObj[key]
+      }
+    })
 }
 
 async function getDelegatedValidatorWhoDidNotVoted(
