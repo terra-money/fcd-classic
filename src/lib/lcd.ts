@@ -366,9 +366,11 @@ export function getSeigniorageProceeds(): Promise<string> {
 }
 
 export async function getTaxRate(height?: string): Promise<string> {
-  return get(`/treasury/tax_rate`, height ? { height } : undefined)
+  const taxRate = await get(`/treasury/tax_rate`, height ? { height } : undefined)
+  return taxRate ? taxRate : get(`/treasury/tax_rate`) // fallback for col-3 to col-4 upgrade
 }
 
 export async function getTaxCap(denom: string, height?: string): Promise<string> {
-  return get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
+  const taxCaps = await get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
+  return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
 }

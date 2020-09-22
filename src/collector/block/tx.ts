@@ -11,6 +11,13 @@ import { times, minus, plus } from 'lib/math'
 
 import { getAccountTxDocs } from './accountTx'
 
+type TaxCapAndRate = {
+  taxRate: string
+  taxCaps: {
+    [denom: string]: string
+  }
+}
+
 async function getTaxCapByDenom(denom: string, height?: string): Promise<Coin> {
   return {
     denom,
@@ -18,12 +25,7 @@ async function getTaxCapByDenom(denom: string, height?: string): Promise<Coin> {
   }
 }
 
-async function getTaxRateAndCap(
-  height?: string
-): Promise<{
-  taxRate: string
-  taxCaps: { [denom: string]: string }
-}> {
+async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
   const taxCapsList: Coin[] = await Promise.all(config.ACTIVE_DENOMS.map((denom) => getTaxCapByDenom(denom, height)))
 
   const taxRate = await lcd.getTaxRate(height)
@@ -88,9 +90,9 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
   return []
 }
 
-async function assignGasAndTax(height: string, lcdTx: Transaction.LcdTransaction): Promise<void> {
+async function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate): Promise<void> {
   // get tax rate and tax caps
-  const { taxRate, taxCaps } = await getTaxRateAndCap(height)
+  const { taxRate, taxCaps } = taxInfo
 
   const fees = lcdTx.tx.value.fee.amount
   const feeObj = fees.reduce((acc, fee) => {
@@ -168,8 +170,8 @@ function syncMsgType(tx: object): object {
 
 export async function getTxDoc(
   chainId: string,
-  height: string,
-  txhash: string
+  txhash: string,
+  taxInfo: TaxCapAndRate
 ): Promise<Transaction.LcdTransaction | undefined> {
   const tx = await lcd.getTx(txhash)
 
@@ -196,7 +198,7 @@ export async function getTxDoc(
       })
     }
 
-    await assignGasAndTax(height, txDoc)
+    await assignGasAndTax(txDoc, taxInfo)
   } catch (err) {
     logger.error(err)
     throw err
@@ -207,7 +209,9 @@ export async function getTxDoc(
 
 export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
   // pulling all txs from hash
-  const txDocs = await Bluebird.map(txHashes, (txHash) => getTxDoc(config.CHAIN_ID, height, txHash))
+  const taxInfo = await getTaxRateAndCap(height)
+
+  const txDocs = await Bluebird.map(txHashes, (txHash) => getTxDoc(config.CHAIN_ID, txHash, taxInfo))
 
   // If we use node cluster, this can be occured.
   if (txDocs.length !== txDocs.filter(Boolean).length) {
