@@ -99,7 +99,8 @@
     "uuid": "^7.0.2",
     "websocket": "^1.0.32",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4"
+    "winston-daily-rotate-file": "^4",
+    "yargs": "^16.0.3"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.32",
@@ -123,8 +124,7 @@
     "ts-jest": "^26.4.0",
     "tslint": "^6.1.3",
     "tslint-config-airbnb": "^5.11.2",
-    "tslint-config-prettier": "^1.18.0",
-    "yargs": "^16.0.3"
+    "tslint-config-prettier": "^1.18.0"
   },
   "prettier": {
     "printWidth": 120,
