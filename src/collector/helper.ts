@@ -29,10 +29,6 @@ export function addDatetimeFilterToQuery(timestamp: number, qb: WhereExpression)
   qb.andWhere(`timestamp < '${getQueryDateTime(to)}'`)
 }
 
-export function isSuccessfulMsg(msg) {
-  return msg.success
-}
-
 export function bulkSave(docs) {
   return getConnection().manager.save(docs)
 }

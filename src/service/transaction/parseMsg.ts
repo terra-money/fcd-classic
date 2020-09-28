@@ -124,8 +124,7 @@ const custom: Parser = ({ type, value: v, log }: Params) => {
       text: `Voted orice of LUNA denominated in ${format.denom(v.denom)}`
     }),
     MsgSwap: () => {
-      const success = get(log, 'success', false)
-      if (!success) {
+      if (!log) {
         return {
           tag: 'Swap',
           text: `Swapped ${format.coin(v.offer_coin)}`,

@@ -1,4 +1,6 @@
-import { get, flatten, take, drop, compact, filter } from 'lodash'
+import { get, flatten, take, drop, compact } from 'lodash'
+
+import { isSuccessfulTx } from 'lib/tx'
 
 import { getRawDelegationTxs } from './helper'
 
@@ -76,20 +78,12 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
   }
 }
 
-function isSuccessful(logs): { success: boolean; errorMessage?: string } {
-  const failed = filter(logs, { success: false })
-  return !logs || failed.length > 0
-    ? { success: false, errorMessage: get(failed[0], 'log.message') }
-    : { success: true }
-}
-
 export default async function getDelegationTxs(data: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
   const rawTxs = await getRawDelegationTxs(data)
 
   const result = rawTxs.txs
-    .filter((tx: any) => {
-      const { success } = isSuccessful(tx.logs)
-      return success
+    .filter((tx: Transaction.LcdTransaction) => {
+      return isSuccessfulTx(tx)
     })
     .map((tx: any) => {
       const msgs = get(tx, 'tx.value.msg')
