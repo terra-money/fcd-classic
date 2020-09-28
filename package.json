@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "description": "Terra FCD API Server",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
@@ -18,7 +18,7 @@
     "stability": "better-npm-run stability",
     "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
     "swagger": "ts-node --files -r tsconfig-paths/register src/scripts/generateSwagger.ts",
-    "mergeswagger": "ts-node --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
+    "mergeswagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
     "testurls": "ts-node --files -r tsconfig-paths/register src/scripts/testUrls.ts",
     "apidoc": "ts-node --files -r tsconfig-paths/register src/scripts/generateApidoc.ts"
   },
@@ -99,7 +99,8 @@
     "uuid": "^7.0.2",
     "websocket": "^1.0.32",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4"
+    "winston-daily-rotate-file": "^4",
+    "yargs": "^16.0.3"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.32",
@@ -123,8 +124,7 @@
     "ts-jest": "^26.4.0",
     "tslint": "^6.1.3",
     "tslint-config-airbnb": "^5.11.2",
-    "tslint-config-prettier": "^1.18.0",
-    "yargs": "^16.0.3"
+    "tslint-config-prettier": "^1.18.0"
   },
   "prettier": {
     "printWidth": 120,

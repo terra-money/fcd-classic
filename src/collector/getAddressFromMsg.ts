@@ -46,7 +46,9 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
     }
 
     case 'oracle/MsgExchangeRateVote':
-    case 'oracle/MsgExchangeRatePrevote': {
+    case 'oracle/MsgExchangeRatePrevote':
+    case 'oracle/MsgAggregateExchangeRateVote':
+    case 'oracle/MsgAggregateExchangeRatePrevote': {
       return {
         market: [get(msg, 'value.feeder')].filter(Boolean)
       }
