@@ -19,9 +19,9 @@ async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: 
   const volumeByCurrency = {}
 
   txs.forEach((tx: TxEntity) => {
-    const lcdTx = get(tx, 'data') as Transaction.LcdTransaction
-    const msgs = get(lcdTx, 'tx.value.msg')
-    const logs = get(lcdTx, 'logs')
+    const lcdTx = tx.data as Transaction.LcdTransaction
+    const msgs = lcdTx.tx.value.msg
+    const logs = lcdTx.logs
 
     isSuccessfulTx(lcdTx) &&
       msgs &&
@@ -52,9 +52,10 @@ async function getVolumeFromMultiSend(timestamp: number): Promise<{ [denom: stri
   const volumeByCurrency = {}
 
   txs.forEach((tx: TxEntity) => {
-    const lcdTx = get(tx, 'data') as Transaction.LcdTransaction
-    const msgs = get(lcdTx, 'tx.value.msg')
-    const logs = get(lcdTx, 'logs') as Transaction.Log[]
+    const lcdTx = tx.data as Transaction.LcdTransaction
+    const msgs = lcdTx.tx.value.msg
+    const logs = lcdTx.logs
+
     isSuccessfulTx(lcdTx) &&
       msgs &&
       logs &&

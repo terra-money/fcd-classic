@@ -48,7 +48,7 @@ declare namespace Transaction {
     gas_wanted: string
     gas_used: string
     codespace: string
-    code: number
+    code?: number
     tx: {
       type: string
       value: Value

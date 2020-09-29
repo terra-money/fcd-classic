@@ -76,9 +76,9 @@ type SwapValueDetails = {
 }
 
 function getSwapValues(tx: TxEntity): SwapValueDetails {
-  const lcdTx = get(tx, 'data') as Transaction.LcdTransaction
-  const logs = get(lcdTx, 'logs')
-  const msgs = get(lcdTx, 'tx.value.msg')
+  const lcdTx = tx.data as Transaction.LcdTransaction
+  const logs = lcdTx.logs
+  const msgs = lcdTx.tx.value.msg
 
   return msgs && logs && isSuccessfulTx(lcdTx)
     ? msgs.reduce(

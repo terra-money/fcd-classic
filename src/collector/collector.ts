@@ -4,6 +4,7 @@ import { get } from 'lodash'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
+import { PROMISE_TIMEOUT_TEN_MIN_IN_MS, PROMISE_TIMEOUT_TWENTY_MIN_IN_MS } from 'lib/constant'
 
 import { collectBlock } from './block'
 import { collectPrice } from './price'
@@ -25,17 +26,25 @@ process.on('unhandledRejection', (err) => {
   })
 })
 
-const TEN_MIN_IN_MS = 10 * 60 * 1000 // 10 min in milliseconds
-
-const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, TEN_MIN_IN_MS) // 10 min timeout time as block collector has a loop
+const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, PROMISE_TIMEOUT_TEN_MIN_IN_MS) // 10 min timeout time as block collector has a loop
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger) // default 1 min timeout
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger) // default 1 min timeout
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger) // default 1 min timeout
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, TEN_MIN_IN_MS) // 10 min timeout
+const returnCalculator = new Semaphore(
+  'ReturnCalculator',
+  calculateValidatorsReturn,
+  logger,
+  PROMISE_TIMEOUT_TEN_MIN_IN_MS
+) // 10 min timeout
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger) // 1 min timeout
-const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, 2 * TEN_MIN_IN_MS) // 20 mins as took 3 mins go get users count
-const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, TEN_MIN_IN_MS)
-const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, TEN_MIN_IN_MS)
+const dashboardCollector = new Semaphore(
+  'DashboardCollector',
+  collectDashboard,
+  logger,
+  PROMISE_TIMEOUT_TWENTY_MIN_IN_MS
+) // 20 mins as took 3 mins go get users count
+const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, PROMISE_TIMEOUT_TEN_MIN_IN_MS) // run once a day and huge data
+const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, PROMISE_TIMEOUT_TEN_MIN_IN_MS) // run once a day
 
 const jobs = [
   {

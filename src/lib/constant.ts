@@ -9,3 +9,5 @@ export const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.
 export const ONE_DAY_IN_MS = 60000 * 60 * 24
 export const LOCAL_TERRA_CHAIN_ID = 'localterra'
 export const PROMISE_MAX_TIMEOUT_MS = 60 * 1000 // in ms
+export const PROMISE_TIMEOUT_TEN_MIN_IN_MS = 10 * PROMISE_MAX_TIMEOUT_MS // 10 min in milliseconds
+export const PROMISE_TIMEOUT_TWENTY_MIN_IN_MS = 2 * PROMISE_TIMEOUT_TEN_MIN_IN_MS // 10 min in milliseconds

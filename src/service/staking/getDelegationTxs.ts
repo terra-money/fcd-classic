@@ -81,14 +81,10 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
 export default async function getDelegationTxs(data: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
   const rawTxs = await getRawDelegationTxs(data)
 
-  const result = rawTxs.txs
-    .filter((tx: Transaction.LcdTransaction) => {
-      return isSuccessfulTx(tx)
-    })
-    .map((tx: any) => {
-      const msgs = get(tx, 'tx.value.msg')
-      return msgs.map(eventMapper(tx.height, data.operatorAddr, tx.timestamp))
-    })
+  const result = rawTxs.txs.filter(isSuccessfulTx).map((tx: any) => {
+    const msgs = get(tx, 'tx.value.msg')
+    return msgs.map(eventMapper(tx.height, data.operatorAddr, tx.timestamp))
+  })
   const events: GetDelegationEventsReturn[] = compact(flatten(result))
 
   return {
