@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "description": "Terra FCD API Server",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
