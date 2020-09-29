@@ -40,7 +40,7 @@ export default function parseTx(account: string | undefined) {
     const chainId = get(tx, 'chain_id')
 
     const success = isSuccessfulTx(lcdTx)
-    const errorMessage = lcdTx.raw_log ? lcdTx.raw_log : ''
+    const errorMessage = success ? undefined : lcdTx.raw_log ? lcdTx.raw_log : ''
 
     const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(msgs, (msg, i) => parseMsg(msg, logs[i], account, success))
 
