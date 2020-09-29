@@ -1,21 +1,20 @@
-import { PROMISE_MAX_TIMEOUT_MS } from 'lib/constant'
 import { timeoutPromise } from 'lib/timeoutPromise'
 import { Logger } from 'winston'
 
 type Process = () => Promise<void>
 
+const TIMEOUT_DEFAULT = 60 * 1000 // 1 minute
+
 export default class Semaphore {
   isRunning: boolean
-  name: string
-  logger: Logger
-  process: Process
-  timeoutMS: number
-  constructor(name: string, process: Process, logger: Logger, timeoutMS: number = PROMISE_MAX_TIMEOUT_MS) {
+
+  constructor(
+    private name: string,
+    private process: Process,
+    private logger: Logger,
+    private timeoutMS: number | null = TIMEOUT_DEFAULT
+  ) {
     this.isRunning = false
-    this.name = name
-    this.process = process
-    this.logger = logger
-    this.timeoutMS = timeoutMS
   }
 
   async run(): Promise<void> {
