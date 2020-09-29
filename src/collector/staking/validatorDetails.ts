@@ -8,9 +8,10 @@ import * as lcd from 'lib/lcd'
 import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
 import { div, plus, times } from 'lib/math'
 import { APIError, ErrorTypes } from 'lib/error'
-import { SLASHING_PERIOD } from 'lib/constant'
+import { PROMISE_MAX_TIMEOUT_MS, SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
+import { timeoutPromise } from 'lib/timeoutPromise'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
@@ -149,6 +150,14 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
+  await timeoutPromise(
+    saveOrUpdateValidatorInfo(operatorAddress, validatorDetails),
+    PROMISE_MAX_TIMEOUT_MS,
+    'Timeout in saving validator info'
+  )
+}
+
+async function saveOrUpdateValidatorInfo(operatorAddress: string, validatorDetails: DeepPartial<ValidatorInfoEntity>) {
   const repo = getRepository(ValidatorInfoEntity)
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 

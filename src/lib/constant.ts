@@ -8,3 +8,4 @@ export const DAYS_IN_YEAR = 365
 export const CORS_REGEXP = /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){0,3}(terra\.money|terra\.dev|station\.terra-project\.now\.sh)(?::\d{4,5})?(?:\/|$)/
 export const ONE_DAY_IN_MS = 60000 * 60 * 24
 export const LOCAL_TERRA_CHAIN_ID = 'localterra'
+export const PROMISE_MAX_TIMEOUT_MS = 60 * 1000 // in ms
