@@ -1,6 +1,7 @@
 import { init as initORM } from 'orm'
 import * as nodeCron from 'node-cron'
 import { get } from 'lodash'
+import { default as parseDuration } from 'parse-duration'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
@@ -25,15 +26,18 @@ process.on('unhandledRejection', (err) => {
   })
 })
 
-const blockCollector = new Semaphore('BlockCollector', collectBlock, logger)
-const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
-const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
-const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
-const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
-const richListCollector = new Semaphore('RichListCollector', collectRichList, logger)
-const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger)
+const tenMinute = parseDuration('10m')
+const twentyMinute = parseDuration('20m')
+
+const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute) // 10 min timeout time as block collector has a loop
+const priceCollector = new Semaphore('PriceCollector', collectPrice, logger) // default 1 min timeout
+const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger) // default 1 min timeout
+const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger) // default 1 min timeout
+const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, tenMinute) // 10 min timeout
+const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger) // 1 min timeout
+const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute) // 20 mins as took 3 mins go get users count
+const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, tenMinute) // run once a day and huge data
+const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, tenMinute) // run once a day
 
 const jobs = [
   {

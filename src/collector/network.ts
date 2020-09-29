@@ -6,8 +6,9 @@ import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { plus } from 'lib/math'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
+import { isSuccessfulTx } from 'lib/tx'
 
-import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, bulkSave, getAllActivePrices } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery, bulkSave, getAllActivePrices } from './helper'
 
 async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: string }> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx')
@@ -17,14 +18,16 @@ async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: 
 
   const volumeByCurrency = {}
 
-  txs.forEach((tx) => {
-    const msgs = get(tx, 'data.tx.value.msg')
-    const logs = get(tx, 'data.logs')
+  txs.forEach((tx: TxEntity) => {
+    const lcdTx = tx.data as Transaction.LcdTransaction
+    const msgs = lcdTx.tx.value.msg
+    const logs = lcdTx.logs
 
-    msgs &&
+    isSuccessfulTx(lcdTx) &&
+      msgs &&
       logs &&
       msgs.forEach((msg, i) => {
-        if (!logs[i] || !isSuccessfulMsg(logs[i])) {
+        if (!logs[i]) {
           return
         }
 
@@ -48,14 +51,16 @@ async function getVolumeFromMultiSend(timestamp: number): Promise<{ [denom: stri
 
   const volumeByCurrency = {}
 
-  txs.forEach((tx) => {
-    const msgs = get(tx, 'data.tx.value.msg')
-    const logs = get(tx, 'data.logs')
+  txs.forEach((tx: TxEntity) => {
+    const lcdTx = tx.data as Transaction.LcdTransaction
+    const msgs = lcdTx.tx.value.msg
+    const logs = lcdTx.logs
 
-    msgs &&
+    isSuccessfulTx(lcdTx) &&
+      msgs &&
       logs &&
       msgs.forEach((msg, i) => {
-        if (!logs[i] || !isSuccessfulMsg(logs[i])) {
+        if (!logs[i]) {
           return
         }
 

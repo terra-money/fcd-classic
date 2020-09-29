@@ -219,7 +219,12 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
   )
 }
 
-export async function getRawDelegationTxs(data: GetRawDelegationTxsParam) {
+export async function getRawDelegationTxs(
+  data: GetRawDelegationTxsParam
+): Promise<{
+  totalCnt: number
+  txs: Transaction.LcdTransaction[]
+}> {
   const offset = (data.page - 1) * data.limit
 
   const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
@@ -233,7 +238,7 @@ export async function getRawDelegationTxs(data: GetRawDelegationTxsParam) {
 
   return {
     totalCnt,
-    txs: txs.map((tx) => tx.data)
+    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
   }
 }
 

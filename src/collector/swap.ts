@@ -8,8 +8,9 @@ import { collectorLogger as logger } from 'lib/logger'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { div, plus, minus, times } from 'lib/math'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
+import { isSuccessfulTx } from 'lib/tx'
 
-import { getUSDValue, addDatetimeFilterToQuery, isSuccessfulMsg, getAllActivePrices } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery, getAllActivePrices } from './helper'
 
 async function getSpread(denom: string, price: string) {
   const swapRequestParams = {
@@ -74,15 +75,16 @@ type SwapValueDetails = {
   fee?: DenomMap
 }
 
-function getSwapValues(tx): SwapValueDetails {
-  const logs = get(tx, 'data.logs')
-  const msgs = get(tx, 'data.tx.value.msg')
+function getSwapValues(tx: TxEntity): SwapValueDetails {
+  const lcdTx = tx.data as Transaction.LcdTransaction
+  const logs = lcdTx.logs
+  const msgs = lcdTx.tx.value.msg
 
-  return msgs && logs
+  return msgs && logs && isSuccessfulTx(lcdTx)
     ? msgs.reduce(
         (acc, msg, i) => {
           const offerCoin = get(msg, 'value.offer_coin')
-          if (!logs[i] || !isSuccessfulMsg(logs[i]) || !offerCoin) {
+          if (!logs[i] || !offerCoin) {
             return acc
           }
 

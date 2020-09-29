@@ -40,7 +40,6 @@ export async function saveGeneral() {
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
     })
   ])
-
   const now = Date.now()
   const datetime = new Date(getStartOfPreviousMinuteTs(now))
 

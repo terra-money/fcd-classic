@@ -1,7 +1,6 @@
 declare namespace Transaction {
   interface Log {
     msg_index: number
-    success: boolean
     log:
       | string
       | {
@@ -45,14 +44,16 @@ declare namespace Transaction {
     height: string
     txhash: string
     raw_log: string
-    logs: Log[]
+    logs: Log[] // doesn't exist if tx failed
     gas_wanted: string
     gas_used: string
+    codespace: string
+    code?: number
     tx: {
       type: string
       value: Value
     }
-    timestamp: string
+    timestamp: string // unix time at GMT 0
     events: Event[]
   }
 
