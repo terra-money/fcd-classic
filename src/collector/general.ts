@@ -8,11 +8,16 @@ import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import { errorReport } from 'lib/errorReporting'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
-import { timeoutPromise } from 'lib/timeoutPromise'
-import { PROMISE_MAX_TIMEOUT_MS } from 'lib/constant'
 
 export async function saveGeneral() {
-  const genInfoPromises = Promise.all([
+  const [
+    taxRate,
+    taxProceeds,
+    seigniorageProceeds,
+    communityPool,
+    taxCaps,
+    { bondedTokens, notBondedTokens, issuances, stakingRatio }
+  ] = await Promise.all([
     lcd.getTaxRate(),
     lcd.getTaxProceeds(),
     lcd.getSeigniorageProceeds(),
@@ -35,16 +40,6 @@ export async function saveGeneral() {
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
     })
   ])
-
-  const [
-    taxRate,
-    taxProceeds,
-    seigniorageProceeds,
-    communityPool,
-    taxCaps,
-    { bondedTokens, notBondedTokens, issuances, stakingRatio }
-  ] = await timeoutPromise(genInfoPromises, PROMISE_MAX_TIMEOUT_MS, 'Failed in timeout getting general info')
-
   const now = Date.now()
   const datetime = new Date(getStartOfPreviousMinuteTs(now))
 
@@ -64,14 +59,6 @@ export async function saveGeneral() {
     communityPool
   }
 
-  await timeoutPromise(
-    saveOrUpdateGeneralInfo(datetime, genInfo),
-    PROMISE_MAX_TIMEOUT_MS,
-    'Timeout while saving general info'
-  )
-}
-
-async function saveOrUpdateGeneralInfo(datetime: Date, genInfo: DeepPartial<GeneralInfoEntity>) {
   const prevGenInfo = await getRepository(GeneralInfoEntity).findOne({
     datetime
   })

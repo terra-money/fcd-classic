@@ -25,15 +25,17 @@ process.on('unhandledRejection', (err) => {
   })
 })
 
-const blockCollector = new Semaphore('BlockCollector', collectBlock, logger)
-const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
-const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
-const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger)
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger)
-const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger)
-const richListCollector = new Semaphore('RichListCollector', collectRichList, logger)
-const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger)
+const TEN_MIN_IN_MS = 10 * 60 * 1000 // 10 min in milliseconds
+
+const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, TEN_MIN_IN_MS) // 10 min timeout time as block collector has a loop
+const priceCollector = new Semaphore('PriceCollector', collectPrice, logger) // default 1 min timeout
+const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger) // default 1 min timeout
+const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger) // default 1 min timeout
+const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, TEN_MIN_IN_MS) // 10 min timeout
+const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger) // 1 min timeout
+const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, 2 * TEN_MIN_IN_MS) // 20 mins as took 3 mins go get users count
+const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, TEN_MIN_IN_MS)
+const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, TEN_MIN_IN_MS)
 
 const jobs = [
   {
