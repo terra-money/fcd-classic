@@ -1,4 +1,3 @@
-import * as Bluebird from 'bluebird'
 import * as sentry from '@sentry/node'
 import { get } from 'lodash'
 import { getTime, getMinutes } from 'date-fns'

@@ -1,6 +1,5 @@
 import { KoaController } from 'koa-joi-controllers'
 import config from 'config'
-import { apiLogger as logger } from 'lib/logger'
 
 import DashboardController from './DashboardController'
 import BankController from './BankController'
@@ -34,8 +33,7 @@ const controllers = [
       return true
     })
 
-    controller.routes.forEach((r) => logger.info(`Route: ${r.methods} ${controller.prefix}${r.path}`))
-
+    // controller.routes.forEach((r) => logger.info(`Route: ${r.methods} ${controller.prefix}${r.path}`))
     return controller
   })
   .filter(Boolean) as KoaController[]
