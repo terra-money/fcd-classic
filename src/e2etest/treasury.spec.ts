@@ -2,8 +2,6 @@ import { SuperTest, Test } from 'supertest'
 import config from 'config'
 import { setupAgent, terminateAPITest } from './lib/agent'
 
-jest.mock('request-promise-native')
-
 describe('Network Info Test', () => {
   let agent: SuperTest<Test>
   let connection

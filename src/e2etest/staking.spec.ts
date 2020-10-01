@@ -58,8 +58,6 @@ const delegationObject = {
   totalReward: expect.any(String) // total rewards
 }
 
-jest.mock('request-promise-native')
-
 describe('Staking', () => {
   let agent: SuperTest<Test>
   let connection

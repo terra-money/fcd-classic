@@ -122,7 +122,9 @@ export function getLatestBlock(): Promise<LcdBlock> {
 ///////////////////////////////////////////////
 // Auth
 ///////////////////////////////////////////////
-export function getAccount(address: string): Promise<StandardAccount | VestingAccount | ModuleAccount> {
+export function getAccount(
+  address: string
+): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
   return get(`/auth/accounts/${address}`)
 }
 

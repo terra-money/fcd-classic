@@ -3,6 +3,7 @@ import { times, div, getIntegerPortion } from 'lib/math'
 
 async function getDelegations(address: string, validators?: LcdValidator[]): Promise<DelegationInfo[]> {
   const delegations = await lcd.getDelegations(address)
+
   if (!delegations) {
     return []
   }

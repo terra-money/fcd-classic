@@ -34,13 +34,23 @@ function getClaimFromCol2(tx) {
       let type: string
       let amounts: Coin[]
 
-      if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+      if (msgType === 'cosmos-sdk/MsgWithdrawValidatorCommission') {
+        // Columbus-1
+        type = 'Commission'
+        amounts = []
+      } else if (msgType === 'cosmos-sdk/MsgWithdrawDelegationReward') {
+        // Columbus-1
+        type = 'Reward'
+        amounts = []
+      } else if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+        // Columbus-2
         type = 'Commission'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')
           .map(splitDenomAndAmount)
         tagIndex += 3
       } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
+        // Columbus-2
         type = 'Reward'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')
@@ -65,6 +75,7 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
     flatten(
       txs.map((tx) => {
         const events = get(tx, 'data.events')
+
         if (!events) {
           return getClaimFromCol2(tx)
         }

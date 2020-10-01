@@ -90,7 +90,6 @@
     "pg": "^8.3.3",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
-    "request-promise-native": "^1.0.9",
     "socketcluster-server": "^14.5.0",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",

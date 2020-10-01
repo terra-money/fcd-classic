@@ -5,8 +5,6 @@ import { setupAgent, terminateAPITest } from './lib/agent'
 const NORMAL_ACCOUNT = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
 const VESTING_ACCOUNT = 'terra1qz27yu74kvv0xvxqlzhggdfkzkn2gg7fmez3we'
 
-jest.mock('request-promise-native')
-
 describe('Account', () => {
   let agent: SuperTest<Test>
   let connection
@@ -66,10 +64,34 @@ describe('Account', () => {
             ratio: 0.2,
             startTime: 1587788301000
           },
-          { amount: '10000000000', endTime: 1605068301000, freedRate: 0, ratio: 0.2, startTime: 1596428302000 },
-          { amount: '10000000000', endTime: 1613708301000, freedRate: 0, ratio: 0.2, startTime: 1605068302000 },
-          { amount: '10000000000', endTime: 1622348301000, freedRate: 0, ratio: 0.2, startTime: 1613708302000 },
-          { amount: '10000000000', endTime: 1630988301000, freedRate: 0, ratio: 0.2, startTime: 1622348302000 }
+          {
+            amount: '10000000000',
+            endTime: 1605068301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1596428302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1613708301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1605068302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1622348301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1613708302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1630988301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1622348302000
+          }
         ],
         total: '50000000000'
       },
@@ -83,10 +105,34 @@ describe('Account', () => {
             ratio: 0.2,
             startTime: 1587788301000
           },
-          { amount: '10000000000', endTime: 1605068301000, freedRate: 0, ratio: 0.2, startTime: 1596428302000 },
-          { amount: '10000000000', endTime: 1613708301000, freedRate: 0, ratio: 0.2, startTime: 1605068302000 },
-          { amount: '10000000000', endTime: 1622348301000, freedRate: 0, ratio: 0.2, startTime: 1613708302000 },
-          { amount: '10000000000', endTime: 1630988301000, freedRate: 0, ratio: 0.2, startTime: 1622348302000 }
+          {
+            amount: '10000000000',
+            endTime: 1605068301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1596428302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1613708301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1605068302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1622348301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1613708302000
+          },
+          {
+            amount: '10000000000',
+            endTime: 1630988301000,
+            freedRate: expect.any(Number),
+            ratio: 0.2,
+            startTime: 1622348302000
+          }
         ],
         total: '50000000000'
       }

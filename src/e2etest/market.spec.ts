@@ -4,8 +4,6 @@ import { setupAgent, terminateAPITest } from './lib/agent'
 
 const denoms = ['uusd', 'ukrw', 'usdr', 'umnt', 'uluna']
 
-jest.mock('request-promise-native')
-
 describe('Market Test', () => {
   let agent: SuperTest<Test>
   let connection
@@ -41,10 +39,11 @@ describe('Market Test', () => {
   test('get price', async () => {
     const { body } = await agent.get(`/v1/market/price?denom=ukrw&interval=15m&count=10`).expect(200)
 
+    console.log(body)
     expect(body).toMatchObject({
       lastPrice: expect.any(Number),
-      // oneDayVariation: expect.any(String), TODO: enable this later
-      // oneDayVariationRate: expect.any(String), TODO: enable this later
+      oneDayVariation: expect.any(String),
+      oneDayVariationRate: expect.any(String),
       prices: expect.arrayContaining([
         {
           datetime: expect.any(Number),

@@ -1,9 +1,9 @@
-interface NormalizedAccount {
-  value: AccountValue
-  original_vesting?: Coins
-  delegated_free?: Coins
-  delegated_vesting?: Coins
-  vesting_schedules?: VestingLazySchedule[]
+interface AccountValue {
+  address: string
+  coins: Coins
+  public_key: { type: string; value: string }
+  account_number: string
+  sequence: string
 }
 
 interface StandardAccount {
@@ -21,8 +21,39 @@ interface VestingAccount {
       delegated_vesting: Coins
       end_time: string
     }
-    vesting_schedules: VestingLazySchedule[]
+    vesting_schedules: {
+      denom: string
+      schedules: {
+        cliff: string
+        ratio: string
+      }[]
+    }[]
   }
+}
+
+interface LazyVestingAccount {
+  type: string
+  value: {
+    BaseVestingAccount: {
+      BaseAccount: AccountValue
+      original_vesting: Coins
+      delegated_free: Coins
+      delegated_vesting: Coins
+      end_time: string
+    }
+    vesting_schedules: VestingSchedules[]
+  }
+}
+
+interface VestingSchedules {
+  denom: string
+  schedules: Schedule[]
+}
+
+interface Schedule {
+  start_time: string
+  end_time: string
+  ratio: string
 }
 
 interface ModuleAccount {
@@ -34,23 +65,12 @@ interface ModuleAccount {
   }
 }
 
-interface AccountValue {
-  address: string
-  coins: Coins
-  public_key: { type: string; value: string }
-  account_number: string
-  sequence: string
-}
-
-interface VestingLazySchedule {
-  denom: string
-  schedules: Schedule[]
-}
-
-interface Schedule {
-  start_time: string
-  end_time: string
-  ratio: string
+interface NormalizedAccount {
+  value: AccountValue
+  original_vesting?: Coins
+  delegated_free?: Coins
+  delegated_vesting?: Coins
+  vesting_schedules?: VestingSchedules[]
 }
 
 interface CountInfoByDate {
