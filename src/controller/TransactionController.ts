@@ -66,14 +66,13 @@ export default class TransactionController extends KoaController {
   @Get('/tx/:txhash')
   @Validate({
     params: {
-      txhash: Joi.string().required().alphanum().description('Tx hash'),
-      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX)
+      txhash: Joi.string().required().alphanum().description('Tx hash')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    const { txhash, chainId } = ctx.params
-    success(ctx, await getTx(txhash, chainId))
+    const { txhash } = ctx.params
+    success(ctx, await getTx(txhash))
   }
 
   /**
