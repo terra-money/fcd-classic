@@ -4,7 +4,7 @@ import config from 'config'
 
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
@@ -66,13 +66,14 @@ export default class TransactionController extends KoaController {
   @Get('/tx/:txhash')
   @Validate({
     params: {
-      txhash: Joi.string().required().alphanum().description('Tx hash')
+      txhash: Joi.string().required().alphanum().description('Tx hash'),
+      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX)
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    const { txhash } = ctx.params
-    success(ctx, await getTx(txhash))
+    const { txhash, chainId } = ctx.params
+    success(ctx, await getTx(txhash, chainId))
   }
 
   /**
@@ -163,7 +164,7 @@ export default class TransactionController extends KoaController {
         .regex(/^\d{1,16}$/),
       order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
+      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
