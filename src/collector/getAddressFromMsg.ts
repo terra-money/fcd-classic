@@ -87,27 +87,27 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
 
     case 'wasm/MsgStoreCode':
       return {
-        wasm: [get(msg, 'value.sender')].filter(Boolean)
+        contract: [get(msg, 'value.sender')].filter(Boolean)
       }
 
     case 'wasm/MsgInstantiateContract':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
 
     case 'wasm/MsgExecuteContract':
       return {
-        wasm: [get(msg, 'value.sender')].filter(Boolean)
+        contract: [get(msg, 'value.sender')].filter(Boolean)
       }
 
     case 'wasm/MsgMigrateContract':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
 
     case 'wasm/MsgUpdateContractOwner':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
 
     default: {

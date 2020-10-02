@@ -156,7 +156,7 @@ export default class TransactionController extends KoaController {
     query: {
       account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address'),
       action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
         .description('Tx types'),
       block: Joi.string()
         .allow('')
@@ -288,7 +288,7 @@ export default class TransactionController extends KoaController {
     query: {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
       action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
         .description('Tx types'),
       order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
       from: Joi.number().min(0).description('From timestamp unix time'),
