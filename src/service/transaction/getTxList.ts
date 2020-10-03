@@ -141,7 +141,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const totalCnt = await getTxTotalCount(data)
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account=$1 `
+  let distinctTxQuery = `SELECT DISTINCT ON (tx_id, timestamp) tx_id, timestamp FROM account_tx WHERE account=$1 `
   const params = [data.account]
 
   if (data.action) {
@@ -159,7 +159,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const offset = Math.max(0, data.limit * (data.page - 1))
   const order: 'ASC' | 'DESC' = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const orderAndPageClause = ` ORDER BY tx_id ${order} OFFSET ${offset} LIMIT ${Math.max(0, data.limit)}`
+  const orderAndPageClause = ` ORDER BY timestamp ${order} OFFSET ${offset} LIMIT ${Math.max(0, data.limit)}`
 
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 

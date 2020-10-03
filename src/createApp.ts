@@ -121,7 +121,22 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
 
   app
     .use(morgan('common'))
-    .use(helmet())
+    .use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: [`'self'`],
+            scriptSrc: [`'self'`, 'cdnjs.cloudflare.com', `'sha256-UrOWoG1lQobAsAKtuYuOGfRLmWNX7kUAYuwroD8mPA8='`],
+            fontSrc: [`'self'`, 'https:', 'data:'],
+            objectSrc: [`'none'`],
+            imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+            styleSrc: [`'self'`, 'https:', `'unsafe-inline'`],
+            upgradeInsecureRequests: [],
+            blockAllMixedContent: []
+          }
+        }
+      })
+    )
     .use(cors())
     .use(mount('/static', apiDocApp))
     .use(mount('/apidoc', apiDocApp))
