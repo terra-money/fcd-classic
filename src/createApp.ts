@@ -126,7 +126,13 @@ export default async (disableAPI: boolean = false): Promise<Koa> => {
         contentSecurityPolicy: {
           directives: {
             defaultSrc: [`'self'`],
-            scriptSrc: [`'self'`, 'cdnjs.cloudflare.com', `'sha256-UrOWoG1lQobAsAKtuYuOGfRLmWNX7kUAYuwroD8mPA8='`],
+            scriptSrc: [
+              `'self'`,
+              'cdnjs.cloudflare.com',
+              `'sha256-UrOWoG1lQobAsAKtuYuOGfRLmWNX7kUAYuwroD8mPA8='`,
+              `'sha256-LM5yn61idT1I7NBFLeWItBaVizQrapu+/ZzXmrBSw48='`,
+              `'sha256-GTKL5IIzkLP1XJobWjQZ7ytmgyfTHLGQ3IkdA4QgXE4='`
+            ],
             fontSrc: [`'self'`, 'https:', 'data:'],
             objectSrc: [`'none'`],
             imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
