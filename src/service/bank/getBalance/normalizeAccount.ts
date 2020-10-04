@@ -1,7 +1,8 @@
 import { APIError } from 'lib/error'
 
 enum AccountType {
-  STANDARD = 'core/Account',
+  OLD_SIMPLE = 'auth/Account',
+  SIMPLE = 'core/Account',
   VESTING = 'core/GradedVestingAccount', // Columbus-1
   LAZY_VESTING = 'core/LazyGradedVestingAccount', // Columbus-2 and 3
   MODULE = 'supply/ModuleAccount'
@@ -94,13 +95,13 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     }
   }
 
-  if (account.type === AccountType.STANDARD) {
+  if (account.type === AccountType.SIMPLE || account.type === AccountType.OLD_SIMPLE) {
     return {
       value: (account as StandardAccount).value
     }
   }
 
-  throw new Error(`unknown account type ${account.type}, address: ${account.value}`)
+  throw new Error(`unknown account type ${account.type}, address: ${JSON.stringify(account.value)}`)
 }
 
 export default normalizeAccount
