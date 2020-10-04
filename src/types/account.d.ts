@@ -31,7 +31,7 @@ interface VestingAccount {
   }
 }
 
-interface LazyVestingAccount {
+interface Columbus3LazyVestingAccount {
   type: string
   value: {
     BaseVestingAccount: {
@@ -41,6 +41,17 @@ interface LazyVestingAccount {
       delegated_vesting: Coins
       end_time: string
     }
+    vesting_schedules: VestingSchedules[]
+  }
+}
+
+interface LazyVestingAccount {
+  type: string
+  value: AccountValue & {
+    original_vesting: Coins
+    delegated_free: Coins
+    delegated_vesting: Coins
+    end_time: string
     vesting_schedules: VestingSchedules[]
   }
 }
@@ -56,7 +67,7 @@ interface Schedule {
   ratio: string
 }
 
-interface ModuleAccount {
+interface Columbus3ModuleAccount {
   type: string
   value: {
     BaseAccount: AccountValue
@@ -65,12 +76,24 @@ interface ModuleAccount {
   }
 }
 
+interface ModuleAccount {
+  type: string
+  value: AccountValue & {
+    name: string
+    permissions: string[]
+  }
+}
+
 interface NormalizedAccount {
   value: AccountValue
+  // For vesting accounts
   original_vesting?: Coins
   delegated_free?: Coins
   delegated_vesting?: Coins
   vesting_schedules?: VestingSchedules[]
+  // For module accounts
+  name?: string
+  permissions?: string[]
 }
 
 interface CountInfoByDate {

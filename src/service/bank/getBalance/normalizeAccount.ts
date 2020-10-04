@@ -1,3 +1,5 @@
+import { APIError } from 'lib/error'
+
 enum AccountType {
   STANDARD = 'core/Account',
   VESTING = 'core/GradedVestingAccount', // Columbus-1
@@ -5,23 +7,18 @@ enum AccountType {
   MODULE = 'supply/ModuleAccount'
 }
 
-type Account = StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount
-
-const getBaseAccount = (account: Account): AccountValue => {
-  switch (account.type) {
-    case AccountType.VESTING:
-      return (account as VestingAccount).value.BaseVestingAccount.BaseAccount
-    case AccountType.LAZY_VESTING:
-      return (account as LazyVestingAccount).value.BaseVestingAccount.BaseAccount
-    case AccountType.MODULE:
-      return (account as ModuleAccount).value.BaseAccount
-    default:
-      return (account as StandardAccount).value
-  }
-}
+type Account =
+  | StandardAccount
+  | VestingAccount
+  | Columbus3LazyVestingAccount
+  | LazyVestingAccount
+  | Columbus3ModuleAccount
+  | ModuleAccount
 
 const normalizeAccount = (account: Account): NormalizedAccount => {
   if (account.type === AccountType.VESTING) {
+    const value = (account as VestingAccount).value.BaseVestingAccount.BaseAccount
+
     // Columbus-1
     const vestingAccount = account as VestingAccount
     const vestingSchedules = vestingAccount.value.vesting_schedules.map(
@@ -44,7 +41,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     )
 
     return {
-      value: getBaseAccount(account),
+      value,
       original_vesting: vestingAccount.value.BaseVestingAccount.original_vesting,
       delegated_free: vestingAccount.value.BaseVestingAccount.delegated_free,
       delegated_vesting: vestingAccount.value.BaseVestingAccount.delegated_vesting,
@@ -53,19 +50,57 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
   }
 
   if (account.type === AccountType.LAZY_VESTING) {
-    // Since Columbus-2
+    // columbus-2 and columbus-3 shapes are different in columbus-4
+    if ('BaseVestingAccount' in account.value) {
+      const value = (account as Columbus3LazyVestingAccount).value
+
+      return {
+        value: value.BaseVestingAccount.BaseAccount,
+        original_vesting: value.BaseVestingAccount.original_vesting,
+        delegated_free: value.BaseVestingAccount.delegated_free,
+        delegated_vesting: value.BaseVestingAccount.delegated_vesting,
+        vesting_schedules: value.vesting_schedules
+      }
+    }
+
+    const value = (account as LazyVestingAccount).value
+
     return {
-      value: getBaseAccount(account),
-      original_vesting: (account as LazyVestingAccount).value.BaseVestingAccount.original_vesting,
-      delegated_free: (account as LazyVestingAccount).value.BaseVestingAccount.delegated_free,
-      delegated_vesting: (account as LazyVestingAccount).value.BaseVestingAccount.delegated_vesting,
-      vesting_schedules: (account as LazyVestingAccount).value.vesting_schedules
+      value,
+      original_vesting: value.original_vesting,
+      delegated_free: value.delegated_free,
+      delegated_vesting: value.delegated_vesting,
+      vesting_schedules: value.vesting_schedules
     }
   }
 
-  return {
-    value: getBaseAccount(account)
+  if (account.type === AccountType.MODULE) {
+    if ('BaseAccount' in account.value) {
+      const value = (account as Columbus3ModuleAccount).value
+
+      return {
+        value: value.BaseAccount,
+        name: value.name,
+        permissions: value.permissions
+      }
+    }
+
+    const value = (account as ModuleAccount).value
+
+    return {
+      value,
+      name: value.name,
+      permissions: value.permissions
+    }
   }
+
+  if (account.type === AccountType.STANDARD) {
+    return {
+      value: (account as StandardAccount).value
+    }
+  }
+
+  throw new Error(`unknown account type ${account.type}, address: ${account.value}`)
 }
 
 export default normalizeAccount
