@@ -141,7 +141,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const totalCnt = await getTxTotalCount(data)
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id, timestamp) tx_id, timestamp FROM account_tx WHERE account=$1 `
+  let distinctTxQuery = `SELECT DISTINCT ON (timestamp) tx_id, timestamp FROM account_tx WHERE account=$1 `
   const params = [data.account]
 
   if (data.action) {
