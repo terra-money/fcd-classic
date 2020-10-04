@@ -125,7 +125,18 @@ export function getLatestBlock(): Promise<LcdBlock> {
 export function getAccount(
   address: string
 ): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
-  return get(`/auth/accounts/${address}`)
+  return (
+    get(`/auth/accounts/${address}`) || {
+      type: 'auth/Account',
+      value: {
+        address: '',
+        coins: null,
+        public_key: null,
+        account_number: '0',
+        sequence: '0'
+      }
+    }
+  )
 }
 
 ///////////////////////////////////////////////
