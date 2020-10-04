@@ -63,8 +63,8 @@ async function getDepositFromTx(tx): Promise<Deposit[]> {
 export default async function getProposalDeposits(input: GetProposalDepositsInput): Promise<GetProposalDepositsReturn> {
   const { proposalId, page, limit } = input
   const proposal = await getRepository(ProposalEntity).findOne({
-    proposalId,
-    chainId: config.CHAIN_ID
+    proposalId
+    // chainId: config.CHAIN_ID
   })
 
   if (!proposal) {

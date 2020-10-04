@@ -16,7 +16,7 @@ interface ProposalsReturn {
 
 export default async function getProposals(status?: string): Promise<ProposalsReturn> {
   const proposals = await getRepository(ProposalEntity).find({
-    chainId: config.CHAIN_ID
+    // chainId: config.CHAIN_ID
   })
 
   const depositParmas = await lcd.getProposalDepositParams()

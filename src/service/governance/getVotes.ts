@@ -83,8 +83,8 @@ export default async function getProposalVotes(
   const { proposalId, page, limit, option } = input
 
   const proposal = await getRepository(ProposalEntity).findOne({
-    proposalId,
-    chainId: config.CHAIN_ID
+    proposalId
+    // chainId: config.CHAIN_ID
   })
 
   if (!proposal) {

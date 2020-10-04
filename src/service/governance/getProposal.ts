@@ -75,8 +75,8 @@ async function getDelegatedValidatorWhoDidNotVoted(
 
 export default async function getProposal(proposalId: string, account?: string): Promise<GetProposalResponse> {
   const proposal = await getRepository(ProposalEntity).findOne({
-    proposalId,
-    chainId: config.CHAIN_ID
+    proposalId
+    // chainId: config.CHAIN_ID
   })
 
   if (!proposal) {
