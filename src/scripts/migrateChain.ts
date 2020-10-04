@@ -1,5 +1,5 @@
 /**
- * This script was written for migrating Columbus-1 Block, Tx, AccountTx entities to main db
+ * This script was written for migrating columbus-1 Block, Tx, AccountTx entities to main db
  */
 import * as fs from 'fs'
 import * as Bluebird from 'bluebird'

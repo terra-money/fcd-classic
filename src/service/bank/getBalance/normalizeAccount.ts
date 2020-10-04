@@ -1,11 +1,11 @@
 import { APIError } from 'lib/error'
 
 enum AccountType {
-  OLD_SIMPLE = 'auth/Account',
-  SIMPLE = 'core/Account',
-  VESTING = 'core/GradedVestingAccount', // Columbus-1
-  LAZY_VESTING = 'core/LazyGradedVestingAccount', // Columbus-2 and 3
-  MODULE = 'supply/ModuleAccount'
+  OLD_SIMPLE = 'auth/Account', // columbus-1
+  VESTING = 'core/GradedVestingAccount', // columbus-1
+  LAZY_VESTING = 'core/LazyGradedVestingAccount', // columbus-2
+  SIMPLE = 'core/Account', // columbus-3
+  MODULE = 'supply/ModuleAccount' // columbus -3
 }
 
 type Account =
@@ -20,11 +20,11 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
   if (account.type === AccountType.VESTING) {
     const value = (account as VestingAccount).value.BaseVestingAccount.BaseAccount
 
-    // Columbus-1
+    // columbus-1
     const vestingAccount = account as VestingAccount
     const vestingSchedules = vestingAccount.value.vesting_schedules.map(
       ({ denom, schedules: oldSchedules }): VestingSchedules => {
-        let startTime = '1556085600000' // Columbus-1 genesis time
+        let startTime = '1556085600000' // columbus-1 genesis time
 
         const schedules = oldSchedules.map(({ cliff, ratio }) => {
           const schedule: Schedule = {
@@ -51,8 +51,9 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
   }
 
   if (account.type === AccountType.LAZY_VESTING) {
-    // columbus-2 and columbus-3 shapes are different in columbus-4
+    // LCD response in columbus-2 and 3 and columbus-4 are different.
     if ('BaseVestingAccount' in account.value) {
+      // Before columbus-4
       const value = (account as Columbus3LazyVestingAccount).value
 
       return {
@@ -64,6 +65,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
       }
     }
 
+    // From columbus-4
     const value = (account as LazyVestingAccount).value
 
     return {
@@ -76,6 +78,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
   }
 
   if (account.type === AccountType.MODULE) {
+    // LCD response in columbus-2 and 3 and columbus-4 are different.
     if ('BaseAccount' in account.value) {
       const value = (account as Columbus3ModuleAccount).value
 
@@ -86,6 +89,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
       }
     }
 
+    // From columbus-4
     const value = (account as ModuleAccount).value
 
     return {

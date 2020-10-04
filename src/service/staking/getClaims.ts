@@ -35,22 +35,22 @@ function getClaimFromCol2(tx) {
       let amounts: Coin[]
 
       if (msgType === 'cosmos-sdk/MsgWithdrawValidatorCommission') {
-        // Columbus-1
+        // columbus-1
         type = 'Commission'
         amounts = []
       } else if (msgType === 'cosmos-sdk/MsgWithdrawDelegationReward') {
-        // Columbus-1
+        // columbus-1
         type = 'Reward'
         amounts = []
       } else if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
-        // Columbus-2
+        // columbus-2
         type = 'Commission'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')
           .map(splitDenomAndAmount)
         tagIndex += 3
       } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
-        // Columbus-2
+        // columbus-2
         type = 'Reward'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')

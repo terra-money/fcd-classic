@@ -122,11 +122,11 @@ export function getLatestBlock(): Promise<LcdBlock> {
 ///////////////////////////////////////////////
 // Auth
 ///////////////////////////////////////////////
-export function getAccount(
+export async function getAccount(
   address: string
 ): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
   return (
-    get(`/auth/accounts/${address}`) || {
+    (await get(`/auth/accounts/${address}`)) || {
       type: 'auth/Account',
       value: {
         address: '',
@@ -332,14 +332,14 @@ export function getMissedOracleVotes(operatorAddr: string): Promise<string> {
 // Treasury
 ///////////////////////////////////////////////
 // async function getLunaSupply() {
-//   // Columbus-2
+//   // columbus-2
 //   const response = await getStakingPool()
 //   const { not_bonded_tokens: notBondedTokens, bonded_tokens: bondedTokens } = response
 //   return plus(notBondedTokens, bondedTokens)
 // }
 
 export async function getDenomIssuanceAfterGenesis(denom: string, day: number): Promise<object | null> {
-  // Columbus-2
+  // columbus-2
   const res = await get(`/treasury/issuance/${denom}/${day}`)
 
   if (!res.issuance) {
