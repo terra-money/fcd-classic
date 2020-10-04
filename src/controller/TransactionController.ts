@@ -62,6 +62,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {string} gas_used total gas used in tx
    * @apiSuccess {string} timestamp timestamp tx in utc 0
    * @apiSuccess {string} gas_wanted gas wanted
+   * @apiSuccess {string} chainId
    */
   @Get('/tx/:txhash')
   @Validate({
