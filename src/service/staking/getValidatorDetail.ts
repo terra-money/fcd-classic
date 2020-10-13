@@ -68,13 +68,15 @@ export async function getValidatorDetailUncached(
     return
   }
 
-  let result = {
-    ...validator
+  const commissions: Coin[] = sortDenoms(await getCommissions(operatorAddr))
+
+  let result: ValidatorDetailsReturn = {
+    ...validator,
+    commissions
   }
 
   if (account) {
     const priceObj = await lcd.getActiveOraclePrices()
-    const commissions: Coin[] = await getCommissions(operatorAddr)
     const myDelegation = await getMyDelegation(account, validator)
     const myBalance = await getBalance(account)
     const ulunaBalance = filter(myBalance.balance, { denom: 'uluna' })[0]
@@ -104,13 +106,10 @@ export async function getValidatorDetailUncached(
 
     result = {
       ...result,
-      ...{ commissions: sortDenoms(commissions) },
-      ...{
-        myDelegation,
-        myUndelegation,
-        myDelegatable: ulunaBalance && ulunaBalance.delegatable,
-        myRewards
-      }
+      myDelegation,
+      myUndelegation,
+      myDelegatable: ulunaBalance && ulunaBalance.delegatable,
+      myRewards
     }
   }
 
