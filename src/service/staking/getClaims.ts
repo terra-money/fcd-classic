@@ -74,9 +74,7 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
   return compact(
     flatten(
       txs.map((tx) => {
-        const events = get(tx, 'data.events')
-
-        if (!events) {
+        if (get(tx, 'data.tags')) {
           return getClaimFromCol2(tx)
         }
 
