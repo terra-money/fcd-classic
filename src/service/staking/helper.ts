@@ -382,6 +382,8 @@ export async function getAvgVotingPowerUncached(
 
     delegationBetweenRange.push({
       chainId: config.CHAIN_ID,
+      txhash: '',
+      height: '', // TODO: remove
       type: 'Delegate',
       amount: { denom: 'uluna', amount: '0' },
       timestamp: fromStr

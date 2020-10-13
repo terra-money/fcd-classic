@@ -13,7 +13,8 @@ export interface GetClaimsParam {
 
 interface DelegationClaim {
   chainId: string
-  tx: string // tx hash of clain
+  txhash: string
+  tx: string // tx hash of claim, TODO: remove
   type: string // tx types like reward, commission
   amounts: Coin[] // amounts in with their denoms
   timestamp: string // tx timestamp
@@ -113,7 +114,8 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
 
             return {
               chainId: tx.chainId,
-              tx: tx.data['txhash'],
+              txhash: tx.data['txhash'],
+              tx: tx.data['txhash'], // TODO: remove
               type,
               amounts: sortDenoms(amounts),
               timestamp: tx.data['timestamp']

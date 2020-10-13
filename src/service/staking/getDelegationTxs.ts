@@ -12,7 +12,8 @@ export interface GetDelegationEventsParam {
 
 interface GetDelegationEventsReturn {
   chainId: string
-  height?: string
+  height: string // TODO: remove
+  txhash: string
   type: string
   amount: Coin
   timestamp: string
@@ -30,7 +31,7 @@ function extractEvents(
   valOpAddr: string
 ): GetDelegationEventsReturn[] {
   const msgs = get(tx, 'tx.value.msg')
-  const { chainId, height, timestamp } = tx
+  const { chainId, height, timestamp, txhash } = tx
 
   return msgs.map((msg): GetDelegationEventsReturn | undefined => {
     switch (msg.type) {
@@ -44,7 +45,7 @@ function extractEvents(
           denom: get(msg, 'value.amount.denom'),
           amount: get(msg, 'value.amount.amount')
         }
-        return { chainId, height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgCreateValidator': {
         if (get(msg, 'value.validator_address') !== valOpAddr) {
@@ -56,7 +57,7 @@ function extractEvents(
           denom: get(msg, 'value.value.denom'),
           amount: get(msg, 'value.value.amount')
         }
-        return { chainId, height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgBeginRedelegate': {
         const srcAddr = get(msg, 'value.validator_src_address')
@@ -76,7 +77,7 @@ function extractEvents(
           denom: 'uluna',
           amount: amt
         }
-        return { chainId, height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgUndelegate': {
         if (get(msg, 'value.validator_address') !== valOpAddr) {
@@ -88,7 +89,7 @@ function extractEvents(
           denom: get(msg, 'value.amount.denom'),
           amount: `-${get(msg, 'value.amount.amount')}`
         }
-        return { chainId, height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       default: {
         return undefined
