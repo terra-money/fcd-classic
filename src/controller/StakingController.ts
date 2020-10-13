@@ -146,6 +146,7 @@ export default class StakingController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} events Delegation event list
+   * @apiSuccess {string} events.chainId
    * @apiSuccess {string} events.height The height of the block the event was performed
    * @apiSuccess {string} events.type Event type
    * @apiSuccess {Object[]} events.amount
@@ -193,6 +194,7 @@ export default class StakingController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} claims Claim list
+   * @apiSuccess {string} claims.chainId
    * @apiSuccess {string} claims.timestamp Tx timestamp
    * @apiSuccess {string} claims.tx Tx hash
    * @apiSuccess {string} claims.type Claim type

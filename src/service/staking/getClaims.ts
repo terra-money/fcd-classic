@@ -12,6 +12,7 @@ export interface GetClaimsParam {
 }
 
 interface DelegationClaim {
+  chainId: string
   tx: string // tx hash of clain
   type: string // tx types like reward, commission
   amounts: Coin[] // amounts in with their denoms
@@ -61,6 +62,7 @@ function getClaimFromCol2(tx) {
       }
 
       return {
+        chainId: tx.chainId,
         tx: tx.data['txhash'],
         type,
         amounts: sortDenoms(amounts),
@@ -110,6 +112,7 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
             }
 
             return {
+              chainId: tx.chainId,
               tx: tx.data['txhash'],
               type,
               amounts: sortDenoms(amounts),

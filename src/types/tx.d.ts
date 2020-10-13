@@ -94,20 +94,6 @@ interface TxVolumeReturn {
   cumulative: DenomTxVolume[]
 }
 
-interface GetDelegationEventsReturn {
-  height?: string
-  type: string
-  amount: Coin
-  timestamp: string
-}
-
-interface DelegationTxsReturn {
-  totalCnt: number // total tx
-  page: number // tx page no of pagination
-  limit: number // tx count per page
-  events: GetDelegationEventsReturn[]
-}
-
 interface ParsedTxMsgInfo {
   tag?: string
   text?: string

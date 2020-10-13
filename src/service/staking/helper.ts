@@ -2,6 +2,7 @@ import { get, orderBy, flatten } from 'lodash'
 import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
 import { startOfDay } from 'date-fns'
 
+import config from 'config'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 
 import { APIError, ErrorTypes } from 'lib/error'
@@ -223,11 +224,11 @@ export async function getRawDelegationTxs(
   data: GetRawDelegationTxsParam
 ): Promise<{
   totalCnt: number
-  txs: Transaction.LcdTransaction[]
+  txs: (Transaction.LcdTransaction & { chainId: string })[]
 }> {
   const offset = (data.page - 1) * data.limit
 
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
   addDelegateFilterToQuery(qb, data.operatorAddr)
 
   data.from && qb.andWhere(`timestamp >= '${data.from}'`)
@@ -236,9 +237,10 @@ export async function getRawDelegationTxs(
   qb.skip(offset).take(data.limit).orderBy('timestamp', 'DESC')
   const [txs, totalCnt] = await qb.getManyAndCount()
 
+  console.log(txs[0])
   return {
     totalCnt,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
   }
 }
 
@@ -269,7 +271,7 @@ interface ClaimTxList {
 }
 
 export async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
 
   const accountAddr = convertValAddressToAccAddress(data.operatorAddr)
   addClaimFilterToQuery(qb, data.operatorAddr, accountAddr)
@@ -379,6 +381,7 @@ export async function getAvgVotingPowerUncached(
     }
 
     delegationBetweenRange.push({
+      chainId: config.CHAIN_ID,
       type: 'Delegate',
       amount: { denom: 'uluna', amount: '0' },
       timestamp: fromStr
