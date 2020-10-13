@@ -237,7 +237,6 @@ export async function getRawDelegationTxs(
   qb.skip(offset).take(data.limit).orderBy('timestamp', 'DESC')
   const [txs, totalCnt] = await qb.getManyAndCount()
 
-  console.log(txs[0])
   return {
     totalCnt,
     txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
