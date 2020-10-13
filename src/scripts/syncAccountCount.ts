@@ -4,34 +4,38 @@ import { chunk } from 'lodash'
 import { init as initORM, AccountEntity, AccountTxEntity } from 'orm'
 
 const updateTxsAccount = async () => {
-  await getManager().transaction(async (mgr: EntityManager) => {
-    await mgr.query('ALTER SEQUENCE account_id_seq RESTART')
-    await mgr.query('DELETE FROM account')
+  const totalAddresses = (await getRepository(AccountEntity).createQueryBuilder().select('address').getRawMany()).map(
+    (e) => e.address
+  )
 
-    const results = await getRepository(AccountTxEntity)
-      .createQueryBuilder()
-      .select('account', 'address')
-      .addSelect('MIN(timestamp)', 'created_at')
-      .addSelect('COUNT(*)', 'txcount')
-      .groupBy('account')
-      .orderBy('created_at')
-      .getRawMany()
+  console.log(`Total ${totalAddresses.length}, ${totalAddresses[0]}`)
 
-    await Bluebird.mapSeries(chunk(results, 1000), (arr) =>
-      mgr
-        .save(
-          arr.map(({ address, created_at, txcount }) => {
-            const entity = new AccountEntity()
+  // update 5000 at a time
+  return Bluebird.mapSeries(chunk(totalAddresses, 1000), async (addresses, chunkIndex) => {
+    await getManager().transaction(async (mgr: EntityManager) => {
+      await mgr
+        .getRepository(AccountEntity)
+        .createQueryBuilder()
+        .select('address')
+        .where('address IN (:...addresses)', { addresses })
+        .setLock('pessimistic_write')
+        .getRawMany()
 
-            entity.address = address
-            entity.createdAt = created_at
-            entity.txcount = txcount
+      const results = await mgr.query(
+        `SELECT DISTINCT ON (address) a.address, COUNT(*) as txcount, MIN(a.created_at) as created_at FROM (SELECT account AS "address", MIN(timestamp) AS "created_at" FROM "account_tx" "AccountTxEntity" WHERE account IN (${addresses
+          .map((a) => `'${a}'`)
+          .join(',')}) GROUP BY account, timestamp) as a GROUP BY a.address`
+      )
 
-            return entity
-          })
+      await Promise.all(
+        results.map(({ address, created_at, txcount }) =>
+          mgr.update(AccountEntity, { address }, { txcount, createdAt: created_at })
         )
-        .then(() => console.log(`${arr.length} rows inserted`))
-    )
+      )
+
+      const progress = (chunkIndex + 1) * addresses.length
+      console.log(`Updating ${progress} ${((progress / totalAddresses.length) * 100).toFixed(2)}%`)
+    })
   })
 }
 
