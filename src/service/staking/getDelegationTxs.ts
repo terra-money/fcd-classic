@@ -1,7 +1,5 @@
-import { get, flatten, take, drop, compact } from 'lodash'
-
+import { get, flatten, compact } from 'lodash'
 import { isSuccessfulTx } from 'lib/tx'
-
 import { getRawDelegationTxs } from './helper'
 
 export interface GetDelegationEventsParam {
