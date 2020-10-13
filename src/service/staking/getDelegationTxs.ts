@@ -88,7 +88,7 @@ export default async function getDelegationTxs(data: GetDelegationEventsParam): 
   const events: GetDelegationEventsReturn[] = compact(flatten(result))
 
   return {
-    totalCnt: events.length,
+    totalCnt: rawTxs.totalCnt,
     page: data.page,
     limit: data.limit,
     events: take(drop(events, (data.page - 1) * data.limit), data.limit)
