@@ -85,12 +85,11 @@ export default async function getDelegationTxs(data: GetDelegationEventsParam): 
     const msgs = get(tx, 'tx.value.msg')
     return msgs.map(eventMapper(tx.height, data.operatorAddr, tx.timestamp))
   })
-  const events: GetDelegationEventsReturn[] = compact(flatten(result))
 
   return {
     totalCnt: rawTxs.totalCnt,
     page: data.page,
     limit: data.limit,
-    events: take(drop(events, (data.page - 1) * data.limit), data.limit)
+    events: compact(flatten(result))
   }
 }
