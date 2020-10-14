@@ -142,16 +142,16 @@ export async function getAccount(
 ///////////////////////////////////////////////
 // Staking
 ///////////////////////////////////////////////
-export function getDelegations(delegator: string): Promise<LcdDelegation[]> {
-  return get(`/staking/delegators/${delegator}/delegations`)
+export async function getDelegations(delegator: string): Promise<LcdDelegation[]> {
+  return (await get(`/staking/delegators/${delegator}/delegations`)) || []
 }
 
 export function getDelegationForValidator(delegator: string, validator: string): Promise<LcdDelegation | undefined> {
   return get(`/staking/delegators/${delegator}/delegations/${validator}`)
 }
 
-export function getUnbondingDelegations(address: string): Promise<LcdUnbonding[]> {
-  return get(`/staking/delegators/${address}/unbonding_delegations`)
+export async function getUnbondingDelegations(address: string): Promise<LcdUnbonding[]> {
+  return (await get(`/staking/delegators/${address}/unbonding_delegations`)) || []
 }
 
 export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'): Promise<LcdValidator[]> {
@@ -172,8 +172,8 @@ export async function getValidator(operatorAddr: string): Promise<LcdValidator |
   return get(`/staking/validators/${operatorAddr}`)
 }
 
-export function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
-  return get(`/staking/validators/${validatorOperKey}/delegations`)
+export async function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
+  return (await get(`/staking/validators/${validatorOperKey}/delegations`)) || []
 }
 
 export function getStakingPool(): Promise<LcdStakingPool> {
@@ -183,8 +183,8 @@ export function getStakingPool(): Promise<LcdStakingPool> {
 ///////////////////////////////////////////////
 // Governance
 ///////////////////////////////////////////////
-export function getProposals(): Promise<LcdProposal[]> {
-  return get(`/gov/proposals`)
+export async function getProposals(): Promise<LcdProposal[]> {
+  return (await get(`/gov/proposals`)) || []
 }
 
 export function getProposal(proposalId: string): Promise<LcdProposal | undefined> {
@@ -218,8 +218,7 @@ export function getProposalVoteTxs(proposalId: string, option?: string): Promise
 }
 
 export async function getProposalVotes(proposalId: string): Promise<LcdProposalVote[]> {
-  const votes = await get(`/gov/proposals/${proposalId}/votes`)
-  return votes || []
+  return (await get(`/gov/proposals/${proposalId}/votes`)) || []
 }
 
 export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {
