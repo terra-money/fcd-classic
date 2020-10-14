@@ -48,17 +48,16 @@ async function getDelegatedValidatorWhoDidNotVoted(
     return []
   }
 
-  const delegatedOperatorList: string[] = delegations.map((validator: LcdDelegation) => {
-    return validator.validator_address
-  })
-  const delegatedValidator = await getRepository(ValidatorInfoEntity)
+  const delegatedOperatorList: string[] = delegations.map((d) => d.validator_address)
+
+  const qb = getRepository(ValidatorInfoEntity)
     .createQueryBuilder('validator')
-    .where('validator.operator_address IN (:...ids)', { ids: delegatedOperatorList })
+    .where('validator.operatorAddress IN (:...ids)', { ids: delegatedOperatorList })
+    .andWhere('validator.chainId = (:chainId)', { chainId: config.CHAIN_ID })
     .andWhere('validator.status = (:status)', { status: 'active' })
-    .getMany()
 
+  const delegatedValidator = await qb.getMany()
   const validatorNotVoted = delegatedValidator.filter((validator) => !voters[validator.accountAddress])
-
   const validatorsReturn = getValidatorsReturn()
 
   const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {

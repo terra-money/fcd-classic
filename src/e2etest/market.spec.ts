@@ -39,7 +39,6 @@ describe('Market Test', () => {
   test('get price', async () => {
     const { body } = await agent.get(`/v1/market/price?denom=ukrw&interval=15m&count=10`).expect(200)
 
-    console.log(body)
     expect(body).toMatchObject({
       lastPrice: expect.any(Number),
       oneDayVariation: expect.any(String),
