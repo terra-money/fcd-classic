@@ -191,7 +191,7 @@ export function getProposal(proposalId: string): Promise<LcdProposal | undefined
   return get(`/gov/proposals/${proposalId}`)
 }
 
-export function getProposalProposer(proposalId: string): Promise<LcdProposalProposer> {
+export function getProposalProposer(proposalId: string): Promise<LcdProposalProposer | undefined> {
   return get(`/gov/proposals/${proposalId}/proposer`)
 }
 

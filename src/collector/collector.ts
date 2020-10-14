@@ -40,29 +40,32 @@ const richListCollector = new Semaphore('RichListCollector', collectRichList, lo
 const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, tenMinute) // run once a day
 
 const jobs = [
+  // Per second
   {
     method: blockCollector.run.bind(blockCollector),
-    cron: '*/1 * * * * *'
+    cron: '* * * * * *'
   },
-  {
-    method: priceCollector.run.bind(priceCollector),
-    cron: '50 * * * * *'
-  },
+  // Per minute
   {
     method: generalCollector.run.bind(generalCollector),
     cron: '0 * * * * *'
   },
   {
-    method: validatorCollector.run.bind(validatorCollector),
-    cron: '0 */5 * * * *'
+    method: proposalCollector.run.bind(proposalCollector),
+    cron: '5 * * * * *'
   },
+  {
+    method: validatorCollector.run.bind(validatorCollector),
+    cron: '10 * * * * *'
+  },
+  {
+    method: priceCollector.run.bind(priceCollector),
+    cron: '50 * * * * *'
+  },
+  // Per day
   {
     method: returnCalculator.run.bind(returnCalculator),
     cron: '0 10 0 * * *'
-  },
-  {
-    method: proposalCollector.run.bind(proposalCollector),
-    cron: '0 */5 * * * *'
   },
   {
     method: dashboardCollector.run.bind(dashboardCollector),
