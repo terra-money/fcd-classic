@@ -1,9 +1,10 @@
 import * as rp from 'request-promise'
-import { compact, get } from 'lodash'
+import { compact } from 'lodash'
 import config from 'config'
 import { apiLogger as logger } from './logger'
+import { unmarshalTx } from '@terra-money/amino-js'
 
-async function getRequest(url: string, params?: object): Promise<any> {
+async function getRequest(url: string, params?: Record<string, unknown>): Promise<any> {
   const options = {
     method: 'GET',
     rejectUnauthorized: false,
@@ -14,10 +15,15 @@ async function getRequest(url: string, params?: object): Promise<any> {
     json: true
   }
 
-  const result = await rp(`${config.RPC_URI}${url}`, options).catch((e) => {
+  const response = await rp(`${config.RPC_URI}${url}`, options).catch((e) => {
     logger.error(`RPC request to ${url} failed by ${e}`)
   })
-  return result
+
+  if (typeof response.jsonrpc !== 'string') {
+    throw new Error('failed to query rpc')
+  }
+
+  return response.result
 }
 
 function base64Decode(data: string) {
@@ -38,14 +44,13 @@ interface Reward {
 export async function getRewards(height: number): Promise<Reward[]> {
   const blockResult = await getRequest(`/block_results`, { height })
 
-  if (!blockResult || !blockResult.result) {
+  if (!blockResult) {
     throw new Error('failed get block results from rpc')
   }
 
-  const result = blockResult.result
-  const events = result.results
-    ? result.results.begin_block.events // columbus-1 to 3
-    : result.begin_block_events // columbus-4
+  const events = blockResult.results
+    ? blockResult.results.begin_block.events // columbus-1 to 3
+    : blockResult.begin_block_events // columbus-4
 
   const decodedRewardsAndCommission: Reward[] = compact(
     events.map((event) => {
@@ -67,4 +72,14 @@ export async function getRewards(height: number): Promise<Reward[]> {
   )
 
   return decodedRewardsAndCommission
+}
+
+export async function getUnconfirmedTxs(params: Record<string, unknown> = {}, decode: boolean = true) {
+  const unconfirmedTxs = await getRequest(`/unconfirmed_txs`, params)
+
+  if (!Array.isArray(unconfirmedTxs.txs)) {
+    throw new Error('unconfirmed txs not found')
+  }
+
+  return !decode ? unconfirmedTxs.txs : unconfirmedTxs.txs.map((str) => unmarshalTx(Buffer.from(str, 'base64')))
 }

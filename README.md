@@ -64,11 +64,11 @@ module.exports = {
 |---------------------|---------------------------------|----------------------------------------------|------------------------------------|
 | SERVER_PORT         | Listening port for API server   | 3060                                         | API                                |
 | SENTRY_DSN          | Sentry DSN for error management |                                              | All                                |
-| CHAIN_ID            | Chain ID of Terra network       | soju-0014                                    | API, Collector                     |
-| LCD_URI             | LCD URI for Terra network       | https://soju-lcd.terra.dev                   | API, Collector, Validator Scrapper |
-| FCD_URI             | FCD URI for Terra network       | https://soju-fcd.terra.dev                   | Collector                          |
-| RPC_URI             | RPC URI for Terra network       | <required>                                   | Collector                          |
-| BYPASS_URI          | Terra LCD address               | https://soju-lcd.terra.dev                   | API                                |
+| CHAIN_ID            | Chain ID of Terra network       | tequila-0004                                    | API, Collector                     |
+| LCD_URI             | LCD URI for Terra network       | https://tequila-lcd.terra.dev                   | API, Collector, Validator Scrapper |
+| FCD_URI             | FCD URI for Terra network       | https://tequila-fcd.terra.dev                   | Collector                          |
+| RPC_URI             | RPC URI for Terra network       | <required>                                   | API, Collector                          |
+| BYPASS_URI          | Terra LCD address               | https://tequila-lcd.terra.dev                   | API                                |
 | STATION_STATUS_JSON | URL for Station version control | https://terra.money/station/version-web.json | API                                |
 | USE_LOG_FILE        | Creates logs/* when enabled     | false                                        | All                                |
 | SC_AUTH_KEY         | Authentication key for SocketCluster | <required>                              | API                                |
@@ -98,7 +98,7 @@ module.exports = {
   ```bash
   npm run test
   ```
-  * Tests are designed to use soju network
+  * Tests are designed to use testnet
 
 ### Production
 * Collector

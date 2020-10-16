@@ -40,6 +40,11 @@ declare namespace Transaction {
     signature: string
   }
 
+  interface LcdTx {
+    type: string
+    value: Value
+  }
+
   interface LcdTransaction {
     height: string
     txhash: string
@@ -49,10 +54,7 @@ declare namespace Transaction {
     gas_used: string
     codespace: string
     code?: number
-    tx: {
-      type: string
-      value: Value
-    }
+    tx: LcdTx
     timestamp: string // unix time at GMT 0
     events: Event[]
   }

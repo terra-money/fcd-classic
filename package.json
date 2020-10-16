@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "0.4.18",
+  "version": "0.4.19",
   "description": "Terra FCD API Server",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
@@ -64,6 +64,7 @@
   "dependencies": {
     "@koa/cors": "^3.1.0",
     "@sentry/node": "^5.24.2",
+    "@terra-money/amino-js": "^3.0.1",
     "apidoc-core": "^0.11.1",
     "apidoc-swagger": "git+https://github.com/terra-project/apidoc-swagger.git",
     "bech32": "^1.1.4",

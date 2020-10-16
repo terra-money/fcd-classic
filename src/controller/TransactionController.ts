@@ -5,6 +5,7 @@ import config from 'config'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
+import { getUnconfirmedTxs } from 'lib/rpc'
 
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
@@ -319,6 +320,7 @@ export default class TransactionController extends KoaController {
       })
     )
   }
+
   /**
    * @api {get} /txs/gas_prices Get gas prices
    * @apiName getGasPrices
@@ -333,5 +335,41 @@ export default class TransactionController extends KoaController {
   @Get('/txs/gas_prices')
   async getGasPrices(ctx): Promise<void> {
     success(ctx, config.MIN_GAS_PRICES)
+  }
+
+  /**
+   * @api {get} /txs/unconfirmed Get unconfirmed transactions
+   * @apiName getUnconfirmedTxs
+   * @apiGroup Transactions
+   *
+   * @apiSuccess {Object[]} tx transactions
+   * @apiSuccess {string} tx.type type of transaction
+   * @apiSuccess {Object} tx.value value of transaction
+   * @apiSuccess {Object} tx.value.fee
+   * @apiSuccess {Object[]} tx.value.fee.amount
+   * @apiSuccess {string} tx.value.fee.amount.denom
+   * @apiSuccess {string} tx.value.fee.amount.amount
+   * @apiSuccess {string} tx.value.fee.gas
+   * @apiSuccess {string} tx.value.memo
+   * @apiSuccess {Object[]} tx.value.msg
+   * @apiSuccess {string} tx.value.msg.type
+   * @apiSuccess {Object} tx.value.msg.value
+   * @apiSuccess {Object[]} tx.value.msg.value.amount
+   * @apiSuccess {string} tx.value.msg.value.amount.denom
+   * @apiSuccess {string} tx.value.msg.value.amount.amount
+   * @apiSuccess {Object[]} tx.value.signatures
+   * @apiSuccess {Object[]} tx.value.signatures.pubKey
+   * @apiSuccess {string} tx.value.signatures.pubKey.type
+   * @apiSuccess {string} tx.value.signatures.pubKey.value
+   * @apiSuccess {string} tx.value.signatures.signature
+   */
+  @Get('/txs/unconfirmed')
+  @Validate({
+    query: {
+      limit: Joi.number().description('maximum number of txs to query')
+    }
+  })
+  async getUnconfirmedTxs(ctx): Promise<void> {
+    success(ctx, await getUnconfirmedTxs())
   }
 }
