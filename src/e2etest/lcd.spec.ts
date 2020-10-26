@@ -268,7 +268,10 @@ describe('LCD', () => {
       expect(proposals).toBeArray()
 
       proposal = proposals.find(
-        (p) => p.content.type === 'params/ParameterChangeProposal' && new Date(p.voting_end_time).getTime() > Date.now()
+        (p) =>
+          p.content.type === 'params/ParameterChangeProposal' &&
+          p.content.value.changes &&
+          p.content.value.changes[0].subspace === 'staking'
       )
 
       expect(proposal).not.toBeNil()
