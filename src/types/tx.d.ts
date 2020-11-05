@@ -109,7 +109,7 @@ interface ParsedTxInfo {
   timestamp: string
   txhash: string
   msgs: ParsedTxMsgInfo[]
-  txFee: string
+  txFee: Coin[]
   memo: string
   success: boolean
   errorMessage?: string

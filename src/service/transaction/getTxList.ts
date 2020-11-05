@@ -168,7 +168,7 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
 
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 
-  const query = `SELECT id, data, chain_id as "chainId" FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
+  const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
 
   const txs = await getConnection().query(query, params)
 
@@ -176,7 +176,9 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
     totalCnt,
     page: param.page,
     limit: param.limit,
-    txs: parse ? await Promise.all(txs.map((tx) => parseTx(tx, param.account))) : txs
+    txs: parse
+      ? await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
+      : txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
   }
 }
 
