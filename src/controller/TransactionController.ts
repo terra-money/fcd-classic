@@ -91,6 +91,7 @@ export default class TransactionController extends KoaController {
    * @apiParam {string} [chainId=columbus-3] ChainId filter
    * @apiParam {number} [from] timestamp filter (from)
    * @apiParam {number} [to] timestamp filter (to)
+   * @apiParam {number} [offset] offset (latest id) for pagination
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
