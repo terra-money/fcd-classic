@@ -1,9 +1,8 @@
 import { get, chain } from 'lodash'
 import { getRepository, getConnection, FindConditions } from 'typeorm'
-
 import { BlockEntity, AccountEntity, TxEntity } from 'orm'
-
 import { getQueryDateTime } from 'lib/time'
+import config from 'config'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
@@ -37,8 +36,13 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     .createQueryBuilder()
     .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: param.memo })
     .orderBy(`timestamp`, order)
-    .offset((param.page - 1) * param.limit)
-    .limit(param.limit)
+    .take(param.limit)
+
+  if (param.offset) {
+    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+  } else {
+    qb.skip(param.limit * (param.page - 1))
+  }
 
   if (param.from) {
     qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
@@ -65,20 +69,15 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
     where.height = +param.block
   }
 
-  if (param.chainId) {
-    where.chainId = param.chainId
-  }
+  where.chainId = param.chainId || config.CHAIN_ID
 
-  const blocksWithTxs = await getRepository(BlockEntity).find({
+  const blockWithTxs = await getRepository(BlockEntity).findOne({
     where,
     order: {
       id: 'DESC'
     },
-    relations: ['txs'],
-    skip: 0,
-    take: 1
+    relations: ['txs']
   })
-  const blockWithTxs = blocksWithTxs.length > 0 ? blocksWithTxs[0] : undefined
 
   const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
   const offset = param.limit * (param.page - 1)
@@ -157,7 +156,15 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
 
   const offset = Math.max(0, param.limit * (param.page - 1))
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const orderAndPageClause = ` ORDER BY timestamp ${order} OFFSET ${offset} LIMIT ${Math.max(0, param.limit)}`
+
+  if (param.offset) {
+    distinctTxQuery += ` AND id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+  }
+
+  const orderAndPageClause = ` ORDER BY timestamp ${order} ${!param.offset ? `OFFSET ${offset}` : ''} LIMIT ${Math.max(
+    0,
+    param.limit
+  )}`
 
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 
@@ -174,17 +181,13 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
-  const offset = param.limit * (param.page - 1)
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-  const qb = getRepository(TxEntity)
-    .createQueryBuilder()
-    .skip(offset)
-    .take(param.limit + 1)
-    .orderBy('timestamp', order)
+  const qb = getRepository(TxEntity).createQueryBuilder().take(param.limit).orderBy('timestamp', order)
 
   if (param.offset) {
     qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+  } else {
+    qb.skip(param.limit * (param.page - 1))
   }
 
   if (param.from) {

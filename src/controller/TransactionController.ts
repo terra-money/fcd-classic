@@ -82,16 +82,16 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
-   * @apiParam {string} [action] Tx type
-   * @apiParam {number} [page=1] Page
-   * @apiParam {number} [limit=10] Limit
+   * @apiParam {string='send','receive','staking','market','governance','contract'} [action] Type of tx (account is required)
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
-   * @apiParam {string} [order] 'ASC' or 'DESC'
-   * @apiParam {string} [chainId=columbus-3] ChainId filter
-   * @apiParam {number} [from] timestamp filter (from)
-   * @apiParam {number} [to] timestamp filter (to)
-   * @apiParam {number} [offset] offset (latest id) for pagination
+   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
+   * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
+   * @apiParam {number} [from] Timestamp from
+   * @apiParam {number} [to] Timestamp to
+   * @apiParam {number} [offset] Use last id from previous result for pagination
+   * @apiParam {number} [page=1] # of page
+   * @apiParam {number} [limit=10] Size of page
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -169,7 +169,7 @@ export default class TransactionController extends KoaController {
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(100).description('Items per page'),
+      limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
       offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
@@ -238,9 +238,9 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [page=1] Page
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
-   * @apiParam {string} [order] 'ASC' or 'DESC'
-   * @apiParam {number} [from] Start time (millisecond)
-   * @apiParam {number} [to] End time (millisecond)
+   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
+   * @apiParam {number} [from] Timestamp from
+   * @apiParam {number} [to] Timestamp to
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -277,7 +277,7 @@ export default class TransactionController extends KoaController {
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(500).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
