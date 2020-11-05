@@ -53,7 +53,7 @@ export async function getRewards(height: number): Promise<Reward[]> {
     : blockResult.begin_block_events // columbus-4
 
   const decodedRewardsAndCommission: Reward[] = compact(
-    events.map((event) => {
+    (events || []).map((event) => {
       if (event.type !== 'proposer_reward' && event.type !== 'rewards' && event.type !== 'commission') {
         return
       }

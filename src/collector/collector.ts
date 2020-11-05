@@ -26,14 +26,15 @@ process.on('unhandledRejection', (err) => {
   })
 })
 
+const threeMinute = parseDuration('3m')
 const tenMinute = parseDuration('10m')
 const twentyMinute = parseDuration('20m')
 
 const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute) // 10 min timeout time as block collector has a loop
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger) // default 1 min timeout
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger) // default 1 min timeout
-const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger) // default 1 min timeout
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, tenMinute) // 10 min timeout
+const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, threeMinute) // default 1 min timeout
+const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute) // 10 min timeout
 const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger) // 1 min timeout
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute) // 20 mins as took 3 mins go get users count
 const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, tenMinute) // run once a day and huge data
