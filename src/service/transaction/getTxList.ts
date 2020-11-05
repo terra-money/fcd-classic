@@ -138,7 +138,7 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
 
   const totalCnt = await getTxTotalCount(param)
 
-  let distinctTxQuery = `SELECT DISTINCT ON (timestamp) tx_id, timestamp FROM account_tx WHERE account=$1 `
+  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
   const params = [param.account]
 
   if (param.action) {
@@ -158,18 +158,15 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {
-    distinctTxQuery += ` AND id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+    distinctTxQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
   }
 
-  const orderAndPageClause = ` ORDER BY timestamp ${order} ${!param.offset ? `OFFSET ${offset}` : ''} LIMIT ${Math.max(
+  const orderAndPageClause = ` ORDER BY tx_id ${order} ${!param.offset ? `OFFSET ${offset}` : ''} LIMIT ${Math.max(
     0,
     param.limit
   )}`
 
-  const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
-
-  const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
-
+  const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
   const txs = await getConnection().query(query, params)
 
   return {
