@@ -181,12 +181,7 @@ async function getTxs(data: GetTxListParam): Promise<GetTxsReturn> {
   const offset = data.limit * (data.page - 1)
   const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
-  const qb = getRepository(TxEntity)
-    .createQueryBuilder()
-    .where('chain_id = :chainId', { chainId: config.CHAIN_ID })
-    .skip(offset)
-    .take(data.limit)
-    .orderBy('timestamp', order)
+  const qb = getRepository(TxEntity).createQueryBuilder().skip(offset).take(data.limit).orderBy('timestamp', order)
 
   if (data.from) {
     qb.andWhere('timestamp >= :from', { from: getQueryDateTime(data.from) })
@@ -195,7 +190,9 @@ async function getTxs(data: GetTxListParam): Promise<GetTxsReturn> {
   if (data.to) {
     qb.andWhere('timestamp <= :to', { to: getQueryDateTime(data.to) })
   }
+
   const [txs, total] = await qb.getManyAndCount()
+
   return {
     totalCnt: total,
     page: data.page,
