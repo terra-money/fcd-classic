@@ -87,7 +87,7 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
-   * @apiParam {string} [order] 'asc' or 'desc'
+   * @apiParam {string} [order] 'ASC' or 'DESC'
    * @apiParam {string} [chainId=columbus-3] ChainId filter
    * @apiParam {number} [from] timestamp filter (from)
    * @apiParam {number} [to] timestamp filter (to)
@@ -163,7 +163,7 @@ export default class TransactionController extends KoaController {
       block: Joi.string()
         .allow('')
         .regex(/^\d{1,16}$/),
-      order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
+      order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       from: Joi.number().min(0).description('From timestamp unix time'),
@@ -238,7 +238,7 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [page=1] Page
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
-   * @apiParam {string} [order] 'asc' or 'desc'
+   * @apiParam {string} [order] 'ASC' or 'DESC'
    * @apiParam {number} [from] Start time (millisecond)
    * @apiParam {number} [to] End time (millisecond)
    *
@@ -273,7 +273,7 @@ export default class TransactionController extends KoaController {
       action: Joi.string()
         .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
         .description('Tx types'),
-      order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
+      order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
@@ -282,24 +282,7 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getMsgList(ctx): Promise<void> {
-    const { account, action, order } = ctx.request.query
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-    const from = +ctx.request.query.from
-    const to = +ctx.request.query.to
-
-    success(
-      ctx,
-      await getMsgList({
-        account,
-        action,
-        limit,
-        page,
-        from,
-        to,
-        order
-      })
-    )
+    success(ctx, await getMsgList(ctx.request.query))
   }
 
   /**

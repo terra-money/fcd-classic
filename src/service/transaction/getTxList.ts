@@ -91,11 +91,11 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   }
 }
 
-async function getTxTotalCount(data: GetTxListParam): Promise<number> {
-  if (!data.from && !data.to && !data.action) {
+async function getTxTotalCount(param: GetTxListParam): Promise<number> {
+  if (!param.from && !param.to && !param.action) {
     // get count from account entity
     const accountEntity = await getRepository(AccountEntity).findOne({
-      address: data.account
+      address: param.account
     })
 
     if (accountEntity) {
@@ -104,19 +104,19 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   }
 
   let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account=$1`
-  const params = [data.account]
+  const params = [param.account]
 
-  if (data.from) {
-    distinctQuery += ` AND timestamp >= '${getQueryDateTime(data.from)}'`
+  if (param.from) {
+    distinctQuery += ` AND timestamp >= '${getQueryDateTime(param.from)}'`
   }
 
-  if (data.to) {
-    distinctQuery += ` AND timestamp <= '${getQueryDateTime(data.to)}'`
+  if (param.to) {
+    distinctQuery += ` AND timestamp <= '${getQueryDateTime(param.to)}'`
   }
 
-  if (data.action) {
+  if (param.action) {
     distinctQuery = `${distinctQuery} AND type=$2`
-    params.push(data.action)
+    params.push(param.action)
   }
 
   const totalCntQuery = `SELECT COUNT(*) FROM (${distinctQuery}) t`
@@ -124,40 +124,40 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   return +get(totalCntResult, '0.count', 0)
 }
 
-export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
-  if (!data.account) {
+export async function getTxFromAccount(param: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
+  if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
 
-  if (!parseInt(data.limit as any, 10)) {
+  if (!parseInt(param.limit as any, 10)) {
     throw new TypeError('Invalid parameter: limit')
   }
 
-  if (!parseInt(data.page as any, 10)) {
+  if (!parseInt(param.page as any, 10)) {
     throw new TypeError('Invalid parameter: page')
   }
 
-  const totalCnt = await getTxTotalCount(data)
+  const totalCnt = await getTxTotalCount(param)
 
   let distinctTxQuery = `SELECT DISTINCT ON (timestamp) tx_id, timestamp FROM account_tx WHERE account=$1 `
-  const params = [data.account]
+  const params = [param.account]
 
-  if (data.action) {
+  if (param.action) {
     distinctTxQuery += ` AND type=$2`
-    params.push(data.action)
+    params.push(param.action)
   }
 
-  if (data.from) {
-    distinctTxQuery += ` AND timestamp >= '${getQueryDateTime(data.from)}'`
+  if (param.from) {
+    distinctTxQuery += ` AND timestamp >= '${getQueryDateTime(param.from)}'`
   }
 
-  if (data.to) {
-    distinctTxQuery += ` AND timestamp <= '${getQueryDateTime(data.to)}'`
+  if (param.to) {
+    distinctTxQuery += ` AND timestamp <= '${getQueryDateTime(param.to)}'`
   }
 
-  const offset = Math.max(0, data.limit * (data.page - 1))
-  const order: 'ASC' | 'DESC' = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const orderAndPageClause = ` ORDER BY timestamp ${order} OFFSET ${offset} LIMIT ${Math.max(0, data.limit)}`
+  const offset = Math.max(0, param.limit * (param.page - 1))
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+  const orderAndPageClause = ` ORDER BY timestamp ${order} OFFSET ${offset} LIMIT ${Math.max(0, param.limit)}`
 
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 
@@ -167,9 +167,9 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   return {
     totalCnt,
-    page: data.page,
-    limit: data.limit,
-    txs: parse ? await Promise.all(txs.map((tx) => parseTx(tx, data.account))) : txs
+    page: param.page,
+    limit: param.limit,
+    txs: parse ? await Promise.all(txs.map((tx) => parseTx(tx, param.account))) : txs
   }
 }
 

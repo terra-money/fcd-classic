@@ -64,8 +64,7 @@ export default class GovernanceController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getProposals(ctx): Promise<void> {
-    const { status } = ctx.request.query
-    success(ctx, await getProposals(status))
+    success(ctx, await getProposals(ctx.request.query.status))
   }
 
   /**
