@@ -2,12 +2,12 @@ import { get, chain } from 'lodash'
 import { getRepository, getConnection, FindConditions } from 'typeorm'
 
 import { BlockEntity, AccountEntity, TxEntity } from 'orm'
-import config from 'config'
 
 import { getQueryDateTime } from 'lib/time'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
+  offset?: number
   account?: string
   block?: string
   memo?: string
@@ -23,7 +23,7 @@ interface GetTxsReturn {
   totalCnt: number
   page: number
   limit: number
-  txs: ParsedTxInfo[] | Transaction.LcdTransaction[]
+  txs: ParsedTxInfo[] | ({ id: number } & Transaction.LcdTransaction)[]
 }
 
 export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn> {
@@ -54,7 +54,7 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     totalCnt: total,
     page: param.page,
     limit: param.limit,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 
@@ -80,9 +80,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   })
   const blockWithTxs = blocksWithTxs.length > 0 ? blocksWithTxs[0] : undefined
 
-  const txs: Transaction.LcdTransaction[] = blockWithTxs
-    ? blockWithTxs.txs.map((item) => item.data as Transaction.LcdTransaction)
-    : []
+  const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
   const offset = param.limit * (param.page - 1)
 
   return {
@@ -163,7 +161,7 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
 
   const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
 
-  const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
+  const query = `SELECT id, data, chain_id as "chainId" FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
 
   const txs = await getConnection().query(query, params)
 
@@ -171,33 +169,39 @@ export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Pr
     totalCnt,
     page: data.page,
     limit: data.limit,
-    txs: parse
-      ? await Promise.all(txs.map((tx) => parseTx(data.account)(tx)))
-      : txs.map((tx) => ({ ...tx.data, chainId: tx.chain_id }))
+    txs: parse ? await Promise.all(txs.map((tx) => parseTx(tx, data.account))) : txs
   }
 }
 
-async function getTxs(data: GetTxListParam): Promise<GetTxsReturn> {
-  const offset = data.limit * (data.page - 1)
-  const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
+  const offset = param.limit * (param.page - 1)
+  const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
-  const qb = getRepository(TxEntity).createQueryBuilder().skip(offset).take(data.limit).orderBy('timestamp', order)
+  const qb = getRepository(TxEntity)
+    .createQueryBuilder()
+    .skip(offset)
+    .take(param.limit + 1)
+    .orderBy('timestamp', order)
 
-  if (data.from) {
-    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(data.from) })
+  if (param.offset) {
+    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
   }
 
-  if (data.to) {
-    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(data.to) })
+  if (param.from) {
+    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
   }
 
-  const [txs, total] = await qb.getManyAndCount()
+  if (param.to) {
+    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(param.to) })
+  }
+
+  const txs = await qb.getMany()
 
   return {
-    totalCnt: total,
-    page: data.page,
-    limit: data.limit,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    totalCnt: -1,
+    page: param.page,
+    limit: param.limit,
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 

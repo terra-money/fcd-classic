@@ -5,7 +5,7 @@ import { TxEntity } from 'orm'
 type GetContractTxsParams = {
   page: number
   limit: number
-  contract_address: string
+  contractAddress: string
   sender?: string
 }
 
@@ -21,7 +21,7 @@ export async function getContractTxs({
   page,
   limit,
   sender,
-  contract_address
+  contractAddress
 }: GetContractTxsParams): Promise<{
   total: number
   page: number
@@ -29,7 +29,7 @@ export async function getContractTxs({
   contractTxs: Transaction.LcdTransaction[]
 }> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx')
-  addWasmContractTxFilter(qb, contract_address, sender)
+  addWasmContractTxFilter(qb, contractAddress, sender)
 
   const total = await qb.getCount()
 

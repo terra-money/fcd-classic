@@ -131,9 +131,7 @@ export default class GovernanceController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getIndividualProposal(ctx): Promise<void> {
-    const { proposalId } = ctx.params
-    const { account } = ctx.request.query
-    success(ctx, await getProposal(proposalId, account))
+    success(ctx, await getProposal(ctx.params.proposalId, ctx.request.query.account))
   }
 
   /**
@@ -172,16 +170,11 @@ export default class GovernanceController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getProposalDeposits(ctx): Promise<void> {
-    const { proposalId } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-
     success(
       ctx,
       await getDeposits({
-        proposalId,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -222,18 +215,11 @@ export default class GovernanceController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getProposalVotes(ctx): Promise<void> {
-    const { proposalId } = ctx.params
-    const page = ctx.request.query.page
-    const limit = ctx.request.query.limit
-    const { option } = ctx.request.query
-
     success(
       ctx,
       await getVotes({
-        proposalId,
-        page,
-        limit,
-        option
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }

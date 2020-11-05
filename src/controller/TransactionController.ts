@@ -73,8 +73,7 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    const { txhash } = ctx.params
-    success(ctx, await getTx(txhash))
+    success(ctx, await getTx(ctx.params.txhash))
   }
 
   /**
@@ -169,32 +168,13 @@ export default class TransactionController extends KoaController {
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(100).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTxList(ctx): Promise<void> {
-    const { account, action, block, order, memo, chainId } = ctx.request.query
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-    const from = +ctx.request.query.from
-    const to = +ctx.request.query.to
-
-    success(
-      ctx,
-      await getTxList({
-        account,
-        block,
-        action,
-        limit,
-        page,
-        from,
-        to,
-        order,
-        memo,
-        chainId
-      })
-    )
+    success(ctx, await getTxList(ctx.query))
   }
   /**
    * @api {post} /txs Broadcast Txs

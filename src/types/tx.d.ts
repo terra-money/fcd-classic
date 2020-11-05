@@ -105,6 +105,7 @@ interface ParsedTxMsgInfo {
 }
 
 interface ParsedTxInfo {
+  id: number
   timestamp: string
   txhash: string
   msgs: ParsedTxMsgInfo[]

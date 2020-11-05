@@ -55,7 +55,6 @@ export default class BankController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getAccountDetails(ctx) {
-    const { account } = ctx.params
-    success(ctx, await getBalance(account))
+    success(ctx, await getBalance(ctx.params.account))
   }
 }

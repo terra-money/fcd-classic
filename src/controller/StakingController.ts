@@ -85,10 +85,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getValidator(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const { account } = ctx.request.query
-
-    success(ctx, await getValidatorDetail(operatorAddr, account))
+    success(ctx, await getValidatorDetail(ctx.params.operatorAddr, ctx.request.query.account))
   }
 
   /**
@@ -167,16 +164,11 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getDelegationEvents(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-
     success(
       ctx,
       await getDelegationTxs({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -214,16 +206,11 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async claims(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-
     success(
       ctx,
       await getClaims({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -258,15 +245,11 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async delegators(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
     success(
       ctx,
       await getDelegators({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -353,9 +336,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingForAccount(ctx): Promise<void> {
-    const { account } = ctx.params
-
-    success(ctx, await getStaking(account))
+    success(ctx, await getStaking(ctx.params.account))
   }
 
   /**
@@ -418,8 +399,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const { stakingReturn } = await getValidatorAnnualAvgReturn(operatorAddr)
+    const { stakingReturn } = await getValidatorAnnualAvgReturn(ctx.params.operatorAddr)
     success(ctx, stakingReturn)
   }
 }

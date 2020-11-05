@@ -44,8 +44,7 @@ export default class TreasuryController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTotalSupply(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getTotalSupply(denom))
+    success(ctx, await getTotalSupply(ctx.params.denom))
   }
   /**
    * @api {get} /richlist/:denom Get richlist of coins
@@ -73,8 +72,7 @@ export default class TreasuryController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getRichList(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getRichList(denom, +ctx.request.query.page, +ctx.request.query.limit))
+    success(ctx, await getRichList(ctx.params.denom, ctx.request.query.page, ctx.request.query.limit))
   }
 
   /**
@@ -94,7 +92,6 @@ export default class TreasuryController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getCirculatingSupply(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getCirculatingSupply(denom))
+    success(ctx, await getCirculatingSupply(ctx.params.denom))
   }
 }
