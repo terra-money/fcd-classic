@@ -65,7 +65,7 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
     const amountObj = inputs.reduce((acc, input) => {
       input.coins.reduce((accInner, coin: Coin) => {
         if (coin.denom === 'uluna') {
-          return
+          return accInner
         }
 
         const taxCap = taxCaps && taxCaps[coin.denom] ? taxCaps[coin.denom] : '1000000'
