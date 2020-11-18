@@ -12,6 +12,6 @@ export function errorReport(error) {
 
 export function initializeSentry() {
   if (config.SENTRY_DSN && process.env.NODE_ENV === 'production') {
-    Sentry.init({ dsn: config.SENTRY_DSN })
+    Sentry.init({ dsn: config.SENTRY_DSN, environment: config.CHAIN_ID })
   }
 }
