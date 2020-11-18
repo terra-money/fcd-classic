@@ -141,7 +141,7 @@ export async function getLatestBlockInfo(): Promise<NewBlockInfo> {
   }
 }
 
-async function saveBlockInformation(
+export async function saveBlockInformation(
   lcdBlock: LcdBlock,
   lastSyncedBlock: BlockEntity | undefined
 ): Promise<BlockEntity | undefined> {

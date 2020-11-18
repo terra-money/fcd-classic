@@ -32,18 +32,13 @@ const twentyMinute = parseDuration('20m')
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
 export const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute)
+export const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute) // 10 min timeout
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
 const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, twentyMinute)
 const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, twentyMinute)
 
 const jobs = [
-  // Per second
-  {
-    method: blockCollector.run.bind(blockCollector),
-    cron: '* * * * * *'
-  },
   // Per minute
   {
     method: generalCollector.run.bind(generalCollector),
