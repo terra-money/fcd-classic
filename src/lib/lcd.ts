@@ -53,10 +53,21 @@ export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefi
   return get(`/txs/${hash}`)
 }
 
-export function getTxHash(txstring: string): string {
+function getTxHash(txstring: string): string {
   const s256Buffer = crypto.createHash(`sha256`).update(Buffer.from(txstring, `base64`)).digest()
   const txbytes = new Uint8Array(s256Buffer)
   return Buffer.from(txbytes.slice(0, 32)).toString(`hex`)
+}
+
+export function getTxHashesFromBlock(lcdBlock: LcdBlock): string[] {
+  const txStrings = lcdBlock.block.data.txs
+
+  if (!txStrings || !txStrings.length) {
+    return []
+  }
+
+  const hashes = txStrings.map(getTxHash)
+  return hashes
 }
 
 export function broadcast(body: { tx: Transaction.Value; mode: string }): Promise<Transaction.LcdPostTransaction> {
@@ -111,7 +122,7 @@ export async function getValidatorVotingPower(consensusPubkey: string): Promise<
   return filteredByAddr.length > 0 ? filteredByAddr[0] : undefined
 }
 
-export function getBlock(height: number): Promise<LcdBlock> {
+export function getBlock(height: string): Promise<LcdBlock> {
   return get(`/blocks/${height}`)
 }
 

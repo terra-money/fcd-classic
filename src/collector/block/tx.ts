@@ -43,6 +43,7 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
     return []
   }
+
   if (msg.type === 'bank/MsgSend') {
     const amount = get(msg, 'value.amount')
     return compact(
@@ -58,6 +59,7 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
       })
     )
   }
+
   if (msg.type === 'bank/MsgMultiSend') {
     const inputs = get(msg, 'value.inputs')
     const amountObj = inputs.reduce((acc, input) => {
@@ -124,6 +126,7 @@ async function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCa
     taxArr.push(taxPerMsg)
     return acc
   }, feeObj)
+
   // failed tx
   if (!lcdTx.logs || lcdTx.logs.length !== taxArr.length) {
     return

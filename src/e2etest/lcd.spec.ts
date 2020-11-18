@@ -120,15 +120,15 @@ describe('LCD', () => {
   })
 
   test('getBlock: invalid', async () => {
-    await expect(lcd.getBlock(0)).toReject()
+    await expect(lcd.getBlock('0')).toReject()
   })
 
   test('getBlock: not found', async () => {
-    await expect(lcd.getBlock(Number.MAX_SAFE_INTEGER)).resolves.toBeUndefined()
+    await expect(lcd.getBlock(Number.MAX_SAFE_INTEGER.toString())).resolves.toBeUndefined()
   })
 
   test('getBlock: success', async () => {
-    await expect(lcd.getBlock(1)).resolves.toMatchObject({
+    await expect(lcd.getBlock('1')).resolves.toMatchObject({
       block: {}
     })
   })

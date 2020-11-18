@@ -18,15 +18,6 @@ import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
 
-function getTxHashesFromBlock(block: LcdBlock): string[] {
-  const txStrings = get(block, 'block.data.txs')
-  if (!txStrings || !txStrings.length) {
-    return []
-  }
-  const hashes = txStrings.map(lcd.getTxHash)
-  return hashes
-}
-
 async function getRecentlySyncedBlock(): Promise<BlockEntity | undefined> {
   const latestBlock = await getRepository(BlockEntity).find({
     where: {
@@ -170,7 +161,7 @@ async function saveBlockInformation(
         .getRepository(BlockEntity)
         .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
       // get block tx hashes
-      const txHashes = getTxHashesFromBlock(lcdBlock)
+      const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 
       if (txHashes) {
         const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
@@ -215,7 +206,7 @@ export async function collectBlock(): Promise<void> {
   let lastSyncedBlock = await getRecentlySyncedBlock()
 
   while (nextSyncHeight <= latestHeight) {
-    const lcdBlock = await lcd.getBlock(nextSyncHeight)
+    const lcdBlock = await lcd.getBlock(nextSyncHeight.toString())
 
     if (!lcdBlock) {
       break
