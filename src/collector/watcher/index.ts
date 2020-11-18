@@ -28,11 +28,11 @@ async function collectorValidators(data: RpcResponse) {
       const votingPower = await lcd.getVotingPower()
       const activePrices = await lcd.getActiveOraclePrices()
 
-      await Bluebird.map(addresses, async (addr) => {
-        const lcdValidator = await lcd.getValidator(addr)
-        console.log(lcdValidator)
-        return lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower })
-      })
+      await Bluebird.map(addresses, (addr) =>
+        lcd
+          .getValidator(addr)
+          .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
+      )
     } catch (err) {
       sentry.captureException(err)
     }
@@ -50,7 +50,7 @@ export async function rpcEventWatcher() {
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
-    Promise.all([blockCollector.run(), collectorValidators(data)]).catch(sentry.captureException)
+    await Promise.all([blockCollector.run(), collectorValidators(data)]).catch(sentry.captureException)
   })
 
   await watcher.start()

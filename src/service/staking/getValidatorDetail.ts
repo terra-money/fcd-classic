@@ -118,6 +118,6 @@ export async function getValidatorDetailUncached(
 
 export const getValidatorDetail = memoizeCache(getValidatorDetailUncached, {
   promise: true,
-  maxAge: 300 * 1000 /* 5 minutes */
+  maxAge: 10 * 1000 // 10 seconds
 })
 export default getValidatorDetail
