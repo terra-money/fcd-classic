@@ -172,10 +172,14 @@ export default class RPCWatcher {
   /**
    * start listening to socket for data
    */
-  async start(detach: boolean = false) {
+  async start() {
     this.logger.info('Starting watcher')
     this.initConnection()
     this.client.connect(this.url)
+  }
+
+  restart() {
+    this.connection && this.connection.close()
   }
 
   /**

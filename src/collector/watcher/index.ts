@@ -40,18 +40,34 @@ async function collectorValidators(data: RpcResponse) {
 }
 
 export async function rpcEventWatcher() {
+  let eventCounter = 0
+
   const watcher = new RPCWatcher({
     url: SOCKET_URL,
     logger
   })
 
   watcher.registerSubscriber(GOVERNANCE_Q, (data: RpcResponse) => {
+    eventCounter += 1
     proposalCollector.run().catch(sentry.captureException)
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
+    eventCounter += 1
     await Promise.all([blockCollector.run(), collectorValidators(data)]).catch(sentry.captureException)
   })
 
   await watcher.start()
+
+  const checkRestart = () => {
+    if (eventCounter === 0) {
+      logger.info('watcher: event counter is zero. restarting..')
+      watcher.restart()
+    }
+
+    eventCounter = 0
+    setTimeout(checkRestart, 60000)
+  }
+
+  setTimeout(checkRestart, 60000)
 }
