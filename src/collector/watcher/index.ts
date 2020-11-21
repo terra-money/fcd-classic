@@ -59,10 +59,11 @@ export async function rpcEventWatcher() {
 
   await watcher.start()
 
-  const checkRestart = () => {
+  const checkRestart = async () => {
     if (eventCounter === 0) {
       logger.info('watcher: event counter is zero. restarting..')
-      watcher.restart()
+      await rpcEventWatcher()
+      return
     }
 
     eventCounter = 0
