@@ -314,8 +314,16 @@ export async function getOraclePrice(denom: string): Promise<{ denom: string; pr
   }
 }
 
-export function getOracleActives(): Promise<string[]> {
-  return get(`/oracle/denoms/actives`)
+export async function getOracleActives(): Promise<string[]> {
+  const res = await get(`/oracle/denoms/actives`)
+
+  // from columbus-3
+  if (Array.isArray(res)) {
+    return res
+  }
+
+  // columbus-2 compatibility
+  return res.actives || []
 }
 
 export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
