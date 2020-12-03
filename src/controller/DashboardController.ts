@@ -250,7 +250,7 @@ export default class DashboardController extends KoaController {
   }
 
   /**
-   * @api {get} /dashboard/last_hour_ops_txs Get registered accounts count history
+   * @api {get} /dashboard/last_hour_ops_txs_count Get registered accounts count history
    * @apiName getLastHourTxAndOpsCount
    * @apiGroup Dashboard
    *
@@ -258,7 +258,7 @@ export default class DashboardController extends KoaController {
    * @apiSuccess {Number} last_1h_tx total txs count in last hour
    */
 
-  @Get('/last_hour_ops_txs')
+  @Get('/last_hour_ops_txs_count')
   @Validate({})
   async lastHourOpsAndTxs(ctx): Promise<void> {
     success(ctx, await lastHourOpsAndTxs())
