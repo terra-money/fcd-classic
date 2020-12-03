@@ -12,7 +12,8 @@ import {
   getStakingRatio,
   getAccountGrowth,
   getActiveAccounts,
-  getRegisteredAccounts
+  getRegisteredAccounts,
+  lastHourOpsAndTxs
 } from 'service/dashboard'
 
 const Joi = Validator.Joi
@@ -246,5 +247,20 @@ export default class DashboardController extends KoaController {
   })
   async registeredAccounts(ctx): Promise<void> {
     success(ctx, await getRegisteredAccounts(+ctx.request.query.count))
+  }
+
+  /**
+   * @api {get} /dashboard/last_hour_ops_txs Get registered accounts count history
+   * @apiName getLastHourTxAndOpsCount
+   * @apiGroup Dashboard
+   *
+   * @apiSuccess {Number} last_1h_op total ops count in last hour
+   * @apiSuccess {Number} last_1h_tx total txs count in last hour
+   */
+
+  @Get('/last_hour_ops_txs')
+  @Validate({})
+  async lastHourOpsAndTxs(ctx): Promise<void> {
+    success(ctx, await lastHourOpsAndTxs())
   }
 }
