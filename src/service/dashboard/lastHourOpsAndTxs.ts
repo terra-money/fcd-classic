@@ -24,11 +24,11 @@ async function getMultiSendOpsCount(startTime: string, endTime: string): Promise
         AND data->'tx'->'value'->'msg'@>'[{ "type": "bank/MsgMultiSend"}]'`
 
   const opsCount: {
-    ops: number
+    ops: string
   }[] = await getConnection().query(rawQ, [startTime, endTime])
 
   if (opsCount.length > 0) {
-    return opsCount[0].ops
+    return Number(opsCount[0].ops)
   }
   return 0
 }
