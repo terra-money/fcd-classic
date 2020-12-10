@@ -32,6 +32,11 @@ async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: 
         }
 
         const amount = get(msg, 'value.amount')
+        const msgType = get(msg, 'type')
+        if (msgType !== 'bank/MsgSend') {
+          // we only need to check send msg
+          return
+        }
         Array.isArray(amount) &&
           amount.forEach((item) => {
             volumeByCurrency[item.denom] = volumeByCurrency[item.denom]
@@ -65,10 +70,14 @@ async function getVolumeFromMultiSend(timestamp: number): Promise<{ [denom: stri
         }
 
         const inputs = get(msg, 'value.inputs')
-
-        inputs &&
+        const msgType = get(msg, 'type')
+        if (msgType !== 'bank/MsgMultiSend') {
+          // only need to check bank MsgMultiSend
+          return
+        }
+        Array.isArray(inputs) &&
           inputs.forEach((input) => {
-            input.coins &&
+            Array.isArray(input.coins) &&
               input.coins.forEach((coin) => {
                 volumeByCurrency[coin.denom] = volumeByCurrency[coin.denom]
                   ? plus(volumeByCurrency[coin.denom], coin.amount)
