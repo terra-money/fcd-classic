@@ -32,7 +32,7 @@ async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: 
         }
 
         const amount = get(msg, 'value.amount')
-        amount &&
+        Array.isArray(amount) &&
           amount.forEach((item) => {
             volumeByCurrency[item.denom] = volumeByCurrency[item.denom]
               ? plus(volumeByCurrency[item.denom], item.amount)
