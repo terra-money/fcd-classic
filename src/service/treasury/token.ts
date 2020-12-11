@@ -130,9 +130,9 @@ const ASSETS_BY_SYMBOL: {
   return prev
 }, {})
 
-const SYMBOLS = Object.keys(ASSETS).map((address) => ASSETS[address].symbol.toLowerCase())
+export const TOKEN_SYMBOLS = Object.keys(ASSETS).map((address) => ASSETS[address].symbol.toLowerCase())
 
-export const isToken = (symbol: string) => SYMBOLS.includes(symbol.toLowerCase())
+export const isToken = (symbol: string) => TOKEN_SYMBOLS.includes(symbol.toLowerCase())
 
 async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply: string }> {
   const res = await rp('https://graph.mirror.finance/graphql', {
