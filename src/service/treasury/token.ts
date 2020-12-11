@@ -1,5 +1,6 @@
 import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
+import { div } from 'lib/math'
 
 const ASSETS = {
   terra15gwkyepfc6xgca5t5zefzwy42uts8l2m4g40k6: {
@@ -159,8 +160,8 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
   }
 
   return {
-    totalSupply: res.data.statistic.mirTotalSupply,
-    circulatingSupply: res.data.statistic.mirCirculatingSupply
+    totalSupply: div(res.data.statistic.mirTotalSupply, 1000000),
+    circulatingSupply: div(res.data.statistic.mirCirculatingSupply, 1000000)
   }
 }
 
@@ -191,5 +192,5 @@ export async function getTotalSupply(symbol: string): Promise<string> {
     return ''
   }
 
-  return res.total_supply
+  return div(res.total_supply, 1000000)
 }
