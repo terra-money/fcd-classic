@@ -1,5 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { uniq, flatten, compact } from 'lodash'
+import { uniq } from 'lodash'
 import * as sentry from '@sentry/node'
 import { unmarshalTx } from '@terra-money/amino-js'
 import { collectorLogger as logger } from 'lib/logger'
@@ -22,8 +22,16 @@ async function collectorValidators(data: RpcResponse) {
 
   if (marshalTxs) {
     try {
+      // decode amino transactions
       const txs = marshalTxs.map((tx) => unmarshalTx(Buffer.from(tx, 'base64')))
-      const addresses = compact(uniq(flatten(txs.map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX)))))
+
+      // extract validator addresses from string
+      const addresses = uniq(
+        txs
+          .map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX))
+          .flat()
+          .filter(Boolean) as string[]
+      )
 
       const votingPower = await lcd.getVotingPower()
       const activePrices = await lcd.getActiveOraclePrices()
@@ -54,6 +62,7 @@ export async function rpcEventWatcher() {
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
     eventCounter += 1
+
     await Promise.all([blockCollector.run(), collectorValidators(data)]).catch(sentry.captureException)
   })
 

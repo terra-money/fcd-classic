@@ -1,4 +1,4 @@
-import { get, flatten, compact } from 'lodash'
+import { get } from 'lodash'
 import { isSuccessfulTx } from 'lib/tx'
 import { getRawDelegationTxs } from './helper'
 
@@ -100,7 +100,11 @@ function extractEvents(
 
 export default async function getDelegationTxs(data: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
   const rawTxs = await getRawDelegationTxs(data)
-  const events = compact(flatten(rawTxs.txs.filter(isSuccessfulTx).map((tx) => extractEvents(tx, data.operatorAddr))))
+  const events = rawTxs.txs
+    .filter(isSuccessfulTx)
+    .map((tx) => extractEvents(tx, data.operatorAddr))
+    .flat()
+    .filter(Boolean)
 
   return {
     totalCnt: rawTxs.totalCnt,

@@ -1,8 +1,7 @@
 import { getRepository } from 'typeorm'
-import { get, chain, flatten, compact } from 'lodash'
+import { get, chain, compact } from 'lodash'
 
 import { ProposalEntity } from 'orm'
-import config from 'config'
 
 import { APIError, ErrorTypes } from 'lib/error'
 import getAccountInfo from './helper/getAccountInfo'
@@ -81,18 +80,17 @@ export default async function getProposalDeposits(input: GetProposalDepositsInpu
   }
 
   const depositTxs = await Promise.all(proposal.depositTxs.txs.map((tx) => getDepositFromTx(tx)))
-  const txsExceptZeroDeposit = flatten(depositTxs).filter((tx) => tx.deposit.length > 0)
+  const txsExceptZeroDeposit = depositTxs.flat().filter((tx) => tx.deposit.length > 0)
 
   return {
     totalCnt: txsExceptZeroDeposit.length,
     page,
     limit,
-    deposits: flatten(
-      chain(txsExceptZeroDeposit)
-        .reverse()
-        .drop((page - 1) * limit)
-        .take(limit)
-        .value()
-    )
+    deposits: chain(txsExceptZeroDeposit)
+      .reverse()
+      .drop((page - 1) * limit)
+      .take(limit)
+      .value()
+      .flat()
   }
 }

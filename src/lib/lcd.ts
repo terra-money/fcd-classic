@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 import * as rp from 'request-promise'
-import { compact, flatten, get as lodashGet, filter } from 'lodash'
 
 import config from 'config'
 
@@ -118,8 +117,7 @@ export async function getVotingPower(): Promise<LcdVotingPower> {
 export async function getValidatorVotingPower(consensusPubkey: string): Promise<LcdLatestValidator | undefined> {
   const latestValidatorSet = await getLatestValidatorSet()
   const { validators } = latestValidatorSet
-  const filteredByAddr = filter(validators, { pub_key: consensusPubkey })
-  return filteredByAddr.length > 0 ? filteredByAddr[0] : undefined
+  return validators.find((v) => v.pub_key === consensusPubkey)
 }
 
 export function getBlock(height: string): Promise<LcdBlock> {
@@ -176,7 +174,7 @@ export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'
 
   const [bonded, unbonded, unbonding] = await Promise.all([get(urlBonded), get(urlUnbonded), get(urlUnbonding)])
 
-  return flatten([bonded, unbonded, unbonding])
+  return [bonded, unbonded, unbonding].flat()
 }
 
 export async function getValidator(operatorAddr: string): Promise<LcdValidator | undefined> {
@@ -335,8 +333,11 @@ export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
 
   const denomsPrices = await Promise.all(activeDenomsResponse.map((denom) => getOraclePrice(denom)))
 
-  return compact(denomsPrices).reduce((prev, item) => {
-    prev[item.denom] = item.price
+  return denomsPrices.filter(Boolean).reduce((prev, item) => {
+    if (item) {
+      prev[item.denom] = item.price
+    }
+
     return prev
   }, {})
 }
@@ -404,4 +405,8 @@ export async function getTaxRate(height?: string): Promise<string> {
 export async function getTaxCap(denom: string, height?: string): Promise<string> {
   const taxCaps = await get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
   return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
+}
+
+export async function getContractStore(contractAddress: string, query: any): Promise<Record<string, unknown>> {
+  return get(`/wasm/contracts/${contractAddress}/store?query_msg=${JSON.stringify(query)}`)
 }

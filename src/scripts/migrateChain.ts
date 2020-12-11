@@ -4,7 +4,7 @@
 import * as fs from 'fs'
 import * as Bluebird from 'bluebird'
 import { getConnection, EntityManager } from 'typeorm'
-import { chunk, find, flatten } from 'lodash'
+import { chunk, find } from 'lodash'
 import { init as initORM, BlockEntity, TxEntity, AccountTxEntity, AccountEntity } from 'orm'
 
 async function migrate() {
@@ -29,7 +29,7 @@ async function migrate() {
   */
   await getConnection('mainnet').manager.transaction(async (mgr: EntityManager) => {
     // Block
-    const newBlocks = flatten(
+    const newBlocks = (
       await Bluebird.mapSeries(chunk(blocks, 10000), (blockChunk) =>
         mgr.getRepository(BlockEntity).save(
           blockChunk.map((b) => ({
@@ -39,7 +39,7 @@ async function migrate() {
           }))
         )
       )
-    )
+    ).flat()
 
     // Tx
     const txs = await src.getRepository(TxEntity).find({ order: { timestamp: 'ASC' }, relations: ['block'] })

@@ -1,7 +1,6 @@
 import { getRepository } from 'typeorm'
-import { chain, flatten, get, compact, reverse, filter } from 'lodash'
+import { chain, get, reverse, filter } from 'lodash'
 
-import config from 'config'
 import { ProposalEntity } from 'orm'
 
 import { APIError, ErrorTypes } from 'lib/error'
@@ -59,7 +58,7 @@ async function getVoteFromTx(tx) {
       voter: await getAccountInfo(voter)
     }
   }
-  return compact(await Promise.all(msgs.map(mapMsgToVote)))
+  return (await Promise.all(msgs.map(mapMsgToVote))).filter(Boolean)
 }
 
 function getUniqueVote(txs, option?: string) {
@@ -100,7 +99,7 @@ export default async function getProposalVotes(
     }
   }
 
-  const voteTxs = flatten(await Promise.all(proposal.voteTxs.txs.map(getVoteFromTx)))
+  const voteTxs = (await Promise.all(proposal.voteTxs.txs.map(getVoteFromTx))).flat()
   const uniqueVoteTxs = getUniqueVote(voteTxs, option)
 
   return {
