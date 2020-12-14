@@ -1,4 +1,4 @@
-import { flatten, filter, reverse, uniqBy } from 'lodash'
+import { reverse, uniqBy } from 'lodash'
 import * as Bluebird from 'bluebird'
 
 import * as lcd from 'lib/lcd'
@@ -40,14 +40,16 @@ function getVotersVotingPowerArr(
 ): ValidatorVotingPower[] {
   delegations.forEach((delegation) => {
     const { delegator_address: delegatorAddress, validator_address: validatorAddress, shares } = delegation
-    const validator = filter(validatorsVotingPower, { operatorAddress: validatorAddress })[0]
-    const delegator = filter(validatorsVotingPower, { accountAddress: delegatorAddress })[0]
+    const validator = validatorsVotingPower.find((v) => v.operatorAddress === validatorAddress)
+    const delegator = validatorsVotingPower.find((v) => v.accountAddress === delegatorAddress)
 
     if (!validator) {
-      errorReport(new Error(`ProposalVote: GET Validator Info Failed. ${validatorAddress}`))
+      errorReport(new Error(`ProposalVote: cannot find validator ${validatorAddress}`))
+      return
     }
 
     validator.votingPower = minus(validator.votingPower, shares)
+
     if (delegator) {
       delegator.votingPower = plus(delegator.votingPower, shares)
     } else {
@@ -125,11 +127,11 @@ export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary
   }
 
   const uniqueUserVotes = uniqBy(reverse(votes), 'voter') // can vote multiple times, doing reverse will took the latest votes
-  const votersDelegations = flatten(await Bluebird.map(uniqueUserVotes, (vote) => lcd.getDelegations(vote.voter)))
+  const votersDelegations = (await Bluebird.map(uniqueUserVotes, (vote) => lcd.getDelegations(vote.voter))).flat()
   const validatorsVotingPower = await getValidatorsVotingPower()
   const votersVotingPowerArr = getVotersVotingPowerArr(validatorsVotingPower, votersDelegations)
   uniqueUserVotes.forEach((vote) => {
-    const votingPower = filter(votersVotingPowerArr, { accountAddress: vote.voter })[0]
+    const votingPower = votersVotingPowerArr.find((v) => v.accountAddress === vote.voter)
 
     if (!votingPower) {
       return

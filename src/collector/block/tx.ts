@@ -1,6 +1,6 @@
 import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
-import { get, min, compact, flatten, uniq } from 'lodash'
+import { get, min, compact, uniq } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
 import config from 'config'
@@ -323,6 +323,6 @@ export async function saveTxs(
   await transactionEntityManager.save(updatedAccountEntity)
   logger.info(`SaveAccountTx - Height: ${block.height}, ${updatedAccountEntity.length} account updated.`)
 
-  const accountTxEntities = await transactionEntityManager.save(flatten(accountTxDocsArray))
+  const accountTxEntities = await transactionEntityManager.save(accountTxDocsArray.flat())
   logger.info(`SaveAccountTx - Height: ${block.height}, ${accountTxEntities.length} accountTxs saved.`)
 }

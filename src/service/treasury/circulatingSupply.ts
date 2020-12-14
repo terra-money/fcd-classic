@@ -3,8 +3,13 @@ import { UnvestedEntity } from 'orm'
 import { minus, div } from 'lib/math'
 import { currencyToDenom, isActiveCurrency } from 'lib/common'
 import { getTotalSupply } from './totalSupply'
+import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from './token'
 
 export async function getCirculatingSupply(input: string): Promise<string> {
+  if (isToken(input)) {
+    return getTokenCirculatingSupply(input)
+  }
+
   const denom = isActiveCurrency(input) ? currencyToDenom(input.toLowerCase()) : input
   const totalSupply = await getTotalSupply(denom)
   const unvested = await getRepository(UnvestedEntity).find({

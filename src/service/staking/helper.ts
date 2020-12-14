@@ -1,4 +1,4 @@
-import { get, orderBy, flatten } from 'lodash'
+import { get, orderBy } from 'lodash'
 import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
 import { startOfDay } from 'date-fns'
 
@@ -303,8 +303,8 @@ export function getUndelegateSchedule(
   validatorObj: { [validatorAddress: string]: ValidatorResponse }
 ): UndeligationSchedule[] {
   return orderBy(
-    flatten(
-      unbondings.map((unbonding: LcdUnbonding) => {
+    unbondings
+      .map((unbonding: LcdUnbonding) => {
         const { validator_address, entries } = unbonding
         const validatorName: string = get(validatorObj, `${validator_address}`).description.moniker
         const validatorStatus: string = get(validatorObj, `${validator_address}`).status
@@ -319,7 +319,7 @@ export function getUndelegateSchedule(
           }
         })
       })
-    ),
+      .flat(),
     ['releaseTime'],
     ['asc']
   )
