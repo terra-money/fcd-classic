@@ -1,7 +1,16 @@
 import { getRepository } from 'typeorm'
 import { RichListEntity } from 'orm'
+import { isToken, getRichList as getTokenRichList } from './token'
 
-export async function getRichList(denom: string, page: number, limit: number): Promise<RichListEntity[]> {
+export async function getRichList(
+  denom: string,
+  page: number,
+  limit: number
+): Promise<{ account: string; amount: string }[]> {
+  if (isToken(denom)) {
+    return getTokenRichList(denom, page, limit)
+  }
+
   if (!denom || limit < 1 || page < 1) {
     throw new Error('invalid parameter')
   }
@@ -9,7 +18,7 @@ export async function getRichList(denom: string, page: number, limit: number): P
   const offset = limit * (page - 1)
 
   return getRepository(RichListEntity).find({
-    select: ['account', 'amount', 'percentage'],
+    select: ['account', 'amount'],
     where: {
       denom
     },
