@@ -1,7 +1,5 @@
-import { get, flatten, take, drop, compact } from 'lodash'
-
+import { get } from 'lodash'
 import { isSuccessfulTx } from 'lib/tx'
-
 import { getRawDelegationTxs } from './helper'
 
 export interface GetDelegationEventsParam {
@@ -12,8 +10,30 @@ export interface GetDelegationEventsParam {
   to?: string // datetime
 }
 
-function eventMapper(height: string, valOpAddr: string, timestamp) {
-  return (msg): GetDelegationEventsReturn | undefined => {
+interface GetDelegationEventsReturn {
+  chainId: string
+  height: string // TODO: remove
+  txhash: string
+  type: string
+  amount: Coin
+  timestamp: string
+}
+
+interface DelegationTxsReturn {
+  totalCnt: number // total tx
+  page: number // tx page no of pagination
+  limit: number // tx count per page
+  events: GetDelegationEventsReturn[]
+}
+
+function extractEvents(
+  tx: Transaction.LcdTransaction & { chainId: string },
+  valOpAddr: string
+): GetDelegationEventsReturn[] {
+  const msgs = get(tx, 'tx.value.msg')
+  const { chainId, height, timestamp, txhash } = tx
+
+  return msgs.map((msg): GetDelegationEventsReturn | undefined => {
     switch (msg.type) {
       case 'staking/MsgDelegate': {
         if (get(msg, 'value.validator_address') !== valOpAddr) {
@@ -25,7 +45,7 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
           denom: get(msg, 'value.amount.denom'),
           amount: get(msg, 'value.amount.amount')
         }
-        return { height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgCreateValidator': {
         if (get(msg, 'value.validator_address') !== valOpAddr) {
@@ -37,7 +57,7 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
           denom: get(msg, 'value.value.denom'),
           amount: get(msg, 'value.value.amount')
         }
-        return { height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgBeginRedelegate': {
         const srcAddr = get(msg, 'value.validator_src_address')
@@ -57,7 +77,7 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
           denom: 'uluna',
           amount: amt
         }
-        return { height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       case 'staking/MsgUndelegate': {
         if (get(msg, 'value.validator_address') !== valOpAddr) {
@@ -69,28 +89,27 @@ function eventMapper(height: string, valOpAddr: string, timestamp) {
           denom: get(msg, 'value.amount.denom'),
           amount: `-${get(msg, 'value.amount.amount')}`
         }
-        return { height, type, amount, timestamp }
+        return { chainId, height, txhash, type, amount, timestamp }
       }
       default: {
         return undefined
       }
     }
-  }
+  })
 }
 
 export default async function getDelegationTxs(data: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
   const rawTxs = await getRawDelegationTxs(data)
-
-  const result = rawTxs.txs.filter(isSuccessfulTx).map((tx: any) => {
-    const msgs = get(tx, 'tx.value.msg')
-    return msgs.map(eventMapper(tx.height, data.operatorAddr, tx.timestamp))
-  })
-  const events: GetDelegationEventsReturn[] = compact(flatten(result))
+  const events = rawTxs.txs
+    .filter(isSuccessfulTx)
+    .map((tx) => extractEvents(tx, data.operatorAddr))
+    .flat()
+    .filter(Boolean)
 
   return {
-    totalCnt: events.length,
+    totalCnt: rawTxs.totalCnt,
     page: data.page,
     limit: data.limit,
-    events: take(drop(events, (data.page - 1) * data.limit), data.limit)
+    events
   }
 }

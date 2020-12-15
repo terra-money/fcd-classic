@@ -1,4 +1,4 @@
-import { get, flatten, filter, compact } from 'lodash'
+import { get } from 'lodash'
 
 import { TxEntity } from 'orm'
 
@@ -12,7 +12,9 @@ export interface GetClaimsParam {
 }
 
 interface DelegationClaim {
-  tx: string // tx hash of clain
+  chainId: string
+  txhash: string
+  tx: string // tx hash of claim, TODO: remove
   type: string // tx types like reward, commission
   amounts: Coin[] // amounts in with their denoms
   timestamp: string // tx timestamp
@@ -34,13 +36,23 @@ function getClaimFromCol2(tx) {
       let type: string
       let amounts: Coin[]
 
-      if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+      if (msgType === 'cosmos-sdk/MsgWithdrawValidatorCommission') {
+        // columbus-1
+        type = 'Commission'
+        amounts = []
+      } else if (msgType === 'cosmos-sdk/MsgWithdrawDelegationReward') {
+        // columbus-1
+        type = 'Reward'
+        amounts = []
+      } else if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+        // columbus-2
         type = 'Commission'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')
           .map(splitDenomAndAmount)
         tagIndex += 3
       } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
+        // columbus-2
         type = 'Reward'
         amounts = get(tags, `[${tagIndex + 1}].value`, '')
           .split(',')
@@ -51,6 +63,7 @@ function getClaimFromCol2(tx) {
       }
 
       return {
+        chainId: tx.chainId,
         tx: tx.data['txhash'],
         type,
         amounts: sortDenoms(amounts),
@@ -60,57 +73,58 @@ function getClaimFromCol2(tx) {
   )
 }
 
-function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
-  return compact(
-    flatten(
-      txs.map((tx) => {
-        const events = get(tx, 'data.events')
-        if (!events) {
-          return getClaimFromCol2(tx)
+function parseTxEntity(tx: TxEntity) {
+  if (get(tx, 'data.tags')) {
+    return getClaimFromCol2(tx)
+  }
+
+  const msgs = get(tx, 'data.tx.value.msg')
+  return (
+    msgs &&
+    msgs.map((msg, i: number) => {
+      const msgType = get(msg, 'type')
+      const events = get(tx, `data.logs.${i}.events`)
+
+      let type: string
+      let amounts: Coin[]
+
+      if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+        type = 'Commission'
+
+        const withdrawEvent = events.find((e) => e.type === 'withdraw_commission')
+
+        if (!withdrawEvent) {
+          return null
         }
 
-        const msgs = get(tx, 'data.tx.value.msg')
-        return (
-          msgs &&
-          msgs.map((msg, i: number) => {
-            const msgType = get(msg, 'type')
-            const events = get(tx, `data.logs.${i}.events`)
+        amounts = get(withdrawEvent, 'attributes.0.value', '').split(',').map(splitDenomAndAmount)
+      } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
+        type = 'Reward'
+        const withdrawEvent = events.find((e) => e.type === 'withdraw_rewards')
 
-            let type: string
-            let amounts: Coin[]
+        if (!withdrawEvent) {
+          return null
+        }
 
-            if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
-              type = 'Commission'
+        amounts = get(withdrawEvent, 'attributes.0.value', '').split(',').map(splitDenomAndAmount)
+      } else {
+        return null
+      }
 
-              const withdrawEvents = filter(events, { type: 'withdraw_commission' })
-              if (!withdrawEvents || withdrawEvents.length === 0) {
-                return null
-              }
-              const amountStr = get(withdrawEvents[0], 'attributes.0.value', '')
-              amounts = amountStr.split(',').map(splitDenomAndAmount)
-            } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
-              type = 'Reward'
-              const withdrawEvents = filter(events, { type: 'withdraw_rewards' })
-              if (!withdrawEvents || withdrawEvents.length === 0) {
-                return null
-              }
-              const amountStr = get(withdrawEvents[0], 'attributes.0.value', '')
-              amounts = amountStr.split(',').map(splitDenomAndAmount)
-            } else {
-              return null
-            }
-
-            return {
-              tx: tx.data['txhash'],
-              type,
-              amounts: sortDenoms(amounts),
-              timestamp: tx.data['timestamp']
-            }
-          })
-        )
-      })
-    )
+      return {
+        chainId: tx.chainId,
+        txhash: tx.data['txhash'],
+        tx: tx.data['txhash'], // TODO: remove
+        type,
+        amounts: sortDenoms(amounts),
+        timestamp: tx.data['timestamp']
+      }
+    })
   )
+}
+
+function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
+  return txs.map(parseTxEntity).flat().filter(Boolean)
 }
 
 interface ClaimTxReturn {

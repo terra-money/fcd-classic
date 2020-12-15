@@ -21,8 +21,8 @@ export type ConvertedSchedule = {
 
 type ConvertedSchedulesByDenom = { [denom: string]: ConvertedSchedule[] }
 
-export function convertSchedules(array?: VestingLazySchedule[]): ConvertedSchedulesByDenom {
-  const reducer = (acc: object, { schedules, denom }: VestingLazySchedule) => {
+export function convertSchedules(array?: VestingSchedules[]): ConvertedSchedulesByDenom {
+  const reducer = (acc: object, { schedules, denom }: VestingSchedules) => {
     const mapSchedule = ({ start_time, end_time, ratio }: Schedule) => ({
       startTime: Number(start_time) * 1000,
       endTime: Number(end_time) * 1000,
@@ -33,16 +33,7 @@ export function convertSchedules(array?: VestingLazySchedule[]): ConvertedSchedu
   return Array.isArray(array) ? array.reduce(reducer, {}) : {}
 }
 
-type Params = {
-  account: NormalizedAccount
-  delegations: any[]
-  unbondings?: any[]
-  latestBlockTimestamp: number
-}
-
-export default (params: Params): Balance[] => {
-  const { account, unbondings, latestBlockTimestamp } = params
-
+const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTimestamp: number): Balance[] => {
   /* normailze */
   const { value, vesting_schedules } = account
   const { original_vesting, delegated_vesting } = account
@@ -106,3 +97,5 @@ export default (params: Params): Balance[] => {
 
   return available
 }
+
+export default calculate

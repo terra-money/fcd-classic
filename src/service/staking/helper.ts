@@ -1,7 +1,8 @@
-import { get, orderBy, flatten } from 'lodash'
+import { get, orderBy } from 'lodash'
 import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
 import { startOfDay } from 'date-fns'
 
+import config from 'config'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 
 import { APIError, ErrorTypes } from 'lib/error'
@@ -223,11 +224,11 @@ export async function getRawDelegationTxs(
   data: GetRawDelegationTxsParam
 ): Promise<{
   totalCnt: number
-  txs: Transaction.LcdTransaction[]
+  txs: (Transaction.LcdTransaction & { chainId: string })[]
 }> {
   const offset = (data.page - 1) * data.limit
 
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
   addDelegateFilterToQuery(qb, data.operatorAddr)
 
   data.from && qb.andWhere(`timestamp >= '${data.from}'`)
@@ -238,7 +239,7 @@ export async function getRawDelegationTxs(
 
   return {
     totalCnt,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
   }
 }
 
@@ -269,7 +270,7 @@ interface ClaimTxList {
 }
 
 export async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data')
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
 
   const accountAddr = convertValAddressToAccAddress(data.operatorAddr)
   addClaimFilterToQuery(qb, data.operatorAddr, accountAddr)
@@ -302,8 +303,8 @@ export function getUndelegateSchedule(
   validatorObj: { [validatorAddress: string]: ValidatorResponse }
 ): UndeligationSchedule[] {
   return orderBy(
-    flatten(
-      unbondings.map((unbonding: LcdUnbonding) => {
+    unbondings
+      .map((unbonding: LcdUnbonding) => {
         const { validator_address, entries } = unbonding
         const validatorName: string = get(validatorObj, `${validator_address}`).description.moniker
         const validatorStatus: string = get(validatorObj, `${validator_address}`).status
@@ -318,7 +319,7 @@ export function getUndelegateSchedule(
           }
         })
       })
-    ),
+      .flat(),
     ['releaseTime'],
     ['asc']
   )
@@ -379,6 +380,9 @@ export async function getAvgVotingPowerUncached(
     }
 
     delegationBetweenRange.push({
+      chainId: config.CHAIN_ID,
+      txhash: '',
+      height: '', // TODO: remove
       type: 'Delegate',
       amount: { denom: 'uluna', amount: '0' },
       timestamp: fromStr

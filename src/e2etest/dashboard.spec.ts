@@ -3,7 +3,6 @@ import { setupAgent, terminateAPITest } from './lib/agent'
 
 import { plus, div, times } from 'lib/math'
 import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
-jest.mock('request-promise-native')
 
 const DATA_POINT_COUNT = 4
 

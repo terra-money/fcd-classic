@@ -22,7 +22,7 @@ function getFilteredEventByType(tx: TxEntity, eventType: string): Transaction.Ev
 }
 
 function getContractInfo(tx: TxEntity): ContractInfo {
-  const { type, value, txMemo } = getTxMsgTypeAndValueMemo(tx)
+  const { value, txMemo } = getTxMsgTypeAndValueMemo(tx)
   const { owner, code_id, init_msg, migratable } = value
 
   const info = {

@@ -39,9 +39,7 @@ export default class MarketController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getDenomPrice(ctx) {
-    const { interval, denom } = ctx.request.query
-    const count = ctx.request.query.count
-    success(ctx, await getPrice({ denom, interval, count }))
+    success(ctx, await getPrice(ctx.request.query))
   }
 
   /**
@@ -65,7 +63,6 @@ export default class MarketController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getDenomSwapRate(ctx) {
-    const { base } = ctx.params
-    success(ctx, await getSwapRate(base))
+    success(ctx, await getSwapRate(ctx.params.base))
   }
 }

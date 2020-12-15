@@ -22,7 +22,7 @@ export default class TxEntity {
   timestamp: Date
 
   @Column({ type: 'jsonb' })
-  public data: object
+  data: Transaction.LcdTransaction
 
   @Index('tx_block_id')
   @ManyToOne(() => BlockEntity, (block) => block.txs, {

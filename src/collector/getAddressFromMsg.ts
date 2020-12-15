@@ -87,28 +87,55 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
 
     case 'wasm/MsgStoreCode':
       return {
-        wasm: [get(msg, 'value.sender')].filter(Boolean)
+        contract: [get(msg, 'value.sender')].filter(Boolean)
       }
 
     case 'wasm/MsgInstantiateContract':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
 
     case 'wasm/MsgExecuteContract':
       return {
-        wasm: [get(msg, 'value.sender')].filter(Boolean)
+        contract: [get(msg, 'value.sender')].filter(Boolean)
       }
 
     case 'wasm/MsgMigrateContract':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
 
     case 'wasm/MsgUpdateContractOwner':
       return {
-        wasm: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner')].filter(Boolean)
       }
+
+    case 'msgauth/MsgGrantAuthorization':
+      return {
+        msgauth: [get(msg, 'value.granter'), get(msg, 'value.grantee')].filter(Boolean)
+      }
+
+    case 'msgauth/MsgRevokeAuthorization':
+      return {
+        msgauth: [get(msg, 'value.granter'), get(msg, 'value.grantee')].filter(Boolean)
+      }
+
+    case 'msgauth/MsgExecAuthorized':
+      return msg.value.msgs.map(getAddressFromMsg).reduce(
+        (acc, cur) => {
+          Object.keys(cur).forEach((key) => {
+            if (!acc[key]) {
+              acc[key] = []
+            }
+
+            acc[key] = uniq(acc[key].concat(cur[key]))
+          })
+          return acc
+        },
+        {
+          msgauth: [get(msg, 'value.grantee')].filter(Boolean)
+        }
+      )
 
     default: {
       return {}

@@ -5,7 +5,7 @@ import config from 'config'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 
-import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
+import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply, TOKEN_SYMBOLS } from 'service/treasury'
 
 const Joi = Validator.Joi
 
@@ -39,13 +39,15 @@ export default class TreasuryController extends KoaController {
   @Get('/totalsupply/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY).description('Denom name')
+      denom: Joi.string()
+        .required()
+        .valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY, TOKEN_SYMBOLS)
+        .description('Denom name')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTotalSupply(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getTotalSupply(denom))
+    success(ctx, await getTotalSupply(ctx.params.denom))
   }
   /**
    * @api {get} /richlist/:denom Get richlist of coins
@@ -73,8 +75,7 @@ export default class TreasuryController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getRichList(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getRichList(denom, +ctx.request.query.page, +ctx.request.query.limit))
+    success(ctx, await getRichList(ctx.params.denom, ctx.request.query.page, ctx.request.query.limit))
   }
 
   /**
@@ -89,12 +90,14 @@ export default class TreasuryController extends KoaController {
   @Get('/circulatingsupply/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY).description('Denom name')
+      denom: Joi.string()
+        .required()
+        .valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY, TOKEN_SYMBOLS)
+        .description('Denom name')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getCirculatingSupply(ctx) {
-    const { denom } = ctx.params
-    success(ctx, await getCirculatingSupply(denom))
+    success(ctx, await getCirculatingSupply(ctx.params.denom))
   }
 }

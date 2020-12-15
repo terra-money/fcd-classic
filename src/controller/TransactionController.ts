@@ -4,7 +4,8 @@ import config from 'config'
 
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
-import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
+import { getUnconfirmedTxs } from 'lib/rpc'
 
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
@@ -62,6 +63,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {string} gas_used total gas used in tx
    * @apiSuccess {string} timestamp timestamp tx in utc 0
    * @apiSuccess {string} gas_wanted gas wanted
+   * @apiSuccess {string} chainId
    */
   @Get('/tx/:txhash')
   @Validate({
@@ -71,8 +73,7 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    const { txhash } = ctx.params
-    success(ctx, await getTx(txhash))
+    success(ctx, await getTx(ctx.params.txhash))
   }
 
   /**
@@ -81,15 +82,16 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
-   * @apiParam {string} [action] Tx type
-   * @apiParam {number} [page=1] Page
-   * @apiParam {number} [limit=10] Limit
+   * @apiParam {string='send','receive','staking','market','governance','contract'} [action] Type of tx (account is required)
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
-   * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {string} [chainId=columbus-3] ChainId filter
-   * @apiParam {number} [from] timestamp filter (from)
-   * @apiParam {number} [to] timestamp filter (to)
+   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
+   * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
+   * @apiParam {number} [from] Timestamp from
+   * @apiParam {number} [to] Timestamp to
+   * @apiParam {number} [offset] Use last id from previous result for pagination
+   * @apiParam {number} [page=1] # of page
+   * @apiParam {number} [limit=10] Size of page
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -156,43 +158,24 @@ export default class TransactionController extends KoaController {
     query: {
       account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address'),
       action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
         .description('Tx types'),
       block: Joi.string()
         .allow('')
         .regex(/^\d{1,16}$/),
-      order: Joi.string().allow('').valid(['ASC', 'DESC']).description('Tx order'),
+      order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
       memo: Joi.string().description('Tx memo'),
-      chainId: Joi.string().allow('').valid(config.CHAIN_ID),
+      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTxList(ctx): Promise<void> {
-    const { account, action, block, order, memo, chainId } = ctx.request.query
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-    const from = +ctx.request.query.from
-    const to = +ctx.request.query.to
-
-    success(
-      ctx,
-      await getTxList({
-        account,
-        block,
-        action,
-        limit,
-        page,
-        from,
-        to,
-        order,
-        memo,
-        chainId
-      })
-    )
+    success(ctx, await getTxList(ctx.query))
   }
   /**
    * @api {post} /txs Broadcast Txs
@@ -255,9 +238,9 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [page=1] Page
    * @apiParam {number} [limit=10] Limit
    * @apiParam {string} [action] Action filter
-   * @apiParam {string} [order] 'asc' or 'desc'
-   * @apiParam {number} [from] Start time (millisecond)
-   * @apiParam {number} [to] End time (millisecond)
+   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
+   * @apiParam {number} [from] Timestamp from
+   * @apiParam {number} [to] Timestamp to
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -288,36 +271,20 @@ export default class TransactionController extends KoaController {
     query: {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
       action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'wasm')
+        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
         .description('Tx types'),
-      order: Joi.string().valid(['', 'ASC', 'DESC']).description('Tx order'),
+      order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(100).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(500).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getMsgList(ctx): Promise<void> {
-    const { account, action, order } = ctx.request.query
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-    const from = +ctx.request.query.from
-    const to = +ctx.request.query.to
-
-    success(
-      ctx,
-      await getMsgList({
-        account,
-        action,
-        limit,
-        page,
-        from,
-        to,
-        order
-      })
-    )
+    success(ctx, await getMsgList(ctx.request.query))
   }
+
   /**
    * @api {get} /txs/gas_prices Get gas prices
    * @apiName getGasPrices
@@ -332,5 +299,41 @@ export default class TransactionController extends KoaController {
   @Get('/txs/gas_prices')
   async getGasPrices(ctx): Promise<void> {
     success(ctx, config.MIN_GAS_PRICES)
+  }
+
+  /**
+   * @api {get} /txs/unconfirmed Get unconfirmed transactions
+   * @apiName getUnconfirmedTxs
+   * @apiGroup Transactions
+   *
+   * @apiSuccess {Object[]} tx transactions
+   * @apiSuccess {string} tx.type type of transaction
+   * @apiSuccess {Object} tx.value value of transaction
+   * @apiSuccess {Object} tx.value.fee
+   * @apiSuccess {Object[]} tx.value.fee.amount
+   * @apiSuccess {string} tx.value.fee.amount.denom
+   * @apiSuccess {string} tx.value.fee.amount.amount
+   * @apiSuccess {string} tx.value.fee.gas
+   * @apiSuccess {string} tx.value.memo
+   * @apiSuccess {Object[]} tx.value.msg
+   * @apiSuccess {string} tx.value.msg.type
+   * @apiSuccess {Object} tx.value.msg.value
+   * @apiSuccess {Object[]} tx.value.msg.value.amount
+   * @apiSuccess {string} tx.value.msg.value.amount.denom
+   * @apiSuccess {string} tx.value.msg.value.amount.amount
+   * @apiSuccess {Object[]} tx.value.signatures
+   * @apiSuccess {Object[]} tx.value.signatures.pubKey
+   * @apiSuccess {string} tx.value.signatures.pubKey.type
+   * @apiSuccess {string} tx.value.signatures.pubKey.value
+   * @apiSuccess {string} tx.value.signatures.signature
+   */
+  @Get('/txs/unconfirmed')
+  @Validate({
+    query: {
+      limit: Joi.number().description('maximum number of txs to query')
+    }
+  })
+  async getUnconfirmedTxs(ctx): Promise<void> {
+    success(ctx, await getUnconfirmedTxs())
   }
 }

@@ -21,8 +21,7 @@ export async function saveProposalDetails(
   proposalDepositParams: LcdProposalDepositParams
 ) {
   const cachedProposal = await getRepository(ProposalEntity).findOne({
-    proposalId: proposal.id,
-    chainId: config.CHAIN_ID
+    proposalId: proposal.id
   })
 
   if (cachedProposal && !shouldUpdateProposal(cachedProposal.status)) {
@@ -45,7 +44,6 @@ export async function saveProposalDetails(
   const proposalEntityObject: DeepPartial<ProposalEntity> = {
     proposalId: proposal.id,
     chainId: config.CHAIN_ID,
-    proposer: proposer.proposer,
     title: proposal.content.value.title,
     type: proposal.content.type,
     status: proposal.proposal_status,
@@ -63,7 +61,8 @@ export async function saveProposalDetails(
     depositParams: proposalDepositParams,
     totalDeposit: proposal.total_deposit,
     depositTxs: proposalDepositTxs,
-    voteTxs: proposalVoteTxs
+    voteTxs: proposalVoteTxs,
+    ...(proposer && { proposer: proposer.proposer })
   }
 
   if (!cachedProposal) {

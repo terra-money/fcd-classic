@@ -3,9 +3,9 @@ import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 
 const ACCOUNT = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
-const VALIDATOR_DELEGATED = 'terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk'
-const VALIDATOR_NOT_DELEGATED = 'terravaloper10993luwlar59q7syh7t3hhk0kmtee645vlatfl'
-const VALIDATOR_CLAIMED = 'terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk'
+const VALIDATOR_DELEGATED = 'terravaloper1vk20anceu6h9s00d27pjlvslz3avetkvnwmr35'
+const VALIDATOR_NOT_DELEGATED = 'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
+const VALIDATOR_CLAIMED = 'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
 
 const coinObject = {
   denom: expect.any(String),
@@ -57,8 +57,6 @@ const delegationObject = {
   rewards: expect.arrayContaining([coinObject]), // rewards by denoms
   totalReward: expect.any(String) // total rewards
 }
-
-jest.mock('request-promise-native')
 
 describe('Staking', () => {
   let agent: SuperTest<Test>

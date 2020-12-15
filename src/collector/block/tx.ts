@@ -1,6 +1,6 @@
 import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
-import { get, min, compact, flatten, uniq } from 'lodash'
+import { get, min, compact, uniq } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
 import config from 'config'
@@ -43,6 +43,7 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
     return []
   }
+
   if (msg.type === 'bank/MsgSend') {
     const amount = get(msg, 'value.amount')
     return compact(
@@ -58,12 +59,13 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
       })
     )
   }
+
   if (msg.type === 'bank/MsgMultiSend') {
     const inputs = get(msg, 'value.inputs')
     const amountObj = inputs.reduce((acc, input) => {
       input.coins.reduce((accInner, coin: Coin) => {
         if (coin.denom === 'uluna') {
-          return
+          return accInner
         }
 
         const taxCap = taxCaps && taxCaps[coin.denom] ? taxCaps[coin.denom] : '1000000'
@@ -124,6 +126,7 @@ async function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCa
     taxArr.push(taxPerMsg)
     return acc
   }, feeObj)
+
   // failed tx
   if (!lcdTx.logs || lcdTx.logs.length !== taxArr.length) {
     return
@@ -320,6 +323,6 @@ export async function saveTxs(
   await transactionEntityManager.save(updatedAccountEntity)
   logger.info(`SaveAccountTx - Height: ${block.height}, ${updatedAccountEntity.length} account updated.`)
 
-  const accountTxEntities = await transactionEntityManager.save(flatten(accountTxDocsArray))
+  const accountTxEntities = await transactionEntityManager.save(accountTxDocsArray.flat())
   logger.info(`SaveAccountTx - Height: ${block.height}, ${accountTxEntities.length} accountTxs saved.`)
 }

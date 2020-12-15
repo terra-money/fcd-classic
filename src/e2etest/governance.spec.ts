@@ -3,8 +3,6 @@ import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 import { ErrorCodes } from 'lib/error'
 
-jest.mock('request-promise-native')
-
 const TEST_PROPOSAL_ID = 1
 const NO_VOTE_PROPOSAL_ID = 999999
 

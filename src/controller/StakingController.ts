@@ -85,10 +85,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getValidator(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const { account } = ctx.request.query
-
-    success(ctx, await getValidatorDetail(operatorAddr, account))
+    success(ctx, await getValidatorDetail(ctx.params.operatorAddr, ctx.request.query.account))
   }
 
   /**
@@ -146,7 +143,8 @@ export default class StakingController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} events Delegation event list
-   * @apiSuccess {string} events.height The height of the block the event was performed
+   * @apiSuccess {string} events.chainId
+   * @apiSuccess {string} events.txhash
    * @apiSuccess {string} events.type Event type
    * @apiSuccess {Object[]} events.amount
    * @apiSuccess {string} events.amount.denom
@@ -166,16 +164,11 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getDelegationEvents(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-
     success(
       ctx,
       await getDelegationTxs({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -193,12 +186,13 @@ export default class StakingController extends KoaController {
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} claims Claim list
-   * @apiSuccess {string} claims.timestamp Tx timestamp
-   * @apiSuccess {string} claims.tx Tx hash
+   * @apiSuccess {string} claims.chainId
+   * @apiSuccess {string} claims.txhash Tx hash
    * @apiSuccess {string} claims.type Claim type
    * @apiSuccess {Object[]} claims.amount
    * @apiSuccess {string} claims.amount.denom
    * @apiSuccess {string} claims.amount.amount
+   * @apiSuccess {string} claims.timestamp Tx timestamp
    */
   @Get('/validators/:operatorAddr/claims')
   @Validate({
@@ -212,16 +206,11 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async claims(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
-
     success(
       ctx,
       await getClaims({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -251,20 +240,16 @@ export default class StakingController extends KoaController {
     },
     query: {
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(5).min(1).max(100).description('Items per page')
+      limit: Joi.number().default(5).min(1).max(500).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async delegators(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const page = +ctx.request.query.page
-    const limit = +ctx.request.query.limit
     success(
       ctx,
       await getDelegators({
-        operatorAddr,
-        page,
-        limit
+        ...ctx.params,
+        ...ctx.request.query
       })
     )
   }
@@ -351,9 +336,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingForAccount(ctx): Promise<void> {
-    const { account } = ctx.params
-
-    success(ctx, await getStaking(account))
+    success(ctx, await getStaking(ctx.params.account))
   }
 
   /**
@@ -416,8 +399,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
-    const { operatorAddr } = ctx.params
-    const { stakingReturn } = await getValidatorAnnualAvgReturn(operatorAddr)
+    const { stakingReturn } = await getValidatorAnnualAvgReturn(ctx.params.operatorAddr)
     success(ctx, stakingReturn)
   }
 }

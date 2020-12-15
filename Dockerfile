@@ -1,4 +1,4 @@
-FROM node:12 as builder
+FROM node:lts as builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . .
 
 RUN npm run apidoc
 
-FROM node:12-alpine
+FROM node:lts-alpine
 
 WORKDIR /app
 

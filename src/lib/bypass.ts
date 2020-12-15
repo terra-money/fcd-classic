@@ -1,5 +1,5 @@
 const join = require('url').resolve
-const rp = require('request-promise-native')
+const rp = require('request-promise')
 const requestLib = require('request')
 
 import { apiLogger as logger } from 'lib/logger'

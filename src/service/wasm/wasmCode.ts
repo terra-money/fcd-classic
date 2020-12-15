@@ -63,7 +63,7 @@ export async function getWasmCodes({
   qb.skip(limit * (page - 1))
     .take(limit)
     .orderBy(`timestamp`, 'DESC')
-  console.log(qb.getSql())
+
   const result = await qb.getMany()
   return {
     totalCnt,

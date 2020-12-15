@@ -130,8 +130,6 @@ function testTransactions(body): void {
   expect(body.txs[0]).toMatchObject(transactionObject)
 }
 
-jest.mock('request-promise-native')
-
 describe('Transaction', () => {
   let agent: SuperTest<Test>
   let connection

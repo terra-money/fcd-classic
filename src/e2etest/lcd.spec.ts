@@ -2,15 +2,15 @@ import 'jest-extended'
 import * as lcd from 'lib/lcd'
 
 const UNKNOWN_TX_HASH = '0C7A5F320FD3B91CEC2BEBDF539E8B71E1C120B04F95DEF6FB09EEBF9552391B'
-const VALID_TX_HASH = 'E339D4F9B1529AB4946193F5FFB21F2E34404A47979F89E3FEF4CB1A98C7658D'
+const VALID_TX_HASH = 'ED3EA0E1AA684546B8FC1CA57625688876A6DD7C9DF283FCAE271128C52A5D14'
 
 const UNKNOWN_TERRA_ADDRESS = 'terra12c5s58hnc3c0pjr5x7u68upsgzg2r8fwq5nlsy'
 const VALID_TERRA_ADDRESS = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
 
 const UNKNOWN_VALOPER_ADDRESS = 'terravaloper1uwgg244kechjgqdyr9kyxtt7yyj5zqcugvna2d'
-const VALID_VALOPER_ADDRESS = 'terravaloper1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0yhqtk'
-const VALID_VALTERRA_ADDRESS = 'terra1pdx498r0hrc2fj36sjhs8vuhrz9hd2cw0tmam9'
-const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepq9m3l0mafxtvkunllxlscwc35ejpzlgelrne737xncxk0458t5ymqmmhvfv'
+const VALID_VALOPER_ADDRESS = 'terravaloper1vk20anceu6h9s00d27pjlvslz3avetkvnwmr35'
+const VALID_VALTERRA_ADDRESS = 'terra1vk20anceu6h9s00d27pjlvslz3avetkvnph7p8'
+const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepqwgwyky5375uk0llhwf0ya5lmwy4up838jevfh3pyzf5s3hd96xjslnexul'
 
 const coinObject = {
   denom: expect.any(String),
@@ -120,15 +120,15 @@ describe('LCD', () => {
   })
 
   test('getBlock: invalid', async () => {
-    await expect(lcd.getBlock(0)).toReject()
+    await expect(lcd.getBlock('0')).toReject()
   })
 
   test('getBlock: not found', async () => {
-    await expect(lcd.getBlock(Number.MAX_SAFE_INTEGER)).resolves.toBeUndefined()
+    await expect(lcd.getBlock(Number.MAX_SAFE_INTEGER.toString())).resolves.toBeUndefined()
   })
 
   test('getBlock: success', async () => {
-    await expect(lcd.getBlock(1)).resolves.toMatchObject({
+    await expect(lcd.getBlock('1')).resolves.toMatchObject({
       block: {}
     })
   })
@@ -173,7 +173,7 @@ describe('LCD', () => {
     const delegation = delegations.find((d) => d.delegator_address === VALID_TERRA_ADDRESS)
 
     expect(delegation).toMatchObject({
-      balance: expect.any(String),
+      balance: coinObject,
       delegator_address: expect.any(String),
       shares: expect.any(String),
       validator_address: expect.any(String)
@@ -193,7 +193,7 @@ describe('LCD', () => {
 
   test('getDelegationForValidator: success', async () => {
     await expect(lcd.getDelegationForValidator(VALID_TERRA_ADDRESS, VALID_VALOPER_ADDRESS)).resolves.toMatchObject({
-      balance: expect.any(String),
+      balance: coinObject,
       delegator_address: VALID_TERRA_ADDRESS,
       shares: expect.any(String),
       validator_address: VALID_VALOPER_ADDRESS
@@ -245,7 +245,7 @@ describe('LCD', () => {
 
     expect(delegations).not.toBeArrayOfSize(0)
     expect(delegations[0]).toMatchObject({
-      balance: expect.any(String),
+      balance: coinObject,
       delegator_address: expect.any(String),
       shares: expect.any(String),
       validator_address: expect.any(String)
@@ -259,123 +259,127 @@ describe('LCD', () => {
     })
   })
 
-  test('getProposals', async () => {
-    const proposals = await lcd.getProposals()
+  describe('governance', () => {
+    let proposal
 
-    expect(proposals).not.toBeArrayOfSize(0)
-    expect(proposals[0]).toMatchObject(basicProposalObject)
-  })
+    beforeAll(async () => {
+      const proposals = await lcd.getProposals()
 
-  test('getProposal', async () => {
-    const proposal = await lcd.getProposal('1')
+      expect(proposals).toBeArray()
 
-    if (!proposal) {
-      expect(proposal).not.toBeUndefined()
-      return
-    }
+      proposal = proposals.find(
+        (p) =>
+          p.content.type === 'params/ParameterChangeProposal' &&
+          p.content.value.changes &&
+          p.content.value.changes[0].subspace === 'staking'
+      )
 
-    expect(proposal).toMatchObject(basicProposalObject)
+      expect(proposal).not.toBeNil()
+    })
 
-    expect(proposal.content.type).toBe('params/ParameterChangeProposal')
-    expect(proposal.content.value.changes).not.toBeArrayOfSize(0)
+    test('getProposals', async () => {
+      const proposals = await lcd.getProposals()
 
-    if (proposal.content.value.changes) {
-      expect(proposal.content.value.changes[0]).toMatchObject({
-        subspace: expect.any(String),
-        key: expect.any(String),
-        value: expect.any(String)
+      expect(proposals).not.toBeArrayOfSize(0)
+      expect(proposals[0]).toMatchObject(basicProposalObject)
+    })
+
+    test('getProposal', async () => {
+      expect(proposal).toMatchObject(basicProposalObject)
+      expect(proposal.content.value.changes).not.toBeArrayOfSize(0)
+
+      if (proposal.content.value.changes) {
+        expect(proposal.content.value.changes[0]).toMatchObject({
+          subspace: expect.any(String),
+          key: expect.any(String),
+          value: expect.any(String)
+        })
+      }
+    })
+
+    test('getProposalProposer: invalid', async () => {
+      await expect(lcd.getProposalProposer('invalid')).toReject()
+    })
+
+    test('getProposalProposer: not found', async () => {
+      await expect(lcd.getProposalProposer(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeUndefined()
+    })
+
+    test('getProposalProposer: success', async () => {
+      await expect(lcd.getProposalProposer(proposal.id)).resolves.toMatchObject({
+        proposal_id: proposal.id,
+        proposer: expect.any(String)
       })
-    }
-  })
-
-  test('getProposalProposer: invalid', async () => {
-    await expect(lcd.getProposalProposer('invalid')).toReject()
-  })
-
-  test('getProposalProposer: not found', async () => {
-    await expect(lcd.getProposalProposer(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeUndefined()
-  })
-
-  test('getProposalProposer: success', async () => {
-    await expect(lcd.getProposalProposer('1')).resolves.toMatchObject({
-      proposal_id: '1',
-      proposer: expect.any(String)
     })
-  })
 
-  test('getProposalDeposits: invalid / not found', async () => {
-    await expect(lcd.getProposalDeposits(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(emptyTransactionsObject)
-  })
+    test('getProposalDeposits: invalid / not found', async () => {
+      await expect(lcd.getProposalDeposits(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(
+        emptyTransactionsObject
+      )
+    })
 
-  test('getProposalDeposits: success', async () => {
-    await expect(lcd.getProposalDeposits('1')).resolves.not.toBeArrayOfSize(0)
-  })
+    test('getProposalDeposits: success', async () => {
+      await expect(lcd.getProposalDeposits(proposal.id)).resolves.not.toBeArrayOfSize(0)
+    })
 
-  test('getProposalVoteTxs: invalid / not found', async () => {
-    await expect(lcd.getProposalVoteTxs(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(emptyTransactionsObject)
-  })
+    test('getProposalVoteTxs: invalid / not found', async () => {
+      await expect(lcd.getProposalVoteTxs(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(emptyTransactionsObject)
+    })
 
-  test('getProposalVoteTxs: success', async () => {
-    await expect(lcd.getProposalVoteTxs('1')).resolves.not.toBeArrayOfSize(0)
-  })
+    test('getProposalVoteTxs: success', async () => {
+      await expect(lcd.getProposalVoteTxs(proposal.id)).resolves.not.toBeArrayOfSize(0)
+    })
 
-  test('getProposalVotes: invalid', async () => {
-    await expect(lcd.getProposalVotes('invalid')).toReject()
-  })
+    test('getProposalVotes: invalid', async () => {
+      await expect(lcd.getProposalVotes('invalid')).toReject()
+    })
 
-  test('getProposalVotes: invalid / not found', async () => {
-    await expect(lcd.getProposalVotes(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeArrayOfSize(0)
-  })
+    test('getProposalVotes: success', async () => {
+      const votes = await lcd.getProposalVotes(proposal.id)
 
-  test('getProposalVotes: success', async () => {
-    const votes = await lcd.getProposalVotes('1')
+      expect(votes).not.toBeArrayOfSize(0)
 
-    expect(votes).not.toBeArrayOfSize(0)
+      if (votes.length) {
+        expect(votes[0]).toMatchObject({
+          option: expect.any(String),
+          proposal_id: proposal.id,
+          voter: expect.any(String)
+        })
+      }
+    })
 
-    if (votes.length) {
-      expect(votes[0]).toMatchObject({
-        option: expect.any(String),
-        proposal_id: '1',
-        voter: expect.any(String)
+    test('getProposalTally: invalid', async () => {
+      await expect(lcd.getProposalVotes('invalid')).toReject()
+    })
+
+    test('getProposalTally: success', async () => {
+      await expect(lcd.getProposalTally(proposal.id)).resolves.toMatchObject({
+        abstain: expect.any(String),
+        no: expect.any(String),
+        no_with_veto: expect.any(String),
+        yes: expect.any(String)
       })
-    }
-  })
-
-  test('getProposalTally: invalid', async () => {
-    await expect(lcd.getProposalVotes('invalid')).toReject()
-  })
-
-  test('getProposalTally: not found', async () => {
-    await expect(lcd.getProposalTally(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeUndefined()
-  })
-
-  test('getProposalTally: success', async () => {
-    await expect(lcd.getProposalTally('1')).resolves.toMatchObject({
-      abstain: expect.any(String),
-      no: expect.any(String),
-      no_with_veto: expect.any(String),
-      yes: expect.any(String)
     })
-  })
 
-  test('getProposalDepositParams', async () => {
-    await expect(lcd.getProposalDepositParams()).resolves.toMatchObject({
-      max_deposit_period: expect.any(String),
-      min_deposit: expect.arrayContaining([coinObject])
+    test('getProposalDepositParams', async () => {
+      await expect(lcd.getProposalDepositParams()).resolves.toMatchObject({
+        max_deposit_period: expect.any(String),
+        min_deposit: expect.arrayContaining([coinObject])
+      })
     })
-  })
 
-  test('getProposalVotingParams', async () => {
-    await expect(lcd.getProposalVotingParams()).resolves.toMatchObject({
-      voting_period: expect.any(String)
+    test('getProposalVotingParams', async () => {
+      await expect(lcd.getProposalVotingParams()).resolves.toMatchObject({
+        voting_period: expect.any(String)
+      })
     })
-  })
 
-  test('getProposalTallyingParams', async () => {
-    await expect(lcd.getProposalTallyingParams()).resolves.toMatchObject({
-      quorum: expect.any(String),
-      threshold: expect.any(String),
-      veto: expect.any(String)
+    test('getProposalTallyingParams', async () => {
+      await expect(lcd.getProposalTallyingParams()).resolves.toMatchObject({
+        quorum: expect.any(String),
+        threshold: expect.any(String),
+        veto: expect.any(String)
+      })
     })
   })
 
@@ -383,10 +387,8 @@ describe('LCD', () => {
     await expect(lcd.getSigningInfo('invalid')).toReject()
   })
 
-  test('getSigningInfo: not found', async () => {
-    await expect(
-      lcd.getSigningInfo('terravalconspub1zcjduepq9m3l0mafxtvkunllxlscwc35ejpzlgelrne737xncxk0458t5ymqmmhvfv')
-    ).resolves.toMatchObject({
+  test('getSigningInfo: valid', async () => {
+    await expect(lcd.getSigningInfo(VALID_VALCONSPUB_ADDRESS)).resolves.toMatchObject({
       address: expect.any(String), // terravalcons...
       index_offset: expect.any(String),
       jailed_until: expect.any(String),
@@ -458,7 +460,7 @@ describe('LCD', () => {
   })
 
   test('getSwapResult: not found', async () => {
-    await expect(lcd.getSwapResult({ offer_coin: '1000usdr', ask_denom: 'invalid' })).resolves.toBeUndefined()
+    await expect(lcd.getSwapResult({ offer_coin: '1000usdr', ask_denom: 'invalid' })).toReject()
   })
 
   test('getSwapResult: success', async () => {

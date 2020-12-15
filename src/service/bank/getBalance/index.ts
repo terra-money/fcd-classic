@@ -14,23 +14,23 @@ interface AccountDetails {
 }
 
 export default async (address: string): Promise<AccountDetails> => {
-  const [accounts, unbondings, latestBlock, delegations] = await Promise.all([
+  const [rawAccount, unbondings, latestBlock, delegations] = await Promise.all([
     getAccount(address),
     getUnbondingDelegations(address),
     getLatestBlock(),
     getDelegations(address)
   ])
 
-  const account = normalizeAccount(accounts)
+  const account = normalizeAccount(rawAccount)
   const latestBlockTimestamp = new Date(latestBlock.block.header.time).getTime()
-  const balance = accounts && calculate({ account, delegations, unbondings, latestBlockTimestamp })
-  const vesting = accounts && getVesting({ account, latestBlockTimestamp })
+  const balance = rawAccount && calculate(account, unbondings, latestBlockTimestamp)
+  const vesting = rawAccount && getVesting(account, latestBlockTimestamp)
 
   return Object.assign(
     {},
     balance && { balance: sortDenoms(balance) },
     vesting && { vesting: sortDenoms(vesting) },
-    { delegations: delegations ? delegations : [] },
+    { delegations },
     { unbondings }
   )
 }

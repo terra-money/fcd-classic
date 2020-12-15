@@ -46,9 +46,7 @@ export default class WasmController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async wasmCodes(ctx) {
-    const { sender, page, limit, search } = ctx.query
-
-    success(ctx, await getWasmCodes({ page, limit, sender, search }))
+    success(ctx, await getWasmCodes(ctx.query))
   }
   /**
    * @api {get} /wasm/contracts Get wasm codes info
@@ -59,7 +57,7 @@ export default class WasmController extends KoaController {
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [search] full text search query in name and description
-   * @apiParam {number} [code_id] code id
+   * @apiParam {number} [codeId] code id
    *
    * @apiSuccess {number} totalCnt total number of txs
    * @apiSuccess {number} page page number of pagination
@@ -69,7 +67,7 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} contracts.timestamp
    * @apiSuccess {string} contracts.owner
    * @apiSuccess {string} contracts.code_id sent code id
-   * @apiSuccess {string} contracts.contract_address contract address
+   * @apiSuccess {string} contracts.contractAddress contract address
    * @apiSuccess {string} contracts.init_msg contract initialization message
    * @apiSuccess {Object} contracts.info code info
    * @apiSuccess {string} contracts.info.name code name
@@ -93,22 +91,21 @@ export default class WasmController extends KoaController {
     query: {
       owner: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('contract owner'),
       search: Joi.string().description('full text search query'),
-      code_id: Joi.string().regex(/^\d+$/).description('Code id'),
+      codeId: Joi.string().regex(/^\d+$/).description('Code id'),
       page: Joi.number().default(1).min(1).description('Page number'),
       limit: Joi.number().default(10).min(1).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async wasmContracts(ctx) {
-    const { owner, page, limit, search, code_id } = ctx.query
-    success(ctx, await getWasmContracts({ page, limit, owner, search, codeId: code_id }))
+    success(ctx, await getWasmContracts(ctx.query))
   }
   /**
-   * @api {get} /wasm/contract/:contract_address/txs Get wasm codes info
+   * @api {get} /wasm/contract/:contractAddress/txs Get wasm codes info
    * @apiName getWasmContractTxs
    * @apiGroup Wasm
    *
-   * @apiParam {string} contract_address contract address
+   * @apiParam {string} contractAddress contract address
    * @apiParam {string} [sender] contract execution sender Account address
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
@@ -167,7 +164,7 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} txs.timestamp timestamp tx in utc 0
    * @apiSuccess {string} txs.gas_wanted gas wanted
    **/
-  @Get('/contract/:contract_address/txs')
+  @Get('/contract/:contractAddress/txs')
   @Validate({
     query: {
       sender: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('tx sender'),
@@ -175,14 +172,12 @@ export default class WasmController extends KoaController {
       limit: Joi.number().default(10).min(1).description('Items per page')
     },
     params: {
-      contract_address: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('Contract address')
+      contractAddress: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('Contract address')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async contractTxs(ctx) {
-    const { sender, page, limit } = ctx.query
-    const { contract_address } = ctx.params
-    success(ctx, await getContractTxs({ page, limit, contract_address, sender }))
+    success(ctx, await getContractTxs({ ...ctx.query, ...ctx.params }))
   }
 
   /**
@@ -202,10 +197,10 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} info.repo_url code repo url
    * @apiSuccess {string} info.memo tx memo
    **/
-  @Get('/code/:code_id')
+  @Get('/code/:codeId')
   @Validate({
     params: {
-      code_id: Joi.string().regex(/^\d+$/).required().description('Code id')
+      codeId: Joi.string().regex(/^\d+$/).required().description('Code id')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -214,17 +209,17 @@ export default class WasmController extends KoaController {
   }
 
   /**
-   * @api {get} /wasm/contract/:contract_address Get single wasm contract details
+   * @api {get} /wasm/contract/:contractAddress Get single wasm contract details
    * @apiName getIndividualWasmContract
    * @apiGroup Wasm
    *
-   * @apiParam {string} contract_address wasm contract address
+   * @apiParam {string} contractAddress wasm contract address
    *
    * @apiSuccess {string} txhash
    * @apiSuccess {string} timestamp
    * @apiSuccess {string} owner
    * @apiSuccess {string} code_id sent code id
-   * @apiSuccess {string} contract_address contract address
+   * @apiSuccess {string} contractAddress contract address
    * @apiSuccess {string} init_msg contract initialization message
    * @apiSuccess {Object} info code info
    * @apiSuccess {string} info.name code name
@@ -243,14 +238,14 @@ export default class WasmController extends KoaController {
    * @apiSuccess {string} code.info.repo_url code repo url
    * @apiSuccess {string} code.info.memo tx memo
    **/
-  @Get('/contract/:contract_address')
+  @Get('/contract/:contractAddress')
   @Validate({
     params: {
-      contract_address: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('Contract address')
+      contractAddress: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('Contract address')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getIndividualContract(ctx) {
-    success(ctx, await getWasmContract(ctx.params.contract_address))
+    success(ctx, await getWasmContract(ctx.params.contractAddress))
   }
 }

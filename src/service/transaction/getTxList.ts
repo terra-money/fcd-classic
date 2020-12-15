@@ -1,13 +1,12 @@
 import { get, chain } from 'lodash'
 import { getRepository, getConnection, FindConditions } from 'typeorm'
-
 import { BlockEntity, AccountEntity, TxEntity } from 'orm'
-import config from 'config'
-
 import { getQueryDateTime } from 'lib/time'
+import config from 'config'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
+  offset?: number
   account?: string
   block?: string
   memo?: string
@@ -23,7 +22,7 @@ interface GetTxsReturn {
   totalCnt: number
   page: number
   limit: number
-  txs: ParsedTxInfo[] | Transaction.LcdTransaction[]
+  txs: ParsedTxInfo[] | ({ id: number } & Transaction.LcdTransaction)[]
 }
 
 export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn> {
@@ -37,8 +36,13 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     .createQueryBuilder()
     .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: param.memo })
     .orderBy(`timestamp`, order)
-    .offset((param.page - 1) * param.limit)
-    .limit(param.limit)
+    .take(param.limit)
+
+  if (param.offset) {
+    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+  } else {
+    qb.skip(param.limit * (param.page - 1))
+  }
 
   if (param.from) {
     qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
@@ -54,7 +58,7 @@ export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn
     totalCnt: total,
     page: param.page,
     limit: param.limit,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 
@@ -65,24 +69,17 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
     where.height = +param.block
   }
 
-  if (param.chainId) {
-    where.chainId = param.chainId
-  }
+  where.chainId = param.chainId || config.CHAIN_ID
 
-  const blocksWithTxs = await getRepository(BlockEntity).find({
+  const blockWithTxs = await getRepository(BlockEntity).findOne({
     where,
     order: {
       id: 'DESC'
     },
-    relations: ['txs'],
-    skip: 0,
-    take: 1
+    relations: ['txs']
   })
-  const blockWithTxs = blocksWithTxs.length > 0 ? blocksWithTxs[0] : undefined
 
-  const txs: Transaction.LcdTransaction[] = blockWithTxs
-    ? blockWithTxs.txs.map((item) => item.data as Transaction.LcdTransaction)
-    : []
+  const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
   const offset = param.limit * (param.page - 1)
 
   return {
@@ -93,11 +90,11 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   }
 }
 
-async function getTxTotalCount(data: GetTxListParam): Promise<number> {
-  if (!data.from && !data.to && !data.action) {
+async function getTxTotalCount(param: GetTxListParam): Promise<number> {
+  if (!param.from && !param.to && !param.action) {
     // get count from account entity
     const accountEntity = await getRepository(AccountEntity).findOne({
-      address: data.account
+      address: param.account
     })
 
     if (accountEntity) {
@@ -106,19 +103,19 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   }
 
   let distinctQuery = `SELECT DISTINCT(hash) FROM account_tx WHERE account=$1`
-  const params = [data.account]
+  const params = [param.account]
 
-  if (data.from) {
-    distinctQuery += ` AND timestamp >= '${getQueryDateTime(data.from)}'`
+  if (param.from) {
+    distinctQuery += ` AND timestamp >= '${getQueryDateTime(param.from)}'`
   }
 
-  if (data.to) {
-    distinctQuery += ` AND timestamp <= '${getQueryDateTime(data.to)}'`
+  if (param.to) {
+    distinctQuery += ` AND timestamp <= '${getQueryDateTime(param.to)}'`
   }
 
-  if (data.action) {
+  if (param.action) {
     distinctQuery = `${distinctQuery} AND type=$2`
-    params.push(data.action)
+    params.push(param.action)
   }
 
   const totalCntQuery = `SELECT COUNT(*) FROM (${distinctQuery}) t`
@@ -126,81 +123,87 @@ async function getTxTotalCount(data: GetTxListParam): Promise<number> {
   return +get(totalCntResult, '0.count', 0)
 }
 
-export async function getTxFromAccount(data: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
-  if (!data.account) {
+export async function getTxFromAccount(param: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
+  if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
 
-  if (!parseInt(data.limit as any, 10)) {
+  if (!parseInt(param.limit as any, 10)) {
     throw new TypeError('Invalid parameter: limit')
   }
 
-  if (!parseInt(data.page as any, 10)) {
+  if (!parseInt(param.page as any, 10)) {
     throw new TypeError('Invalid parameter: page')
   }
 
-  const totalCnt = await getTxTotalCount(data)
+  const totalCnt = await getTxTotalCount(param)
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id, timestamp FROM account_tx WHERE account=$1 `
-  const params = [data.account]
+  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
+  const params = [param.account]
 
-  if (data.action) {
+  if (param.action) {
     distinctTxQuery += ` AND type=$2`
-    params.push(data.action)
+    params.push(param.action)
   }
 
-  if (data.from) {
-    distinctTxQuery += ` AND timestamp >= '${getQueryDateTime(data.from)}'`
+  if (param.from) {
+    distinctTxQuery += ` AND timestamp >= '${getQueryDateTime(param.from)}'`
   }
 
-  if (data.to) {
-    distinctTxQuery += ` AND timestamp <= '${getQueryDateTime(data.to)}'`
+  if (param.to) {
+    distinctTxQuery += ` AND timestamp <= '${getQueryDateTime(param.to)}'`
   }
 
-  const offset = Math.max(0, data.limit * (data.page - 1))
-  const order: 'ASC' | 'DESC' = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const orderAndPageClause = ` ORDER BY tx_id ${order} OFFSET ${offset} LIMIT ${Math.max(0, data.limit)}`
+  const offset = Math.max(0, param.limit * (param.page - 1))
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
-  const subQuery = `SELECT tx_id FROM (${distinctTxQuery}${orderAndPageClause}) a `
+  if (param.offset) {
+    distinctTxQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+  }
 
-  const query = `SELECT data, chain_id FROM tx WHERE id IN (${subQuery}) ORDER BY timestamp ${order}`
+  const orderAndPageClause = ` ORDER BY tx_id ${order} ${!param.offset ? `OFFSET ${offset}` : ''} LIMIT ${Math.max(
+    0,
+    param.limit
+  )}`
 
+  const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
   const txs = await getConnection().query(query, params)
 
   return {
     totalCnt,
-    page: data.page,
-    limit: data.limit,
+    page: param.page,
+    limit: param.limit,
     txs: parse
-      ? await Promise.all(txs.map((tx) => parseTx(data.account)(tx)))
-      : txs.map((tx) => ({ ...tx.data, chainId: tx.chain_id }))
+      ? await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
+      : txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
   }
 }
 
-async function getTxs(data: GetTxListParam): Promise<GetTxsReturn> {
-  const offset = data.limit * (data.page - 1)
-  const order = data.order && data.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
+  const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+  const qb = getRepository(TxEntity).createQueryBuilder().take(param.limit).orderBy('timestamp', order)
 
-  const qb = getRepository(TxEntity)
-    .createQueryBuilder()
-    .where('chain_id = :chainId', { chainId: config.CHAIN_ID })
-    .skip(offset)
-    .take(data.limit)
-    .orderBy('timestamp', order)
-
-  if (data.from) {
-    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(data.from) })
+  if (param.offset) {
+    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+  } else {
+    qb.skip(param.limit * (param.page - 1))
   }
 
-  if (data.to) {
-    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(data.to) })
+  if (param.from) {
+    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
   }
-  const [txs, total] = await qb.getManyAndCount()
+
+  if (param.to) {
+    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(param.to) })
+  }
+
+  const txs = await qb.getMany()
+
   return {
-    totalCnt: total,
-    page: data.page,
-    limit: data.limit,
-    txs: txs.map((tx) => tx.data as Transaction.LcdTransaction)
+    totalCnt: -1,
+    page: param.page,
+    limit: param.limit,
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 

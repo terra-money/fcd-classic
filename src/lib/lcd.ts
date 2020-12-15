@@ -1,6 +1,5 @@
 import * as crypto from 'crypto'
 import * as rp from 'request-promise'
-import { compact, flatten, get as lodashGet, filter } from 'lodash'
 
 import config from 'config'
 
@@ -53,10 +52,21 @@ export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefi
   return get(`/txs/${hash}`)
 }
 
-export function getTxHash(txstring: string): string {
+function getTxHash(txstring: string): string {
   const s256Buffer = crypto.createHash(`sha256`).update(Buffer.from(txstring, `base64`)).digest()
   const txbytes = new Uint8Array(s256Buffer)
   return Buffer.from(txbytes.slice(0, 32)).toString(`hex`)
+}
+
+export function getTxHashesFromBlock(lcdBlock: LcdBlock): string[] {
+  const txStrings = lcdBlock.block.data.txs
+
+  if (!txStrings || !txStrings.length) {
+    return []
+  }
+
+  const hashes = txStrings.map(getTxHash)
+  return hashes
 }
 
 export function broadcast(body: { tx: Transaction.Value; mode: string }): Promise<Transaction.LcdPostTransaction> {
@@ -107,11 +117,10 @@ export async function getVotingPower(): Promise<LcdVotingPower> {
 export async function getValidatorVotingPower(consensusPubkey: string): Promise<LcdLatestValidator | undefined> {
   const latestValidatorSet = await getLatestValidatorSet()
   const { validators } = latestValidatorSet
-  const filteredByAddr = filter(validators, { pub_key: consensusPubkey })
-  return filteredByAddr.length > 0 ? filteredByAddr[0] : undefined
+  return validators.find((v) => v.pub_key === consensusPubkey)
 }
 
-export function getBlock(height: number): Promise<LcdBlock> {
+export function getBlock(height: string): Promise<LcdBlock> {
   return get(`/blocks/${height}`)
 }
 
@@ -122,23 +131,36 @@ export function getLatestBlock(): Promise<LcdBlock> {
 ///////////////////////////////////////////////
 // Auth
 ///////////////////////////////////////////////
-export function getAccount(address: string): Promise<StandardAccount | VestingAccount | ModuleAccount> {
-  return get(`/auth/accounts/${address}`)
+export async function getAccount(
+  address: string
+): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
+  return (
+    (await get(`/auth/accounts/${address}`)) || {
+      type: 'auth/Account',
+      value: {
+        address: '',
+        coins: null,
+        public_key: null,
+        account_number: '0',
+        sequence: '0'
+      }
+    }
+  )
 }
 
 ///////////////////////////////////////////////
 // Staking
 ///////////////////////////////////////////////
-export function getDelegations(delegator: string): Promise<LcdDelegation[]> {
-  return get(`/staking/delegators/${delegator}/delegations`)
+export async function getDelegations(delegator: string): Promise<LcdDelegation[]> {
+  return (await get(`/staking/delegators/${delegator}/delegations`)) || []
 }
 
 export function getDelegationForValidator(delegator: string, validator: string): Promise<LcdDelegation | undefined> {
   return get(`/staking/delegators/${delegator}/delegations/${validator}`)
 }
 
-export function getUnbondingDelegations(address: string): Promise<LcdUnbonding[]> {
-  return get(`/staking/delegators/${address}/unbonding_delegations`)
+export async function getUnbondingDelegations(address: string): Promise<LcdUnbonding[]> {
+  return (await get(`/staking/delegators/${address}/unbonding_delegations`)) || []
 }
 
 export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'): Promise<LcdValidator[]> {
@@ -152,15 +174,15 @@ export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'
 
   const [bonded, unbonded, unbonding] = await Promise.all([get(urlBonded), get(urlUnbonded), get(urlUnbonding)])
 
-  return flatten([bonded, unbonded, unbonding])
+  return [bonded, unbonded, unbonding].flat()
 }
 
 export async function getValidator(operatorAddr: string): Promise<LcdValidator | undefined> {
   return get(`/staking/validators/${operatorAddr}`)
 }
 
-export function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
-  return get(`/staking/validators/${validatorOperKey}/delegations`)
+export async function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
+  return (await get(`/staking/validators/${validatorOperKey}/delegations`)) || []
 }
 
 export function getStakingPool(): Promise<LcdStakingPool> {
@@ -170,15 +192,15 @@ export function getStakingPool(): Promise<LcdStakingPool> {
 ///////////////////////////////////////////////
 // Governance
 ///////////////////////////////////////////////
-export function getProposals(): Promise<LcdProposal[]> {
-  return get(`/gov/proposals`)
+export async function getProposals(): Promise<LcdProposal[]> {
+  return (await get(`/gov/proposals`)) || []
 }
 
 export function getProposal(proposalId: string): Promise<LcdProposal | undefined> {
   return get(`/gov/proposals/${proposalId}`)
 }
 
-export function getProposalProposer(proposalId: string): Promise<LcdProposalProposer> {
+export function getProposalProposer(proposalId: string): Promise<LcdProposalProposer | undefined> {
   return get(`/gov/proposals/${proposalId}/proposer`)
 }
 
@@ -205,8 +227,7 @@ export function getProposalVoteTxs(proposalId: string, option?: string): Promise
 }
 
 export async function getProposalVotes(proposalId: string): Promise<LcdProposalVote[]> {
-  const votes = await get(`/gov/proposals/${proposalId}/votes`)
-  return votes || []
+  return (await get(`/gov/proposals/${proposalId}/votes`)) || []
 }
 
 export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {
@@ -291,8 +312,16 @@ export async function getOraclePrice(denom: string): Promise<{ denom: string; pr
   }
 }
 
-export function getOracleActives(): Promise<string[]> {
-  return get(`/oracle/denoms/actives`)
+export async function getOracleActives(): Promise<string[]> {
+  const res = await get(`/oracle/denoms/actives`)
+
+  // from columbus-3
+  if (Array.isArray(res)) {
+    return res
+  }
+
+  // columbus-2 compatibility
+  return res.actives || []
 }
 
 export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
@@ -304,8 +333,11 @@ export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
 
   const denomsPrices = await Promise.all(activeDenomsResponse.map((denom) => getOraclePrice(denom)))
 
-  return compact(denomsPrices).reduce((prev, item) => {
-    prev[item.denom] = item.price
+  return denomsPrices.filter(Boolean).reduce((prev, item) => {
+    if (item) {
+      prev[item.denom] = item.price
+    }
+
     return prev
   }, {})
 }
@@ -319,14 +351,14 @@ export function getMissedOracleVotes(operatorAddr: string): Promise<string> {
 // Treasury
 ///////////////////////////////////////////////
 // async function getLunaSupply() {
-//   // Columbus-2
+//   // columbus-2
 //   const response = await getStakingPool()
 //   const { not_bonded_tokens: notBondedTokens, bonded_tokens: bondedTokens } = response
 //   return plus(notBondedTokens, bondedTokens)
 // }
 
 export async function getDenomIssuanceAfterGenesis(denom: string, day: number): Promise<object | null> {
-  // Columbus-2
+  // columbus-2
   const res = await get(`/treasury/issuance/${denom}/${day}`)
 
   if (!res.issuance) {
@@ -373,4 +405,8 @@ export async function getTaxRate(height?: string): Promise<string> {
 export async function getTaxCap(denom: string, height?: string): Promise<string> {
   const taxCaps = await get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
   return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
+}
+
+export async function getContractStore(contractAddress: string, query: any): Promise<Record<string, unknown>> {
+  return get(`/wasm/contracts/${contractAddress}/store?query_msg=${JSON.stringify(query)}`)
 }

@@ -1,9 +1,9 @@
-interface NormalizedAccount {
-  value: AccountValue
-  original_vesting?: Coins
-  delegated_free?: Coins
-  delegated_vesting?: Coins
-  vesting_schedules?: VestingLazySchedule[]
+interface AccountValue {
+  address: string
+  coins: Coins
+  public_key: { type: string; value: string }
+  account_number: string
+  sequence: string
 }
 
 interface StandardAccount {
@@ -21,28 +21,42 @@ interface VestingAccount {
       delegated_vesting: Coins
       end_time: string
     }
-    vesting_schedules: VestingLazySchedule[]
+    vesting_schedules: {
+      denom: string
+      schedules: {
+        cliff: string
+        ratio: string
+      }[]
+    }[]
   }
 }
 
-interface ModuleAccount {
+interface Columbus3LazyVestingAccount {
   type: string
   value: {
-    BaseAccount: AccountValue
-    name: string
-    permissions: string[]
+    BaseVestingAccount: {
+      BaseAccount: AccountValue
+      original_vesting: Coins
+      delegated_free: Coins
+      delegated_vesting: Coins
+      end_time: string
+    }
+    vesting_schedules: VestingSchedules[]
   }
 }
 
-interface AccountValue {
-  address: string
-  coins: Coins
-  public_key: { type: string; value: string }
-  account_number: string
-  sequence: string
+interface LazyVestingAccount {
+  type: string
+  value: AccountValue & {
+    original_vesting: Coins
+    delegated_free: Coins
+    delegated_vesting: Coins
+    end_time: string
+    vesting_schedules: VestingSchedules[]
+  }
 }
 
-interface VestingLazySchedule {
+interface VestingSchedules {
   denom: string
   schedules: Schedule[]
 }
@@ -51,6 +65,35 @@ interface Schedule {
   start_time: string
   end_time: string
   ratio: string
+}
+
+interface Columbus3ModuleAccount {
+  type: string
+  value: {
+    BaseAccount: AccountValue
+    name: string
+    permissions: string[]
+  }
+}
+
+interface ModuleAccount {
+  type: string
+  value: AccountValue & {
+    name: string
+    permissions: string[]
+  }
+}
+
+interface NormalizedAccount {
+  value: AccountValue
+  // For vesting accounts
+  original_vesting?: Coins
+  delegated_free?: Coins
+  delegated_vesting?: Coins
+  vesting_schedules?: VestingSchedules[]
+  // For module accounts
+  name?: string
+  permissions?: string[]
 }
 
 interface CountInfoByDate {

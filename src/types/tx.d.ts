@@ -40,6 +40,11 @@ declare namespace Transaction {
     signature: string
   }
 
+  interface LcdTx {
+    type: string
+    value: Value
+  }
+
   interface LcdTransaction {
     height: string
     txhash: string
@@ -49,10 +54,7 @@ declare namespace Transaction {
     gas_used: string
     codespace: string
     code?: number
-    tx: {
-      type: string
-      value: Value
-    }
+    tx: LcdTx
     timestamp: string // unix time at GMT 0
     events: Event[]
   }
@@ -94,20 +96,6 @@ interface TxVolumeReturn {
   cumulative: DenomTxVolume[]
 }
 
-interface GetDelegationEventsReturn {
-  height?: string
-  type: string
-  amount: Coin
-  timestamp: string
-}
-
-interface DelegationTxsReturn {
-  totalCnt: number // total tx
-  page: number // tx page no of pagination
-  limit: number // tx count per page
-  events: GetDelegationEventsReturn[]
-}
-
 interface ParsedTxMsgInfo {
   tag?: string
   text?: string
@@ -117,10 +105,11 @@ interface ParsedTxMsgInfo {
 }
 
 interface ParsedTxInfo {
+  id: number
   timestamp: string
   txhash: string
   msgs: ParsedTxMsgInfo[]
-  txFee: string
+  txFee: Coin[]
   memo: string
   success: boolean
   errorMessage?: string

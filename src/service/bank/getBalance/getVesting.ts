@@ -1,13 +1,7 @@
 import { convertCoins, convertSchedules, ConvertedSchedule } from './calculate'
 import { minus, times, div, min } from 'lib/math'
 
-type Params = {
-  account: NormalizedAccount
-  latestBlockTimestamp: number
-}
-
-export default (params: Params): Vesting[] => {
-  const { account, latestBlockTimestamp } = params
+const getVesting = (account: NormalizedAccount, latestBlockTimestamp: number): Vesting[] => {
   const { vesting_schedules, original_vesting } = account
 
   const originalVestingMap = convertCoins(original_vesting)
@@ -41,3 +35,5 @@ export default (params: Params): Vesting[] => {
 
   return vesting
 }
+
+export default getVesting

@@ -6,7 +6,7 @@ import { DashboardEntity } from 'orm'
 
 export async function getDashboardHistory(daysBefore?: number): Promise<DashboardEntity[]> {
   const whereClause = {
-    chainId: config.CHAIN_ID
+    // chainId: config.CHAIN_ID
   }
 
   if (daysBefore && !isNaN(subDays(startOfToday(), daysBefore).getTime())) {
