@@ -66,7 +66,7 @@ export default class TreasuryController extends KoaController {
   @Get('/richlist/:denom')
   @Validate({
     params: {
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denom name')
+      denom: Joi.string().required().valid(config.ACTIVE_DENOMS, TOKEN_SYMBOLS).description('Denom name')
     },
     query: {
       page: Joi.number().default(1).min(1).description('Page number'),
