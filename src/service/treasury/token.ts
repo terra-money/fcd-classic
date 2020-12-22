@@ -2,7 +2,7 @@ import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 
-const ASSETS = {
+const ASSETS_BY_ADDRESS = {
   terra15gwkyepfc6xgca5t5zefzwy42uts8l2m4g40k6: {
     symbol: 'MIR',
     name: 'Mirror',
@@ -126,12 +126,14 @@ const ASSETS_BY_SYMBOL: {
     lpToken: string
     status: string
   }
-} = Object.keys(ASSETS).reduce((prev, curr) => {
-  prev[ASSETS[curr].symbol.toLowerCase()] = ASSETS[curr]
+} = Object.keys(ASSETS_BY_ADDRESS).reduce((prev, curr) => {
+  prev[ASSETS_BY_ADDRESS[curr].symbol.toLowerCase()] = ASSETS_BY_ADDRESS[curr]
   return prev
 }, {})
 
-export const TOKEN_SYMBOLS = Object.keys(ASSETS).map((address) => ASSETS[address].symbol.toLowerCase())
+export const TOKEN_SYMBOLS = Object.keys(ASSETS_BY_ADDRESS).map((address) =>
+  ASSETS_BY_ADDRESS[address].symbol.toLowerCase()
+)
 
 export const isToken = (symbol: string) => TOKEN_SYMBOLS.includes(symbol.toLowerCase())
 
@@ -193,4 +195,43 @@ export async function getTotalSupply(symbol: string): Promise<string> {
   }
 
   return div(res.total_supply, 1000000)
+}
+
+export async function getRichList(
+  symbol: string,
+  page: number,
+  limit: number
+): Promise<{ account: string; amount: string }[]> {
+  if (!(symbol in ASSETS_BY_SYMBOL)) {
+    throw new Error('symbol not found')
+  }
+
+  const res = await rp('https://graph.mirror.finance/graphql', {
+    method: 'POST',
+    rejectUnauthorized: false,
+    body: {
+      operationName: null,
+      query: `query {
+        richlist(
+          token: "${ASSETS_BY_SYMBOL[symbol].token}",
+          offset: ${(page - 1) * limit},
+          limit: ${limit}
+        ) {
+          address
+          balance
+        }
+      }`,
+      variables: {}
+    },
+    json: true
+  })
+
+  if (!res?.data?.richlist) {
+    return []
+  }
+
+  return res.data.richlist.map((e) => ({
+    account: e.address,
+    amount: div(e.balance, 1000000)
+  }))
 }

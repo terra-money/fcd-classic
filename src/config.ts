@@ -18,7 +18,8 @@ const {
   DISABLE_API,
   DISABLE_SOCKET,
   EXCLUDED_ROUTES,
-  MIN_GAS_PRICES
+  MIN_GAS_PRICES,
+  FOUNDATION_WALLET_ADDRESS
 } = process.env
 
 const config = {
@@ -30,6 +31,7 @@ const config = {
   RPC_URI: RPC_URI || 'http://localhost:26657',
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
+  FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
   SENTRY_DSN,
   SC_AUTH_KEY,
   USE_LOG_FILE: USE_LOG_FILE ? true : false,
