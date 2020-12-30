@@ -1,33 +1,18 @@
 import { get } from 'lodash'
-
+import { getRepository, Brackets, WhereExpression } from 'typeorm'
 import { TxEntity } from 'orm'
-
-import { sortDenoms, splitDenomAndAmount } from 'lib/common'
-import { getClaimTxs } from './helper'
-
-export interface GetClaimsParam {
-  operatorAddr: string
-  limit: number
-  page: number
-}
-
-interface DelegationClaim {
-  chainId: string
-  txhash: string
-  tx: string // tx hash of claim, TODO: remove
-  type: string // tx types like reward, commission
-  amounts: Coin[] // amounts in with their denoms
-  timestamp: string // tx timestamp
-}
+import { convertValAddressToAccAddress, sortDenoms, splitDenomAndAmount } from 'lib/common'
 
 function getClaimFromCol2(tx) {
   const tags = get(tx, 'data.tags')
+
   if (!tags) {
     return []
   }
 
   const msgs = get(tx, 'data.tx.value.msg')
   let tagIndex = 0
+
   return (
     msgs &&
     msgs.map((msg) => {
@@ -79,6 +64,7 @@ function parseTxEntity(tx: TxEntity) {
   }
 
   const msgs = get(tx, 'data.tx.value.msg')
+
   return (
     msgs &&
     msgs.map((msg, i: number) => {
@@ -123,8 +109,23 @@ function parseTxEntity(tx: TxEntity) {
   )
 }
 
+interface DelegationClaim {
+  chainId: string
+  txhash: string
+  tx: string // tx hash of claim, TODO: remove
+  type: string // tx types like reward, commission
+  amounts: Coin[] // amounts in with their denoms
+  timestamp: string // tx timestamp
+}
+
 function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
   return txs.map(parseTxEntity).flat().filter(Boolean)
+}
+
+export interface GetClaimsParam {
+  operatorAddr: string
+  limit: number
+  page: number
 }
 
 interface ClaimTxReturn {
@@ -132,6 +133,49 @@ interface ClaimTxReturn {
   page: number
   limit: number
   claims: DelegationClaim[]
+}
+
+interface ClaimTxList {
+  totalCnt: number // number of total Claim txs
+  txs: TxEntity[] // claims tx list
+}
+
+function addClaimFilterToQuery(qb: WhereExpression, operatorAddress: string, accountAddress: string) {
+  qb.andWhere(
+    new Brackets((q) => {
+      q.andWhere(
+        new Brackets((qinner) => {
+          qinner
+            .where(`data->'code' IS NULL`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "distribution/MsgWithdrawValidatorCommission"}]'`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
+        })
+      ).orWhere(
+        new Brackets((qinner) => {
+          qinner
+            .where(`data->'code' IS NULL`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "distribution/MsgWithdrawDelegationReward"}]'`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "delegator_address": "${accountAddress}" } }]'`)
+        })
+      )
+    })
+  )
+}
+
+async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
+
+  const accountAddr = convertValAddressToAccAddress(data.operatorAddr)
+  addClaimFilterToQuery(qb, data.operatorAddr, accountAddr)
+
+  const totalCnt = await qb.getCount()
+
+  qb.skip(data.limit * (data.page - 1))
+    .take(data.limit)
+    .orderBy('timestamp', 'DESC')
+  const txs = await qb.getMany()
+  return { totalCnt, txs }
 }
 
 export default async function getClaims(data: GetClaimsParam): Promise<ClaimTxReturn> {

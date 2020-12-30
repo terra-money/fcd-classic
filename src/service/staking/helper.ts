@@ -9,13 +9,12 @@ import { APIError, ErrorTypes } from 'lib/error'
 import * as lcd from 'lib/lcd'
 import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
-import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
+import { sortDenoms } from 'lib/common'
 import getAvatar from 'lib/keybase'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
 import getDelegationTxs from './getDelegationTxs'
-import { GetClaimsParam } from './getClaims'
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
 
 enum ValidatorStatusType {
@@ -180,13 +179,15 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
       q.andWhere(
         new Brackets((qinner) => {
           qinner
-            .where(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgDelegate"}]'`)
+            .where(`data->'code' IS NULL`)
+            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgDelegate"}]'`)
             .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
         })
       )
         .orWhere(
           new Brackets((qinner) => {
             qinner
+              .where(`data->'code' IS NULL`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgCreateValidator"}]'`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
           })
@@ -194,6 +195,7 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
         .orWhere(
           new Brackets((qinner) => {
             qinner
+              .where(`data->'code' IS NULL`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgBeginRedelegate"}]'`)
               .andWhere(
                 `data->'tx'->'value'->'msg'@>'[{ "value": { "validator_src_address": "${operatorAddress}" } }]'`
@@ -203,6 +205,7 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
         .orWhere(
           new Brackets((qinner) => {
             qinner
+              .where(`data->'code' IS NULL`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgBeginRedelegate"}]'`)
               .andWhere(
                 `data->'tx'->'value'->'msg'@>'[{ "value": { "validator_dst_address": "${operatorAddress}" } }]'`
@@ -212,6 +215,7 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
         .orWhere(
           new Brackets((qinner) => {
             qinner
+              .where(`data->'code' IS NULL`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "staking/MsgUndelegate"}]'`)
               .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
           })
@@ -241,47 +245,6 @@ export async function getRawDelegationTxs(
     totalCnt,
     txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
   }
-}
-
-function addClaimFilterToQuery(qb: WhereExpression, operatorAddress: string, accountAddress: string) {
-  qb.andWhere(
-    new Brackets((q) => {
-      q.andWhere(
-        new Brackets((qinner) => {
-          qinner
-            .where(`data->'tx'->'value'->'msg'@>'[{ "type": "distribution/MsgWithdrawValidatorCommission"}]'`)
-            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
-        })
-      ).orWhere(
-        new Brackets((qinner) => {
-          qinner
-            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "distribution/MsgWithdrawDelegationReward"}]'`)
-            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "validator_address": "${operatorAddress}" } }]'`)
-            .andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "delegator_address": "${accountAddress}" } }]'`)
-        })
-      )
-    })
-  )
-}
-
-interface ClaimTxList {
-  totalCnt: number // number of total Claim txs
-  txs: TxEntity[] // claims tx list
-}
-
-export async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
-
-  const accountAddr = convertValAddressToAccAddress(data.operatorAddr)
-  addClaimFilterToQuery(qb, data.operatorAddr, accountAddr)
-
-  const totalCnt = await qb.getCount()
-
-  qb.skip(data.limit * (data.page - 1))
-    .take(data.limit)
-    .orderBy('timestamp', 'DESC')
-  const txs = await qb.getMany()
-  return { totalCnt, txs }
 }
 
 export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
