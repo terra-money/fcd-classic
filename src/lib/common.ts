@@ -29,7 +29,12 @@ const CURRENCY_BY_DENOMS = new Map([
   ['ugbp', 'GBT'],
   ['ueur', 'EUT'],
   ['ujpy', 'JPT'],
-  ['ucny', 'CNT']
+  ['ucny', 'CNT'],
+  ['uinr', 'INT'],
+  ['ucad', 'CAT'],
+  ['uchf', 'CHT'],
+  ['uhkd', 'HKT'],
+  ['uaud', 'AUT']
 ])
 
 export function denomToCurrency(denom: string): string {
@@ -46,7 +51,12 @@ const DENOM_BY_CURRENCIES = new Map([
   ['eut', 'ueur'],
   ['jpt', 'ujpy'],
   ['cnt', 'ucny'],
-  ['mnt', 'umnt']
+  ['mnt', 'umnt'],
+  ['int', 'uinr'],
+  ['cat', 'ucad'],
+  ['cht', 'uchf'],
+  ['hkt', 'uhkd'],
+  ['aut', 'uaud']
 ])
 
 export function currencyToDenom(currency): string {

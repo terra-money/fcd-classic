@@ -9,7 +9,7 @@ import { initializeSentry } from 'lib/errorReporting'
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'
-import { calculateValidatorsReturn } from './staking'
+import { calculateValidatorsReturn, collectValidator } from './staking'
 import { collectProposal } from './gov'
 import { collectDashboard } from './dashboard'
 import { rpcEventWatcher } from './watcher'
@@ -33,7 +33,8 @@ const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
 export const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
 export const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute)
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute) // 10 min timeout
+const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
+const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
 const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, twentyMinute)
 const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, twentyMinute)
@@ -51,6 +52,11 @@ const jobs = [
   {
     method: priceCollector.run.bind(priceCollector),
     cron: '50 * * * * *'
+  },
+  // Per Hour
+  {
+    method: validatorCollector.run.bind(validatorCollector),
+    cron: '30 1 * * * *'
   },
   // Per day
   {

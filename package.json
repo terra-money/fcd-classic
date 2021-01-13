@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "0.6.6",
+  "version": "0.6.8",
   "description": "Terra FCD Suite",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
