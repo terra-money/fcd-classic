@@ -40,35 +40,12 @@ ${isSent ? 'to' : 'from'} ${isSent ? v.to_address : v.from_address}`,
   return messages[type]()
 }
 
-const distribute: Parser = ({ type, value: v }) => {
-  const messages: { [type: string]: () => Promise<Parsed> | Parsed } = {
-    MsgSetWithdrawAddress: () => ({
-      tag: 'Staking',
-      text: `Set withdraw address as ${v.withdraw_address}`
-    }),
-    MsgWithdrawDelegationReward: async () => {
-      const moniker = await getMoniker(v.validator_address)
-      return {
-        tag: 'Staking',
-        text: `Withdrew reward from ${moniker}`
-      }
-    },
-    MsgWithdrawValidatorCommission: async () => {
-      const moniker = await getMoniker(v.validator_address)
-      return {
-        tag: 'Staking',
-        text: `Withdrew ${moniker}'s commission`
-      }
-    }
-  }
-
-  return messages[type]()
-}
-
 const slashing: Parser = ({ type, value: v }) => {
+  const tag = 'Slashing'
+
   const messages: { [type: string]: () => Parsed } = {
     MsgUnjail: () => ({
-      tag: 'Slashing',
+      tag,
       text: `Unjail requested for ${v.address}`
     })
   }
@@ -77,19 +54,38 @@ const slashing: Parser = ({ type, value: v }) => {
 }
 
 const staking: Parser = async ({ type, value: v }) => {
+  const tag = 'Staking'
   const messages: { [type: string]: () => Promise<Parsed> | Parsed } = {
+    MsgSetWithdrawAddress: () => ({
+      tag,
+      text: `Set withdraw address as ${v.withdraw_address}`
+    }),
+    MsgWithdrawDelegationReward: async () => {
+      const moniker = await getMoniker(v.validator_address)
+      return {
+        tag,
+        text: `Withdrew reward from ${moniker}`
+      }
+    },
+    MsgWithdrawValidatorCommission: async () => {
+      const moniker = await getMoniker(v.validator_address)
+      return {
+        tag,
+        text: `Withdrew ${moniker}'s commission`
+      }
+    },
     MsgCreateValidator: () => ({
-      tag: 'Staking',
+      tag,
       text: `Created validator ${v.validator_address}`
     }),
     MsgEditValidator: () => ({
-      tag: 'Staking',
+      tag,
       text: `Edited validator ${v.validator_address}`
     }),
     MsgDelegate: async () => {
       const moniker = await getMoniker(v.validator_address)
       return {
-        tag: 'Staking',
+        tag,
         text: `Delegated ${format.coin(v.amount)} to ${moniker}`
       }
     },
@@ -97,14 +93,14 @@ const staking: Parser = async ({ type, value: v }) => {
       const srcMoniker = await getMoniker(v.validator_src_address)
       const dstMoniker = await getMoniker(v.validator_dst_address)
       return {
-        tag: 'Staking',
+        tag,
         text: `Redelegated ${format.coin(v.amount)} from ${srcMoniker} to ${dstMoniker}`
       }
     },
     MsgUndelegate: async () => {
       const moniker = await getMoniker(v.validator_address)
       return {
-        tag: 'Staking',
+        tag,
         text: `Requested to undelegate ${format.coin(v.amount)} from ${moniker}`
       }
     }
@@ -113,20 +109,21 @@ const staking: Parser = async ({ type, value: v }) => {
   return messages[type]()
 }
 
-const custom: Parser = ({ type, value: v, log }: Params) => {
+const oracle: Parser = ({ type, value: v, log }: Params) => {
+  const tag = 'Swap'
   const messages: { [type: string]: () => Parsed } = {
     MsgPricePrevote: () => ({
-      tag: 'Market',
+      tag,
       text: `Prevoted price of LUNA denominated in ${format.denom(v.denom)}`
     }),
     MsgPriceVote: () => ({
-      tag: 'Market',
+      tag,
       text: `Voted orice of LUNA denominated in ${format.denom(v.denom)}`
     }),
     MsgSwap: () => {
       if (!log) {
         return {
-          tag: 'Swap',
+          tag,
           text: `Swapped ${format.coin(v.offer_coin)}`,
           out: [],
           in: []
@@ -142,42 +139,32 @@ const custom: Parser = ({ type, value: v, log }: Params) => {
       }
 
       return {
-        tag: 'Market',
+        tag,
         text: `Swapped ${format.coin(v.offer_coin)} ${swapCoinMsg}`,
         out: [v.offer_coin],
         in: [splitDenomAndAmount(swapCoin)],
         tax: swapFee
       }
-    },
-    MsgSubmitProgram: () => ({
-      tag: 'Budget',
-      text: `Submit budget program '${v.title}'`
-    }),
-    MsgWithdrawProgram: () => ({
-      tag: 'Budget',
-      text: `Withdraw program ${v.program_id}`
-    }),
-    MsgVoteProgram: () => ({
-      tag: 'Budget',
-      text: `Vote ${v.option ? 'YES' : 'NO'} for program ${v.program_id}`
-    })
+    }
   }
 
   return messages[type]()
 }
 
 const gov: Parser = ({ type, value: v }) => {
+  const tag = 'Governance'
+
   const messages: { [type: string]: () => Parsed } = {
     MsgDeposit: () => {
       const [{ amount, denom }]: Coin[] = v.amount
       return {
-        tag: 'Governance',
+        tag,
         text: `Deposited ${format.amount(amount)} ${format.denom(denom)} to Proposal ${v.proposal_id}`
       }
     },
     MsgVote: () => {
       return {
-        tag: 'Governance',
+        tag,
         text: `Voted ${v.option} for proposal ${v.proposal_id}`
       }
     },
@@ -189,8 +176,62 @@ const gov: Parser = ({ type, value: v }) => {
         initialDepositStr = ` with ${format.amount(amount)} ${format.denom(denom)} deposit`
       }
       return {
-        tag: 'Governance',
+        tag,
         text: `Created proposal '${title}'${initialDepositStr}`
+      }
+    }
+  }
+
+  return messages[type]()
+}
+
+const contract: Parser = ({ type, value: v, log }) => {
+  const tag = 'Contract'
+
+  const messages: { [type: string]: () => Parsed } = {
+    MsgStoreCode: () => {
+      const codeId = get(log, 'events[1].attributes[1].value')
+
+      return {
+        tag,
+        text: `Stored ${codeId}`
+      }
+    },
+    MsgInstantiateContract: () => {
+      const contract = get(log, 'events[0].attributes[2].value')
+      const msg = Buffer.from(v.init_msg, 'base64').toString()
+
+      return {
+        tag,
+        text: `Instantiated ${contract} with ${msg} from code ${v.code_id}`
+      }
+    },
+    MsgExecuteContract: () => {
+      const msg = Buffer.from(v.execute_msg, 'base64').toString()
+      let text = `Executed ${msg} on ${v.contract}`
+
+      if (Array.isArray(v.coins) && v.coins.length) {
+        const [{ amount, denom }]: Coin[] = v.coins
+        text += ` with ${format.amount(amount)} ${format.denom(denom)}`
+      }
+
+      return {
+        tag,
+        text
+      }
+    },
+    MsgMigrateContract: () => {
+      const msg = Buffer.from(v.migrate_msg, 'base64').toString()
+
+      return {
+        tag,
+        text: `Migrated ${v.contract} with ${msg} to code ${v.new_code_id}`
+      }
+    },
+    MsgUpdateContractOwner: () => {
+      return {
+        tag,
+        text: `Changed ${v.contract} owner to ${v.new_owner} from ${v.owner}`
       }
     }
   }
@@ -207,24 +248,26 @@ const defaultParser: Parser = ({ type, value: v }) => ({
 const types: { [type: string]: Parser } = {
   MsgSend: bank,
   MsgMultiSend: bank,
-  MsgSetWithdrawAddress: distribute,
-  MsgWithdrawDelegationReward: distribute,
-  MsgWithdrawValidatorCommission: distribute,
   MsgUnjail: slashing,
+  MsgSetWithdrawAddress: staking,
+  MsgWithdrawDelegationReward: staking,
+  MsgWithdrawValidatorCommission: staking,
   MsgCreateValidator: staking,
   MsgEditValidator: staking,
   MsgDelegate: staking,
   MsgBeginRedelegate: staking,
   MsgUndelegate: staking,
-  MsgPricePrevote: custom,
-  MsgPriceVote: custom,
-  MsgSwap: custom,
-  MsgSubmitProgram: custom,
-  MsgWithdrawProgram: custom,
-  MsgVoteProgram: custom,
+  MsgPricePrevote: oracle,
+  MsgPriceVote: oracle,
+  MsgSwap: oracle,
   MsgVote: gov,
   MsgDeposit: gov,
-  MsgSubmitProposal: gov
+  MsgSubmitProposal: gov,
+  MsgStoreCode: contract,
+  MsgInstantiateContract: contract,
+  MsgExecuteContract: contract,
+  MsgMigrateContract: contract,
+  MsgUpdateContractOwner: contract
 }
 
 export default async (

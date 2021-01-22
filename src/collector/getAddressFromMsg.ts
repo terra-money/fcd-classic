@@ -1,6 +1,6 @@
 import { get, uniq } from 'lodash'
 
-export default function getAddressFromMsg(msg): { [key: string]: string[] } {
+export default function getAddressFromMsg(msg: Transaction.Message, log: Transaction.Log): { [key: string]: string[] } {
   if (!msg) {
     return {}
   }
@@ -87,24 +87,26 @@ export default function getAddressFromMsg(msg): { [key: string]: string[] } {
         contract: [get(msg, 'value.sender')].filter(Boolean)
       }
 
-    case 'wasm/MsgInstantiateContract':
+    case 'wasm/MsgInstantiateContract': {
+      const contract = get(log, 'events[0].attributes[2].value')
       return {
-        contract: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner'), contract].filter(Boolean)
       }
+    }
 
     case 'wasm/MsgExecuteContract':
       return {
-        contract: [get(msg, 'value.sender')].filter(Boolean)
+        contract: [get(msg, 'value.sender'), get(msg, 'value.contract')].filter(Boolean)
       }
 
     case 'wasm/MsgMigrateContract':
       return {
-        contract: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner'), get(msg, 'value.contract')].filter(Boolean)
       }
 
     case 'wasm/MsgUpdateContractOwner':
       return {
-        contract: [get(msg, 'value.owner')].filter(Boolean)
+        contract: [get(msg, 'value.owner'), get(msg, 'value.new_owner'), get(msg, 'value.contract')].filter(Boolean)
       }
 
     case 'msgauth/MsgGrantAuthorization':
