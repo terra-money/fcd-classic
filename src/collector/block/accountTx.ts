@@ -8,7 +8,7 @@ export function getAccountTxDocs(tx: TxEntity): AccountTxEntity[] {
   const logs = tx.data.logs
   const concatArray = (objValue, srcValue) => union(objValue, srcValue)
   const addrObj = msgs
-    .map((msg, index) => getAddressFromMsg(msg, logs[index]))
+    .map((msg, index) => getAddressFromMsg(msg, logs ? logs[index] : undefined))
     .reduce((acc, item) => mergeWith(acc, item, concatArray), {})
 
   return Object.keys(addrObj)

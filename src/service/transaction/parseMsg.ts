@@ -199,20 +199,25 @@ const contract: Parser = ({ type, value: v, log }) => {
     },
     MsgInstantiateContract: () => {
       const contract = get(log, 'events[0].attributes[2].value')
-      const msg = Buffer.from(v.init_msg, 'base64').toString()
+      // const msg = Buffer.from(v.init_msg, 'base64').toString()
 
       return {
         tag,
-        text: `Instantiated ${contract} with ${msg} from code ${v.code_id}`
+        text: `Instantiated ${contract} from code ${v.code_id}`
       }
     },
     MsgExecuteContract: () => {
-      const msg = Buffer.from(v.execute_msg, 'base64').toString()
-      let text = `Executed ${msg} on ${v.contract}`
+      let method
+
+      try {
+        const msg = JSON.parse(Buffer.from(v.execute_msg, 'base64').toString())
+        method = Object.keys(msg)[0]
+      } catch (e) {}
+
+      let text = `Executed ${method} on ${v.contract}`
 
       if (Array.isArray(v.coins) && v.coins.length) {
-        const [{ amount, denom }]: Coin[] = v.coins
-        text += ` with ${format.amount(amount)} ${format.denom(denom)}`
+        text += ` with ${v.coins.map((coin) => `${format.amount(coin.amount)} ${format.denom(coin.denom)}`).join(', ')}`
       }
 
       return {
@@ -221,11 +226,10 @@ const contract: Parser = ({ type, value: v, log }) => {
       }
     },
     MsgMigrateContract: () => {
-      const msg = Buffer.from(v.migrate_msg, 'base64').toString()
-
+      // const msg = Buffer.from(v.migrate_msg, 'base64').toString()
       return {
         tag,
-        text: `Migrated ${v.contract} with ${msg} to code ${v.new_code_id}`
+        text: `Migrated ${v.contract} to code ${v.new_code_id}`
       }
     },
     MsgUpdateContractOwner: () => {

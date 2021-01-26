@@ -1,6 +1,9 @@
 import { get, uniq } from 'lodash'
 
-export default function getAddressFromMsg(msg: Transaction.Message, log: Transaction.Log): { [key: string]: string[] } {
+export default function getAddressFromMsg(
+  msg: Transaction.Message,
+  log?: Transaction.Log
+): { [key: string]: string[] } {
   if (!msg) {
     return {}
   }
