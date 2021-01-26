@@ -122,10 +122,6 @@ export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary
   const stakedLuna = await getLunaStaked()
   const votes = await lcd.getProposalVotes(id)
 
-  if (!votes) {
-    return
-  }
-
   const uniqueUserVotes = uniqBy(reverse(votes), 'voter') // can vote multiple times, doing reverse will took the latest votes
   const votersDelegations = (await Bluebird.map(uniqueUserVotes, (vote) => lcd.getDelegations(vote.voter))).flat()
   const validatorsVotingPower = await getValidatorsVotingPower()

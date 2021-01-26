@@ -49,6 +49,11 @@ interface LcdProposalVote {
   voter: string
 }
 
+interface LcdProposalDeposit {
+  proposal_id: string // number
+  depositor: string // terra address
+  amount: Coin[]
+}
 interface LcdProposalTally {
   abstain: string
   no: string

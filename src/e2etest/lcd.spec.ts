@@ -66,15 +66,6 @@ const basicProposalObject = {
   voting_end_time: expect.any(String)
 }
 
-const emptyTransactionsObject = {
-  count: '0',
-  limit: '1000',
-  page_number: '1',
-  page_total: '0',
-  total_count: '0',
-  txs: []
-}
-
 describe('LCD', () => {
   test('getTx: invalid', async () => {
     await expect(lcd.getTx('blahblah')).toReject()
@@ -313,9 +304,7 @@ describe('LCD', () => {
     })
 
     test('getProposalDeposits: invalid / not found', async () => {
-      await expect(lcd.getProposalDeposits(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(
-        emptyTransactionsObject
-      )
+      await expect(lcd.getProposalDeposits(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeEmpty()
     })
 
     test('getProposalDeposits: success', async () => {
@@ -323,11 +312,11 @@ describe('LCD', () => {
     })
 
     test('getProposalVoteTxs: invalid / not found', async () => {
-      await expect(lcd.getProposalVoteTxs(`${Number.MAX_SAFE_INTEGER}`)).resolves.toMatchObject(emptyTransactionsObject)
+      await expect(lcd.getProposalVotes(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeEmpty()
     })
 
     test('getProposalVoteTxs: success', async () => {
-      await expect(lcd.getProposalVoteTxs(proposal.id)).resolves.not.toBeArrayOfSize(0)
+      await expect(lcd.getProposalVotes(proposal.id)).resolves.not.toBeArrayOfSize(0)
     })
 
     test('getProposalVotes: invalid', async () => {
