@@ -311,11 +311,11 @@ describe('LCD', () => {
       await expect(lcd.getProposalDeposits(proposal.id)).resolves.not.toBeArrayOfSize(0)
     })
 
-    test('getProposalVoteTxs: invalid / not found', async () => {
+    test('getProposalVotes: invalid / not found', async () => {
       await expect(lcd.getProposalVotes(`${Number.MAX_SAFE_INTEGER}`)).resolves.toBeEmpty()
     })
 
-    test('getProposalVoteTxs: success', async () => {
+    test('getProposalVotes: success', async () => {
       await expect(lcd.getProposalVotes(proposal.id)).resolves.not.toBeArrayOfSize(0)
     })
 

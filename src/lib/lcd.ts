@@ -204,28 +204,6 @@ export function getProposalProposer(proposalId: string): Promise<LcdProposalProp
   return get(`/gov/proposals/${proposalId}/proposer`)
 }
 
-export function getProposalDepositTxs(proposalId: string): Promise<Transaction.LcdTransactions> {
-  const params = {
-    'proposal_deposit.proposal_id': proposalId,
-    limit: '1000'
-  }
-
-  return get(`/txs`, params)
-}
-
-export function getProposalVoteTxs(proposalId: string, option?: string): Promise<Transaction.LcdTransactions> {
-  const params = {
-    'proposal_vote.proposal_id': proposalId,
-    limit: '1000'
-  }
-
-  if (option) {
-    params['proposal_vote.option'] = option
-  }
-
-  return get(`/txs`, params)
-}
-
 export async function getProposalDeposits(proposalId: string): Promise<LcdProposalDeposit[]> {
   return (await get(`/gov/proposals/${proposalId}/deposits`)) || []
 }
