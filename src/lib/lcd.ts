@@ -231,7 +231,7 @@ export async function getProposalDeposits(proposalId: string): Promise<LcdPropos
 }
 
 export async function getProposalVotes(proposalId: string): Promise<LcdProposalVote[]> {
-  return (await get(`/gov/proposals/${proposalId}/votes`)) || []
+  return (await get(`/gov/proposals/${proposalId}/votes?limit=1000`)) || []
 }
 
 export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {
