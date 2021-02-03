@@ -2,6 +2,7 @@ import { default as parseDuration } from 'parse-duration'
 import { getRepository, LessThanOrEqual } from 'typeorm'
 import { PriceEntity } from 'orm'
 import { div } from 'lib/math'
+import config from '../../config'
 
 const MIN_DURATION = 60000
 
@@ -19,6 +20,7 @@ export function getQueryDatetimes(interval: string, count: number): Date[] {
 
 export async function getOnedayBefore(): Promise<CoinByDenoms> {
   const now = new Date()
+  const activeDenomsLength = config.ACTIVE_DENOMS.length - 1 /* -1 because luna */
   const oneDayBefore = getTargetDatetime(now, '1d') - MIN_DURATION
   const denomPrices = await getRepository(PriceEntity).find({
     where: {
@@ -28,7 +30,7 @@ export async function getOnedayBefore(): Promise<CoinByDenoms> {
       datetime: 'DESC'
     },
     skip: 0,
-    take: 20
+    take: activeDenomsLength
   })
 
   return denomPrices.reduce((acc, curr) => {
