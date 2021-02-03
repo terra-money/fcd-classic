@@ -13,7 +13,6 @@ interface GetProposalDepositsInput {
 }
 
 interface Deposit {
-  txhash: string
   deposit: Coin[]
   depositor: {
     accountAddress: string
@@ -50,7 +49,6 @@ async function getDepositFromTx(tx): Promise<Deposit[]> {
     const accountInfo = await getAccountInfo(depositor)
 
     return {
-      txhash: tx.txhash,
       deposit,
       depositor: accountInfo
     }
@@ -66,31 +64,27 @@ export default async function getProposalDeposits(input: GetProposalDepositsInpu
     // chainId: config.CHAIN_ID
   })
 
-  if (!proposal) {
+  if (!proposal || !proposal.deposits.length) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
-  if (!proposal.depositTxs || !proposal.depositTxs.txs) {
-    return {
-      totalCnt: 0,
-      page,
-      limit,
-      deposits: []
-    }
-  }
-
-  const depositTxs = await Promise.all(proposal.depositTxs.txs.map((tx) => getDepositFromTx(tx)))
-  const txsExceptZeroDeposit = depositTxs.flat().filter((tx) => tx.deposit.length > 0)
+  const deposits: Deposit[] = await Promise.all(
+    proposal.deposits.map((v) =>
+      getAccountInfo(v.depositor).then((accInfo) => ({
+        deposit: v.amount,
+        depositor: accInfo
+      }))
+    )
+  )
 
   return {
-    totalCnt: txsExceptZeroDeposit.length,
+    totalCnt: deposits.length,
     page,
     limit,
-    deposits: chain(txsExceptZeroDeposit)
+    deposits: chain(deposits)
       .reverse()
       .drop((page - 1) * limit)
       .take(limit)
       .value()
-      .flat()
   }
 }

@@ -24,9 +24,9 @@ export default class DashboardEntity {
   @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
   taxReward: string
 
-  @Column({ default: 0 }) // TODO: legacy column. Will be removed on next release
+  @Column({ default: 0 })
   activeAccount: number
 
-  @Column({ default: 0 }) // TODO: legacy column. Will be removed on next release
+  @Column({ default: 0 })
   totalAccount: number
 }

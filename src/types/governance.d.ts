@@ -44,9 +44,15 @@ enum voteOption {
 }
 
 interface LcdProposalVote {
+  proposal_id: string // number
+  voter: string // terra address
   option: voteOption
-  proposal_id: string
-  voter: string
+}
+
+interface LcdProposalDeposit {
+  proposal_id: string // number
+  depositor: string // terra address
+  amount: Coin[]
 }
 
 interface LcdProposalTally {

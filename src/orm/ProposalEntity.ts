@@ -68,10 +68,10 @@ export default class ProposalEntity {
   public totalDeposit: Coin[]
 
   @Column({ type: 'jsonb' })
-  public voteTxs: Transaction.LcdTransactions
+  public votes: LcdProposalVote[]
 
   @Column({ type: 'jsonb' })
-  public depositTxs: Transaction.LcdTransactions
+  public deposits: LcdProposalDeposit[]
 
   @CreateDateColumn()
   createdAt: Date

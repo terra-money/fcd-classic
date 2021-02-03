@@ -38,8 +38,8 @@ export async function saveProposalDetails(
     throw new Error(`Failed to get proposal ${proposal.id} vote summary`)
   }
 
-  const proposalDepositTxs = await lcd.getProposalDeposits(proposal.id)
-  const proposalVoteTxs = await lcd.getProposalVoteTxs(proposal.id)
+  const deposits = await lcd.getProposalDeposits(proposal.id)
+  const votes = await lcd.getProposalVotes(proposal.id)
 
   const proposalEntityObject: DeepPartial<ProposalEntity> = {
     proposalId: proposal.id,
@@ -60,8 +60,8 @@ export async function saveProposalDetails(
     tallyingParameters: proposalTallyingParams,
     depositParams: proposalDepositParams,
     totalDeposit: proposal.total_deposit,
-    depositTxs: proposalDepositTxs,
-    voteTxs: proposalVoteTxs,
+    deposits,
+    votes,
     ...(proposer && { proposer: proposer.proposer })
   }
 

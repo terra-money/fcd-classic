@@ -1,5 +1,5 @@
 import { getRepository } from 'typeorm'
-import { chain, get, reverse, filter } from 'lodash'
+import { chain, get, reverse, uniqBy } from 'lodash'
 
 import { ProposalEntity } from 'orm'
 
@@ -21,7 +21,6 @@ interface GetProposalVotesInput {
 }
 
 interface Vote {
-  txhash: string
   answer: string
   voter: {
     accountAddress: string
@@ -37,7 +36,7 @@ interface GetProposalVotesReturn {
   votes: Vote[]
 }
 
-async function getVoteFromTx(tx) {
+async function getVoteFromTx(tx): Promise<Vote[]> {
   const msgs = get(tx, 'tx.value.msg')
   const mapMsgToVote = async (msg): Promise<Vote | undefined> => {
     let answer: string | undefined
@@ -53,32 +52,25 @@ async function getVoteFromTx(tx) {
     }
 
     return {
-      txhash: tx.txhash,
       answer,
       voter: await getAccountInfo(voter)
     }
   }
-  return (await Promise.all(msgs.map(mapMsgToVote))).filter(Boolean)
+
+  return Promise.all(msgs.map(mapMsgToVote))
 }
 
-function getUniqueVote(txs, option?: string) {
-  const uniqueTxs: any[] = []
-  reverse(txs).forEach((tx) => {
-    if (filter(uniqueTxs, { voter: tx.voter }).length === 0) {
-      uniqueTxs.push(tx)
-    }
-  })
+function getUniqueVotes(votes: Vote[], option?: string): Vote[] {
+  const uniqueVotes = uniqBy(reverse(votes), 'voter.accountAddress')
 
   if (option) {
-    return filter(uniqueTxs, { answer: option })
+    return uniqueVotes.filter((vote) => vote.answer === option)
   }
 
-  return uniqueTxs
+  return uniqueVotes
 }
 
-export default async function getProposalVotes(
-  input: GetProposalVotesInput
-): Promise<GetProposalVotesReturn | undefined> {
+export default async function getVotes(input: GetProposalVotesInput): Promise<GetProposalVotesReturn | undefined> {
   const { proposalId, page, limit, option } = input
 
   const proposal = await getRepository(ProposalEntity).findOne({
@@ -90,7 +82,7 @@ export default async function getProposalVotes(
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
-  if (!proposal || !proposal.voteTxs || !proposal.voteTxs.txs) {
+  if (!proposal || !proposal.votes.length) {
     return {
       totalCnt: 0,
       page,
@@ -99,14 +91,20 @@ export default async function getProposalVotes(
     }
   }
 
-  const voteTxs = (await Promise.all(proposal.voteTxs.txs.map(getVoteFromTx))).flat()
-  const uniqueVoteTxs = getUniqueVote(voteTxs, option)
+  const votes: Vote[] = await Promise.all(
+    uniqBy(reverse(proposal.votes), 'voter').map((v) =>
+      getAccountInfo(v.voter).then((accInfo) => ({
+        answer: v.option,
+        voter: accInfo
+      }))
+    )
+  )
 
   return {
-    totalCnt: Number(uniqueVoteTxs.length),
+    totalCnt: votes.length,
     page,
     limit,
-    votes: chain(uniqueVoteTxs)
+    votes: chain(votes)
       .drop((page - 1) * limit)
       .take(limit)
       .value()
