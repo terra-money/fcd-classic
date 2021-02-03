@@ -67,17 +67,11 @@ export default class ProposalEntity {
   @Column({ type: 'jsonb' })
   public totalDeposit: Coin[]
 
-  @Column({ type: 'jsonb', nullable: true })
-  public voteTxs: Transaction.LcdTransactions | null
+  @Column({ type: 'jsonb' })
+  public votes: LcdProposalVote[]
 
-  @Column({ type: 'jsonb', nullable: true })
-  public depositTxs: Transaction.LcdTransactions | null
-
-  @Column({ type: 'jsonb', nullable: true })
-  public votes: LcdProposalVote[] | null
-
-  @Column({ type: 'jsonb', nullable: true })
-  public deposits: LcdProposalDeposit[] | null
+  @Column({ type: 'jsonb' })
+  public deposits: LcdProposalDeposit[]
 
   @CreateDateColumn()
   createdAt: Date

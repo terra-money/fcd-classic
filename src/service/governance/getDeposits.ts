@@ -64,37 +64,18 @@ export default async function getProposalDeposits(input: GetProposalDepositsInpu
     // chainId: config.CHAIN_ID
   })
 
-  if (!proposal) {
+  if (!proposal || !proposal.deposits.length) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
-  if ((!proposal.depositTxs || !proposal.depositTxs.txs) && (!proposal.deposits || !proposal.deposits.length)) {
-    return {
-      totalCnt: 0,
-      page,
-      limit,
-      deposits: []
-    }
-  }
-
-  let deposits: Deposit[] = []
-
-  if (proposal.deposits) {
-    deposits = await Promise.all(
-      proposal.deposits.map((v) =>
-        getAccountInfo(v.depositor).then((accInfo) => ({
-          deposit: v.amount,
-          depositor: accInfo
-        }))
-      )
+  const deposits: Deposit[] = await Promise.all(
+    proposal.deposits.map((v) =>
+      getAccountInfo(v.depositor).then((accInfo) => ({
+        deposit: v.amount,
+        depositor: accInfo
+      }))
     )
-  }
-
-  if (proposal.depositTxs) {
-    deposits = await Promise.all(proposal.depositTxs.txs.map((tx) => getDepositFromTx(tx))).then((result) =>
-      result.flat().filter((tx) => tx.deposit.length > 0)
-    )
-  }
+  )
 
   return {
     totalCnt: deposits.length,

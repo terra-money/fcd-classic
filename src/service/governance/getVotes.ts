@@ -82,7 +82,7 @@ export default async function getVotes(input: GetProposalVotesInput): Promise<Ge
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
-  if (!proposal || (!proposal.voteTxs && !proposal.votes)) {
+  if (!proposal || !proposal.votes.length) {
     return {
       totalCnt: 0,
       page,
@@ -91,23 +91,14 @@ export default async function getVotes(input: GetProposalVotesInput): Promise<Ge
     }
   }
 
-  let votes: Vote[] = []
-
-  if (proposal.votes) {
-    votes = await Promise.all(
-      uniqBy(reverse(proposal.votes), 'voter').map((v) =>
-        getAccountInfo(v.voter).then((accInfo) => ({
-          answer: v.option,
-          voter: accInfo
-        }))
-      )
+  const votes: Vote[] = await Promise.all(
+    uniqBy(reverse(proposal.votes), 'voter').map((v) =>
+      getAccountInfo(v.voter).then((accInfo) => ({
+        answer: v.option,
+        voter: accInfo
+      }))
     )
-  }
-
-  if (proposal.voteTxs) {
-    const voteTxs = (await Promise.all(proposal.voteTxs.txs.map(getVoteFromTx))).flat().filter(Boolean)
-    votes = getUniqueVotes(voteTxs, option)
-  }
+  )
 
   return {
     totalCnt: votes.length,
