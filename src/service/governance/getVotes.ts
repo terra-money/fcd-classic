@@ -70,9 +70,7 @@ function getUniqueVotes(votes: Vote[], option?: string): Vote[] {
   return uniqueVotes
 }
 
-export default async function getProposalVotes(
-  input: GetProposalVotesInput
-): Promise<GetProposalVotesReturn | undefined> {
+export default async function getVotes(input: GetProposalVotesInput): Promise<GetProposalVotesReturn | undefined> {
   const { proposalId, page, limit, option } = input
 
   const proposal = await getRepository(ProposalEntity).findOne({
@@ -84,7 +82,7 @@ export default async function getProposalVotes(
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
-  if (!proposal || !proposal.voteTxs || !proposal.voteTxs.txs) {
+  if (!proposal || (!proposal.voteTxs && !proposal.votes)) {
     return {
       totalCnt: 0,
       page,
