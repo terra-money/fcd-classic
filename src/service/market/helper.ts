@@ -28,7 +28,7 @@ export async function getOnedayBefore(): Promise<CoinByDenoms> {
       datetime: 'DESC'
     },
     skip: 0,
-    take: 10
+    take: 20
   })
 
   return denomPrices.reduce((acc, curr) => {
