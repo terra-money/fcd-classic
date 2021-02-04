@@ -1,6 +1,6 @@
 import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
-import { get, min, compact, uniq } from 'lodash'
+import { get, min, compact, uniq, mapValues, keyBy } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
 import config from 'config'
@@ -18,24 +18,25 @@ type TaxCapAndRate = {
   }
 }
 
-async function getTaxCapByDenom(denom: string, height?: string): Promise<Coin> {
-  return {
-    denom,
-    amount: await lcd.getTaxCap(denom, height)
-  }
-}
-
 async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
-  const taxCapsList: Coin[] = await Promise.all(config.ACTIVE_DENOMS.map((denom) => getTaxCapByDenom(denom, height)))
-
-  const taxRate = await lcd.getTaxRate(height)
+  // NOTE: tax caps and rate can be queried by node's configuration
+  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
+  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+  const height100 = height ? (+height - (+height % 100)).toString() : undefined
+  const taxCaps: { [denom: string]: string } = mapValues(
+    keyBy(
+      await Promise.all(
+        config.ACTIVE_DENOMS.map((denom) => lcd.getTaxCap(denom, height100).then((amount) => ({ denom, amount })))
+      ),
+      'denom'
+    ),
+    'amount'
+  )
+  const taxRate = await lcd.getTaxRate(height100)
 
   return {
     taxRate,
-    taxCaps: taxCapsList.reduce((acc, tax) => {
-      acc[tax.denom] = tax.amount
-      return acc
-    }, {})
+    taxCaps
   }
 }
 
