@@ -1,5 +1,3 @@
-import { string } from 'yargs'
-
 const {
   SERVER_PORT,
   CHAIN_ID,
@@ -35,9 +33,9 @@ const config = {
   FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
   SENTRY_DSN,
   SC_AUTH_KEY,
-  USE_LOG_FILE: USE_LOG_FILE ? true : false,
-  DISABLE_API: DISABLE_API ? true : false,
-  DISABLE_SOCKET: DISABLE_SOCKET ? true : false,
+  USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'true'),
+  DISABLE_API: !!JSON.parse(DISABLE_API || 'false'),
+  DISABLE_SOCKET: !!JSON.parse(DISABLE_SOCKET || 'false'),
   // Keybase for fetching validator avatar image
   KEYBASE_URL_PREFIX: `https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=`,
   // Reporter module

@@ -15,9 +15,13 @@ const NEW_BLOCK_Q = `tm.event='NewBlock'`
 const VALIDATOR_REGEX = /terravaloper([a-z0-9]{39})/g
 
 /**
- * Extract valoper... from stringified tx and collector validators
+ * For throttling purpose,
+ * 1. detectValidators extracts valoper... from stringified tx and add to the validatorUpdateSet
+ * 2. collectValidators collects validator for addresses from validatorUpdateSet
  */
-async function collectorValidators(data: RpcResponse) {
+const validatorUpdateSet = new Set<string>()
+
+async function detectValidators(data: RpcResponse) {
   const marshalTxs = data.result.data?.value.block?.data.txs as string[]
 
   if (marshalTxs) {
@@ -33,18 +37,27 @@ async function collectorValidators(data: RpcResponse) {
           .filter(Boolean) as string[]
       )
 
-      const votingPower = await lcd.getVotingPower()
-      const activePrices = await lcd.getActiveOraclePrices()
-
-      await Bluebird.map(addresses, (addr) =>
-        lcd
-          .getValidator(addr)
-          .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
-      )
+      addresses.forEach((address) => validatorUpdateSet.add(address))
     } catch (err) {
       sentry.captureException(err)
     }
   }
+}
+
+async function collectValidators() {
+  const addrs = Array.from(validatorUpdateSet.values())
+  validatorUpdateSet.clear()
+
+  const votingPower = await lcd.getVotingPower()
+  const activePrices = await lcd.getActiveOraclePrices()
+
+  await Bluebird.mapSeries(addrs, (addr) =>
+    lcd
+      .getValidator(addr)
+      .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
+  )
+
+  setTimeout(collectValidators, 5000)
 }
 
 export async function rpcEventWatcher() {
@@ -63,7 +76,7 @@ export async function rpcEventWatcher() {
   watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
     eventCounter += 1
 
-    await Promise.all([blockCollector.run(), collectorValidators(data)]).catch(sentry.captureException)
+    await Promise.all([blockCollector.run(), detectValidators(data)]).catch(sentry.captureException)
   })
 
   await watcher.start()
@@ -80,4 +93,5 @@ export async function rpcEventWatcher() {
   }
 
   setTimeout(checkRestart, 60000)
+  setTimeout(collectValidators, 5000)
 }
