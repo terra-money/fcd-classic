@@ -19,7 +19,8 @@ const {
   DISABLE_SOCKET,
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
-  FOUNDATION_WALLET_ADDRESS
+  FOUNDATION_WALLET_ADDRESS,
+  PRUNING_KEEP_EVERY
 } = process.env
 
 const config = {
@@ -62,7 +63,8 @@ const config = {
         uusd: '0.015',
         ukrw: '0.015',
         umnt: '0.015'
-      } as CoinByDenoms)
+      } as CoinByDenoms),
+  PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100
 }
 
 export default config

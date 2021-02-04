@@ -19,20 +19,16 @@ type TaxCapAndRate = {
 }
 
 async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
-  // NOTE: tax caps and rate can be queried by node's configuration
-  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
-  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
-  const height100 = height ? (+height - (+height % 100)).toString() : undefined
   const taxCaps: { [denom: string]: string } = mapValues(
     keyBy(
       await Promise.all(
-        config.ACTIVE_DENOMS.map((denom) => lcd.getTaxCap(denom, height100).then((amount) => ({ denom, amount })))
+        config.ACTIVE_DENOMS.map((denom) => lcd.getTaxCap(denom, height).then((amount) => ({ denom, amount })))
       ),
       'denom'
     ),
     'amount'
   )
-  const taxRate = await lcd.getTaxRate(height100)
+  const taxRate = await lcd.getTaxRate(height)
 
   return {
     taxRate,

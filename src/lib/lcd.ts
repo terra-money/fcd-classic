@@ -380,12 +380,28 @@ export function getSeigniorageProceeds(): Promise<string> {
 }
 
 export async function getTaxRate(height?: string): Promise<string> {
-  const taxRate = await get(`/treasury/tax_rate`, height ? { height } : undefined)
+  // NOTE: tax rate with specific height must be queried by node's configuration
+  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
+  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+  const taxRate = await get(
+    `/treasury/tax_rate`,
+    height ? { height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString() } : undefined
+  )
   return taxRate ? taxRate : get(`/treasury/tax_rate`) // fallback for col-3 to col-4 upgrade
 }
 
 export async function getTaxCap(denom: string, height?: string): Promise<string> {
-  const taxCaps = await get(`/treasury/tax_cap/${denom}`, height ? { height } : undefined)
+  // NOTE: tax cap with specific height must be queried by node's configuration
+  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
+  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+  const taxCaps = await get(
+    `/treasury/tax_cap/${denom}`,
+    height
+      ? {
+          height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString()
+        }
+      : undefined
+  )
   return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
 }
 
