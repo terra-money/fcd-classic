@@ -1,17 +1,19 @@
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 
-import { removeProposalsDeletedFromChain } from './removeProposal'
+import { removeDeletedProposals } from './removeDeletedProposals'
 import { saveProposalDetails } from './saveProposal'
 
 export async function collectProposal() {
   logger.info('Proposal collector started.')
+
   const proposals: LcdProposal[] = await lcd.getProposals()
   const proposalTallyingParams = await lcd.getProposalTallyingParams()
   const proposalDepositParams = await lcd.getProposalDepositParams()
+
   logger.info(`Got a list of ${proposals.length} proposals`)
 
-  await removeProposalsDeletedFromChain(proposals)
+  await removeDeletedProposals(proposals)
 
   for (const proposal of proposals) {
     try {
@@ -24,5 +26,4 @@ export async function collectProposal() {
   }
 
   logger.info('Proposal collector completed.')
-  return
 }
