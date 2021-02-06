@@ -212,7 +212,9 @@ const contract: Parser = ({ type, value: v, log }) => {
       try {
         const msg = JSON.parse(Buffer.from(v.execute_msg, 'base64').toString())
         method = Object.keys(msg)[0]
-      } catch (e) {}
+      } catch (e) {
+        method = '?'
+      }
 
       let text = `Executed ${method} on ${v.contract}`
 

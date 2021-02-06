@@ -1,4 +1,3 @@
-import * as memoizee from 'memoizee'
 import { get } from 'lodash'
 
 import * as lcd from 'lib/lcd'

@@ -12,7 +12,7 @@ export default async function getBlockRewards(daysBefore?: number): Promise<Bloc
     }
   })
   let cumulativeSum = '0'
-  const cumulative: BlockRewardSumInfo[] = dashboardHistory.map((dashboard: DashboardEntity, index) => {
+  const cumulative: BlockRewardSumInfo[] = dashboardHistory.map((dashboard: DashboardEntity) => {
     cumulativeSum = plus(cumulativeSum, dashboard.taxReward)
     return {
       datetime: dashboard.timestamp.getTime(),

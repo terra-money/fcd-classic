@@ -1,5 +1,3 @@
-import { APIError } from 'lib/error'
-
 enum AccountType {
   OLD_SIMPLE = 'auth/Account', // columbus-1
   VESTING = 'core/GradedVestingAccount', // columbus-1

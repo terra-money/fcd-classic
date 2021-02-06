@@ -76,7 +76,7 @@ describe('Governance', () => {
   let connection
 
   beforeAll(async () => {
-    ;({ agent, connection } = await setupAgent())
+    ({ agent, connection } = await setupAgent())
   })
 
   afterAll(async () => {
@@ -156,8 +156,6 @@ describe('Governance', () => {
   })
 
   test('Test get no vote proposal', async () => {
-    const { body } = await agent
-      .get(`/v1/gov/proposals/${NO_VOTE_PROPOSAL_ID}/votes`)
-      .expect(ErrorCodes.NOT_FOUND_ERROR)
+    await agent.get(`/v1/gov/proposals/${NO_VOTE_PROPOSAL_ID}/votes`).expect(ErrorCodes.NOT_FOUND_ERROR)
   })
 })

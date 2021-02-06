@@ -1,4 +1,4 @@
-import { EntityManager, getRepository } from 'typeorm'
+import { EntityManager } from 'typeorm'
 import { get, filter } from 'lodash'
 
 import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
@@ -10,7 +10,7 @@ function getTxMsgTypeAndValueMemo(tx: TxEntity): Transaction.Message & { txMemo:
   const msgs: Transaction.Message[] = get(tx.data, 'tx.value.msg')
   const msg = msgs && msgs.length ? msgs[0] : { type: '', value: {} }
   return {
-    ...msgs[0],
+    ...msg,
     txMemo: get(tx.data, 'tx.value.memo')
   }
 }
@@ -51,7 +51,7 @@ function getContractInfo(tx: TxEntity): ContractInfo {
 }
 
 function getCodeInfo(tx: TxEntity): WasmCodeInfo {
-  const { type, value, txMemo } = getTxMsgTypeAndValueMemo(tx)
+  const { value, txMemo } = getTxMsgTypeAndValueMemo(tx)
   const sender = value ? get(value, 'value.sender') : ''
   const info = {
     txhash: tx.hash,
@@ -139,17 +139,19 @@ function getMsgTypeAndStatus(
 
 async function migrateContract(transactionEntityManager: EntityManager, wasmMigrationTxs: TxEntity[]) {
   for (const tx of wasmMigrationTxs) {
-    const { type, value, txMemo } = getTxMsgTypeAndValueMemo(tx)
+    const { value } = getTxMsgTypeAndValueMemo(tx)
     const { owner, contract, migrate_msg, new_code_id } = value
 
-    const existingContract = await getRepository(WasmContractEntity).findOne({
+    const existingContract = await transactionEntityManager.findOne(WasmContractEntity, {
       owner,
       contractAddress: contract
     })
+
     if (!existingContract) {
       throw new Error('Failed to update contract')
     }
-    await getRepository(WasmContractEntity).update(existingContract?.id, {
+
+    transactionEntityManager.update(WasmContractEntity, existingContract.id, {
       migrateMsg: Buffer.from(migrate_msg, 'base64').toString(),
       codeId: new_code_id
     })

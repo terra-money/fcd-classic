@@ -5,7 +5,7 @@ import { timeoutPromise } from './timeoutPromise'
 describe('Promise timeout', () => {
   test('Test in promise', async () => {
     const resp = await timeoutPromise(
-      new Promise((res, rej) => {
+      new Promise((res) => {
         res('success')
       }),
       1000,
@@ -30,7 +30,7 @@ describe('Promise timeout', () => {
 
   test('Test timeout in promise timeout failed', async () => {
     let timer: NodeJS.Timeout
-    const promise = new Promise((res, rej) => {
+    const promise = new Promise((res) => {
       timer = setTimeout(() => {
         res('success')
       }, 5000)
@@ -44,7 +44,7 @@ describe('Promise timeout', () => {
 
   test('Test timeout in promise success', async () => {
     let timer: NodeJS.Timeout
-    const promise = new Promise((res, rej) => {
+    const promise = new Promise((res) => {
       timer = setTimeout(() => {
         res('success')
       }, 2000)
@@ -58,14 +58,14 @@ describe('Promise timeout', () => {
 
   test('Test timeout in with promise array success', async () => {
     let timer1: NodeJS.Timeout
-    const promise1 = new Promise((res, rej) => {
+    const promise1 = new Promise((res) => {
       timer1 = setTimeout(() => {
         res('success')
       }, 2000)
     })
 
     let timer2: NodeJS.Timeout
-    const promise2 = new Promise((res, rej) => {
+    const promise2 = new Promise((res) => {
       timer2 = setTimeout(() => {
         res('success')
       }, 2000)
@@ -84,14 +84,14 @@ describe('Promise timeout', () => {
 
   test('Test timeout in with promise array timeout for one promise', async () => {
     let timer1: NodeJS.Timeout
-    const promise1 = new Promise((res, rej) => {
+    const promise1 = new Promise((res) => {
       timer1 = setTimeout(() => {
         res('success')
       }, 2000)
     })
 
     let timer2: NodeJS.Timeout
-    const promise2 = new Promise((res, rej) => {
+    const promise2 = new Promise((res) => {
       timer2 = setTimeout(() => {
         res('success')
       }, 5000)
@@ -114,14 +114,14 @@ describe('Promise timeout', () => {
 
   test('Test timeout in with promise array timeout for all promise', async () => {
     let timer1: NodeJS.Timeout
-    const promise1 = new Promise((res, rej) => {
+    const promise1 = new Promise((res) => {
       timer1 = setTimeout(() => {
         res('success')
       }, 5000)
     })
 
     let timer2: NodeJS.Timeout
-    const promise2 = new Promise((res, rej) => {
+    const promise2 = new Promise((res) => {
       timer2 = setTimeout(() => {
         res('success')
       }, 5000)

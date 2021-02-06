@@ -1,5 +1,5 @@
 import { getRepository } from 'typeorm'
-import { chain, get, reverse, uniqBy } from 'lodash'
+import { chain, reverse, uniqBy } from 'lodash'
 
 import { ProposalEntity } from 'orm'
 
@@ -36,42 +36,8 @@ interface GetProposalVotesReturn {
   votes: Vote[]
 }
 
-async function getVoteFromTx(tx): Promise<Vote[]> {
-  const msgs = get(tx, 'tx.value.msg')
-  const mapMsgToVote = async (msg): Promise<Vote | undefined> => {
-    let answer: string | undefined
-    let voter: string | undefined
-
-    if (msg.type === 'gov/MsgVote') {
-      answer = get(msg, 'value.option')
-      voter = get(msg, 'value.voter')
-    }
-
-    if (!answer || !voter) {
-      return
-    }
-
-    return {
-      answer,
-      voter: await getAccountInfo(voter)
-    }
-  }
-
-  return Promise.all(msgs.map(mapMsgToVote))
-}
-
-function getUniqueVotes(votes: Vote[], option?: string): Vote[] {
-  const uniqueVotes = uniqBy(reverse(votes), 'voter.accountAddress')
-
-  if (option) {
-    return uniqueVotes.filter((vote) => vote.answer === option)
-  }
-
-  return uniqueVotes
-}
-
 export default async function getVotes(input: GetProposalVotesInput): Promise<GetProposalVotesReturn | undefined> {
-  const { proposalId, page, limit, option } = input
+  const { proposalId, page, limit } = input
 
   const proposal = await getRepository(ProposalEntity).findOne({
     proposalId

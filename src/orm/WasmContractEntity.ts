@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index, ManyToOne, JoinColumn, JoinTable } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, Index, ManyToOne, JoinColumn } from 'typeorm'
 import WasmCodeEntity from './WasmCodeEntity'
 
 @Entity('wasm_contract')

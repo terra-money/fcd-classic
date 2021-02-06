@@ -1,7 +1,5 @@
 import { getRepository, MoreThanOrEqual } from 'typeorm'
 import { subDays, startOfToday } from 'date-fns'
-
-import config from 'config'
 import { DashboardEntity } from 'orm'
 
 export async function getDashboardHistory(daysBefore?: number): Promise<DashboardEntity[]> {

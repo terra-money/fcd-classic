@@ -103,7 +103,7 @@ function createAPIApp(): Koa {
   return app
 }
 
-export default async (disableAPI: boolean = false): Promise<Koa> => {
+export default async (disableAPI = false): Promise<Koa> => {
   const app = getRootApp()
 
   if (disableAPI) {

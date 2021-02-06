@@ -92,7 +92,7 @@ export async function rpcEventWatcher() {
     logger
   })
 
-  watcher.registerSubscriber(GOVERNANCE_Q, (data: RpcResponse) => {
+  watcher.registerSubscriber(GOVERNANCE_Q, () => {
     eventCounter += 1
     govUpdated = true
   })

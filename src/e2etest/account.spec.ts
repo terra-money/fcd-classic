@@ -10,7 +10,7 @@ describe('Account', () => {
   let connection
 
   beforeAll(async () => {
-    ;({ agent, connection } = await setupAgent())
+    ({ agent, connection } = await setupAgent())
   })
 
   afterAll(async () => {

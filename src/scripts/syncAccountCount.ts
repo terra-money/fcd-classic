@@ -1,7 +1,7 @@
 import * as Bluebird from 'bluebird'
 import { getManager, EntityManager, getRepository } from 'typeorm'
 import { chunk } from 'lodash'
-import { init as initORM, AccountEntity, AccountTxEntity } from 'orm'
+import { init as initORM, AccountEntity } from 'orm'
 
 const updateTxsAccount = async () => {
   const totalAddresses = (await getRepository(AccountEntity).createQueryBuilder().select('address').getRawMany()).map(

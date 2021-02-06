@@ -74,7 +74,7 @@ export async function getRewards(height: number): Promise<Reward[]> {
   return decodedRewardsAndCommission
 }
 
-export async function getUnconfirmedTxs(params: Record<string, unknown> = {}, decode: boolean = true) {
+export async function getUnconfirmedTxs(params: Record<string, unknown> = {}, decode = true) {
   const unconfirmedTxs = await getRequest(`/unconfirmed_txs`, params)
 
   if (!Array.isArray(unconfirmedTxs.txs)) {

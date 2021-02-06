@@ -2,8 +2,6 @@ import { getRepository } from 'typeorm'
 import { filter, orderBy } from 'lodash'
 
 import { ProposalEntity } from 'orm'
-import config from 'config'
-
 import * as lcd from 'lib/lcd'
 import { getProposalBasic } from './helper'
 

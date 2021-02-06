@@ -104,6 +104,6 @@ export async function testUrls() {
   }
 }
 
-testUrls().catch((err) => {
+testUrls().catch(() => {
   process.exit(1)
 })

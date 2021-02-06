@@ -28,22 +28,6 @@ interface ValidatorDetailsReturn extends ValidatorResponse {
   myRewards?: RewardsByDenom[]
 }
 
-function getSelfDelegation(
-  delegators: Delegator[],
-  accountAddr: string
-): {
-  amount: string
-  weight: string
-} {
-  const selfDelegations = delegators.filter((d) => d.address === accountAddr)
-  return selfDelegations.length > 0
-    ? {
-        amount: selfDelegations[0].amount,
-        weight: selfDelegations[0].weight
-      }
-    : { amount: '0', weight: '0' }
-}
-
 async function getValidatorInfo(operatorAddr: string): Promise<ValidatorResponse | undefined> {
   const validator = await getRepository(ValidatorInfoEntity).findOne({
     operatorAddress: operatorAddr,

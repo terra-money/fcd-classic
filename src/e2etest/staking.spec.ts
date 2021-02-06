@@ -63,7 +63,7 @@ describe('Staking', () => {
   let connection
 
   beforeAll(async () => {
-    ;({ agent, connection } = await setupAgent())
+    ({ agent, connection } = await setupAgent())
   })
 
   afterAll(async () => {
@@ -167,11 +167,11 @@ describe('Staking', () => {
   })
 
   test('staking return', async () => {
-    const { body } = await agent.get('/v1/staking/return').expect(200)
+    await agent.get('/v1/staking/return').expect(200)
   })
 
   test('staking return of validator', async () => {
-    const { body } = await agent.get(`/v1/staking/return/${VALIDATOR_DELEGATED}`).expect(200)
+    await agent.get(`/v1/staking/return/${VALIDATOR_DELEGATED}`).expect(200)
   })
 
   test('Staking for all validators', async () => {

@@ -81,8 +81,6 @@ describe('LCD', () => {
     })
   })
 
-  test('broadcast', async () => {})
-
   test('getLatestValidatorSet', async () => {
     await expect(lcd.getLatestValidatorSet()).resolves.toMatchObject({
       block_height: expect.any(String),

@@ -1,6 +1,6 @@
 import { startOfToday, subDays, startOfMinute, subMinutes, format, getTime } from 'date-fns'
 
-export function daysBeforeTs(daysBefore: number = 1): { fromTs: number; toTs: number } {
+export function daysBeforeTs(daysBefore = 1): { fromTs: number; toTs: number } {
   const to = startOfToday()
 
   return {

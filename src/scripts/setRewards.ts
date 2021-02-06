@@ -40,8 +40,8 @@ async function main() {
         }
       })
 
-      // await Promise.all(docs.map(upsert));
-      // console.log(`Set reward completed. ${datetime.format('YYYY-MM-DD HH:mm:ss')}`);
+      await Promise.all(docs.map(upsert))
+      console.log(`Set reward completed. ${new Date(curTs).toUTCString()}`)
       curTs += 60000
     }
   }

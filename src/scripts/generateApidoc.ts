@@ -54,7 +54,7 @@ function filterExcludeRoutes(urls: UrlItem[]) {
   })
 }
 
-;(function generateApiDoc() {
+(function generateApiDoc() {
   apidoc.setLogger(logger)
   apidoc.setPackageInfos(packageInfo)
 

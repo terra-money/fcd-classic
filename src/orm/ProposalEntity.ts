@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index, CreateDateColumn, UpdateDateColumn, In } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, Index, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 
 interface Voters {
   [operatorAddr: string]: string

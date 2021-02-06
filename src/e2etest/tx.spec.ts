@@ -135,7 +135,7 @@ describe('Transaction', () => {
   let connection
 
   beforeAll(async () => {
-    ;({ agent, connection } = await setupAgent())
+    ({ agent, connection } = await setupAgent())
   })
 
   afterAll(async () => {
@@ -239,17 +239,15 @@ describe('Transaction', () => {
   })
 
   test('get parsed tx list having invalid accout address', async () => {
-    const { body } = await agent
-      .get(`/v1/msgs?account=${VALID_ACCOUNT}_&to=1587808652000&from=1587804294000`)
-      .expect(400)
+    await agent.get(`/v1/msgs?account=${VALID_ACCOUNT}_&to=1587808652000&from=1587804294000`).expect(400)
   })
 
   test('get txs with invalid max return count', async () => {
-    const { body } = await agent.get(`/v1/txs?page=1&limit=200`).expect(400)
+    await agent.get(`/v1/txs?page=1&limit=200`).expect(400)
   })
 
   test('get parsed txs with invalid max return count', async () => {
-    const { body } = await agent.get(`/v1/msgs?page=1&limit=200`).expect(400)
+    await agent.get(`/v1/msgs?page=1&limit=200`).expect(400)
   })
 
   test('get txs with sql injection', async () => {

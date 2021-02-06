@@ -27,13 +27,13 @@ export default class RPCWatcher {
   private connection: connection
   private subscribers: SubscriptionEntity[] = []
 
-  private connected: boolean = false
+  private connected = false
 
   private logger: Logger
 
   private url: string
   private maxRetryAttempt: number
-  private retryCount: number = 0
+  private retryCount = 0
 
   constructor(config: RPCWatcherConfig) {
     this.url = config.url
@@ -43,9 +43,11 @@ export default class RPCWatcher {
 
   private parseResponseIdToNumber(data: RpcResponse): number {
     const id = parseInt(data.id.toString(), 10) // return NaN for invalid string
-    if (id === NaN) {
+
+    if (Number.isNaN(id)) {
       return this.subscribers.length
     }
+
     return id
   }
 
@@ -97,7 +99,7 @@ export default class RPCWatcher {
    * @param error
    */
   private errorEventProcessor(error: Error) {
-    this.logger.error('Failure in watcher, closing the connection')
+    this.logger.error(`Failure in watcher, closing the connection: ${error.message}`)
 
     if (!this.close()) {
       this.closeEventProcessor()

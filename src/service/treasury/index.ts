@@ -1,5 +1,3 @@
-import { TOKEN_SYMBOLS } from './token'
-
 export * from './tax'
 export * from './totalSupply'
 export * from './richList'

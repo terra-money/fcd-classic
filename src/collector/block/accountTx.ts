@@ -1,4 +1,4 @@
-import { get, mergeWith, union } from 'lodash'
+import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
 
 import getAddressFromMsg from '../getAddressFromMsg'
