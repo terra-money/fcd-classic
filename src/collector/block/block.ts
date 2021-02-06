@@ -18,7 +18,7 @@ import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
 
-async function getRecentlySyncedBlock(): Promise<BlockEntity | undefined> {
+async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   const latestBlock = await getRepository(BlockEntity).find({
     where: {
       chainId: config.CHAIN_ID
@@ -125,25 +125,9 @@ export function isNewMinuteBlock(prevBlock: BlockEntity | undefined, newBlock: B
   return 0
 }
 
-interface NewBlockInfo {
-  recentlySyncedHeight: number
-  latestHeight: number
-}
-export async function getLatestBlockInfo(): Promise<NewBlockInfo> {
-  const recentlySyncedBlock = await getRecentlySyncedBlock()
-  const recentlySyncedHeight = recentlySyncedBlock ? recentlySyncedBlock.height : 0
-  const latestBlock = await lcd.getLatestBlock()
-  const latestHeight = Number(get(latestBlock, 'block.header.height'))
-
-  return {
-    recentlySyncedHeight,
-    latestHeight
-  }
-}
-
 export async function saveBlockInformation(
   lcdBlock: LcdBlock,
-  lastSyncedBlock: BlockEntity | undefined
+  latestIndexedBlock: BlockEntity | undefined
 ): Promise<BlockEntity | undefined> {
   const height: string = lcdBlock.block.header.height
   logger.info(`collectBlock: begin transaction for block ${height}`)
@@ -172,13 +156,14 @@ export async function saveBlockInformation(
       }
 
       // new block timestamp
-      const newBlockTimeStamp = isNewMinuteBlock(lastSyncedBlock, newBlockEntity)
+      const newBlockTimeStamp = isNewMinuteBlock(latestIndexedBlock, newBlockEntity)
 
       if (newBlockTimeStamp) {
         await setReward(transactionalEntityManager, newBlockTimeStamp)
         await setSwap(transactionalEntityManager, newBlockTimeStamp)
         await setNetwork(transactionalEntityManager, newBlockTimeStamp)
       }
+
       return newBlockEntity
     })
     .then((block: BlockEntity) => {
@@ -201,9 +186,11 @@ export async function saveBlockInformation(
 }
 
 export async function collectBlock(): Promise<void> {
-  const { recentlySyncedHeight, latestHeight } = await getLatestBlockInfo()
-  let nextSyncHeight = recentlySyncedHeight + 1
-  let lastSyncedBlock = await getRecentlySyncedBlock()
+  let latestIndexedBlock = await getLatestIndexedBlock()
+  const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : 0
+  let nextSyncHeight = latestIndexedHeight + 1
+  const latestBlock = await lcd.getLatestBlock()
+  const latestHeight = Number(latestBlock.block.header.height)
 
   while (nextSyncHeight <= latestHeight) {
     const lcdBlock = await lcd.getBlock(nextSyncHeight.toString())
@@ -212,10 +199,10 @@ export async function collectBlock(): Promise<void> {
       break
     }
 
-    lastSyncedBlock = await saveBlockInformation(lcdBlock, lastSyncedBlock)
+    latestIndexedBlock = await saveBlockInformation(lcdBlock, latestIndexedBlock)
 
     // Exit the loop after transaction error whether there's more blocks or not
-    if (!lastSyncedBlock) {
+    if (!latestIndexedBlock) {
       break
     }
 

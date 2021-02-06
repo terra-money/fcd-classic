@@ -33,7 +33,7 @@ const config = {
   FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
   SENTRY_DSN,
   SC_AUTH_KEY,
-  USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'true'),
+  USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'false'),
   DISABLE_API: !!JSON.parse(DISABLE_API || 'false'),
   DISABLE_SOCKET: !!JSON.parse(DISABLE_SOCKET || 'false'),
   // Keybase for fetching validator avatar image

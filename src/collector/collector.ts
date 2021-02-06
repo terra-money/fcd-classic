@@ -12,7 +12,7 @@ import { collectorGeneral } from './general'
 import { calculateValidatorsReturn, collectValidator } from './staking'
 import { collectProposal } from './gov'
 import { collectDashboard } from './dashboard'
-import { rpcEventWatcher } from './watcher'
+import { startWatcher, startCollectBlocks } from './watcher'
 import { collectRichList } from './richlist'
 import { collectUnvested } from './unvested'
 
@@ -32,7 +32,6 @@ const twentyMinute = parseDuration('20m')
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
 export const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
-export const blockCollector = new Semaphore('BlockCollector', collectBlock, logger, tenMinute)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
@@ -86,13 +85,10 @@ async function createJobs() {
 const init = async () => {
   initializeSentry()
   await initORM()
-  await rpcEventWatcher()
+  await startWatcher()
+  await createJobs()
+  await collectBlock()
+  await startCollectBlocks()
 }
 
-init()
-  .then(() => {
-    createJobs().catch((err) => {
-      logger.error(err)
-    })
-  })
-  .catch(logger.error)
+init().catch(logger.error)

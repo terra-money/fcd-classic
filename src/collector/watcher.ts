@@ -6,8 +6,9 @@ import { collectorLogger as logger } from 'lib/logger'
 import RPCWatcher, { RpcResponse } from 'lib/RPCWatcher'
 import * as lcd from 'lib/lcd'
 import config from 'config'
-import { proposalCollector, blockCollector } from './collector'
+import { proposalCollector } from './collector'
 import { saveValidatorDetail } from './staking/validatorDetails'
+import { collectBlock } from './block'
 
 const SOCKET_URL = `${config.RPC_URI}/websocket`
 const GOVERNANCE_Q = `tm.event='Tx' AND message.module='governance'`
@@ -82,11 +83,11 @@ async function collectBlocks() {
   }
 
   blockUpdated = false
-  await blockCollector.run().catch(sentry.captureException)
+  await collectBlock().catch(sentry.captureException)
   setTimeout(collectBlocks, 50)
 }
 
-export async function rpcEventWatcher() {
+export async function startWatcher() {
   let eventCounter = 0
 
   const watcher = new RPCWatcher({
@@ -110,7 +111,7 @@ export async function rpcEventWatcher() {
   const checkRestart = async () => {
     if (eventCounter === 0) {
       logger.info('watcher: event counter is zero. restarting..')
-      await rpcEventWatcher()
+      await startWatcher()
       return
     }
 
@@ -119,7 +120,10 @@ export async function rpcEventWatcher() {
   }
 
   setTimeout(checkRestart, 30000)
-  setTimeout(collectBlocks, 1000)
   setTimeout(collectValidators, 5000)
   setTimeout(collectProposals, 6000)
+}
+
+export async function startCollectBlocks() {
+  setTimeout(collectBlocks, 0)
 }
