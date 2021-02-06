@@ -2,6 +2,7 @@ FROM node:lts as builder
 
 WORKDIR /app
 
+COPY *.tgz ./
 COPY package*.json ./
 
 RUN npm ci

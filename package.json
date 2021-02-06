@@ -66,7 +66,7 @@
     "@sentry/node": "^5.29.2",
     "@terra-money/amino-js": "^3.0.1",
     "apidoc-core": "^0.11.1",
-    "apidoc-swagger": "git+https://github.com/terra-project/apidoc-swagger.git",
+    "apidoc-swagger": "file:apidoc-swagger-0.2.3-terra.tgz",
     "bech32": "^1.1.4",
     "bech32-buffer": "^0.1.2",
     "better-npm-run": "^0.1.1",

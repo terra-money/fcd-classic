@@ -57,7 +57,31 @@ async function collectValidators() {
       .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
   )
 
-  setTimeout(collectValidators, 5000)
+  setTimeout(collectValidators, 1000)
+}
+
+let govUpdated = true
+
+async function collectProposals() {
+  if (!govUpdated) {
+    return
+  }
+
+  govUpdated = false
+  await proposalCollector.run().catch(sentry.captureException)
+  setTimeout(collectProposals, 1000)
+}
+
+let blockUpdated = true
+
+async function collectBlocks() {
+  if (!blockUpdated) {
+    return
+  }
+
+  blockUpdated = false
+  await blockCollector.run().catch(sentry.captureException)
+  setTimeout(collectBlocks, 50)
 }
 
 export async function rpcEventWatcher() {
@@ -70,13 +94,13 @@ export async function rpcEventWatcher() {
 
   watcher.registerSubscriber(GOVERNANCE_Q, (data: RpcResponse) => {
     eventCounter += 1
-    proposalCollector.run().catch(sentry.captureException)
+    govUpdated = true
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
     eventCounter += 1
-
-    await Promise.all([blockCollector.run(), detectValidators(data)]).catch(sentry.captureException)
+    blockUpdated = true
+    await detectValidators(data).catch(sentry.captureException)
   })
 
   await watcher.start()
@@ -89,9 +113,11 @@ export async function rpcEventWatcher() {
     }
 
     eventCounter = 0
-    setTimeout(checkRestart, 60000)
+    setTimeout(checkRestart, 30000)
   }
 
-  setTimeout(checkRestart, 60000)
+  setTimeout(checkRestart, 30000)
+  setTimeout(collectBlocks, 1000)
   setTimeout(collectValidators, 5000)
+  setTimeout(collectProposals, 5200)
 }
