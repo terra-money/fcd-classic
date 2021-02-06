@@ -2,22 +2,19 @@ FROM node:lts as builder
 
 WORKDIR /app
 
-COPY *.tgz ./
-COPY package*.json ./
-
-RUN npm ci
-
 COPY . .
+RUN npm ci
 
 FROM node:lts-alpine
 
+RUN apk add --no-cache tzdata
+
 WORKDIR /app
 
-COPY --from=builder /app/package.json /app/package-lock.json ./
-COPY --from=builder /app/node_modules ./
-COPY --from=builder /app/tsconfig.json ./
-COPY --from=builder /app/src/ ./src
-COPY entrypoint.sh ./entrypoint.sh
+COPY --from=builder /app/entrypoint.sh /app/package.json /app/package-lock.json /app/tsconfig.json ./
+COPY --from=builder /app/node_modules/ ./node_modules/
+COPY --from=builder /app/apidoc-template/ ./apidoc-template/
+COPY --from=builder /app/src/ ./src/
 
-ENTRYPOINT [ "/app/entrypoint.sh" ]
+ENTRYPOINT [ "./entrypoint.sh" ]
 CMD [ "--help" ]

@@ -20,11 +20,11 @@
     "vscoldev": "better-npm-run val-col-dev",
     "vscolprod": "better-npm-run val-col-prod",
     "stability": "better-npm-run stability",
-    "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "ts-node --files -r tsconfig-paths/register src/scripts/generateSwagger.ts",
+    "typeorm": "ts-node -T --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
+    "swagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateSwagger.ts",
     "mergeswagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
-    "testurls": "ts-node --files -r tsconfig-paths/register src/scripts/testUrls.ts",
-    "apidoc": "ts-node --files -r tsconfig-paths/register src/scripts/generateApidoc.ts"
+    "testurls": "ts-node -T --files -r tsconfig-paths/register src/scripts/testUrls.ts",
+    "apidoc": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateApidoc.ts"
   },
   "betterScripts": {
     "api-dev": {
@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@koa/cors": "^3.1.0",
-    "@sentry/node": "^5.29.2",
+    "@sentry/node": "^6.1.0",
     "@terra-money/amino-js": "^3.0.1",
     "apidoc-core": "^0.11.1",
     "apidoc-swagger": "file:apidoc-swagger-0.2.3-terra.tgz",
@@ -115,7 +115,7 @@
     "@types/lodash": "^4.14.166",
     "@types/memoizee": "^0.4.5",
     "@types/supertest": "^2.0.10",
-    "@types/yargs": "^15.0.12",
+    "@types/yargs": "^16.0.0",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@typescript-eslint/parser": "^4.4.1",
     "eslint": "^7.11.0",

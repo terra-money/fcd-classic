@@ -1,8 +1,6 @@
 #!/usr/bin/env sh
-
-# run mergeswagger at runtime
-# merge from lcd, so depends on runtime env/network
+# apidoc uses FCD_URI env var
 npm run apidoc
+# mergeswagger depends on lcd
 npm run mergeswagger -- -o swagger.json
-
 exec npm run "$@"
