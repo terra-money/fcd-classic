@@ -6,8 +6,8 @@ import { collectorLogger as logger } from 'lib/logger'
 import RPCWatcher, { RpcResponse } from 'lib/RPCWatcher'
 import * as lcd from 'lib/lcd'
 import config from 'config'
-import { proposalCollector, blockCollector } from '../collector'
-import { saveValidatorDetail } from '../staking/validatorDetails'
+import { proposalCollector, blockCollector } from './collector'
+import { saveValidatorDetail } from './staking/validatorDetails'
 
 const SOCKET_URL = `${config.RPC_URI}/websocket`
 const GOVERNANCE_Q = `tm.event='Tx' AND message.module='governance'`
@@ -64,18 +64,20 @@ let govUpdated = true
 
 async function collectProposals() {
   if (!govUpdated) {
+    setTimeout(collectProposals, 1000)
     return
   }
 
   govUpdated = false
   await proposalCollector.run().catch(sentry.captureException)
-  setTimeout(collectProposals, 1000)
+  setTimeout(collectProposals, 5000)
 }
 
 let blockUpdated = true
 
 async function collectBlocks() {
   if (!blockUpdated) {
+    setTimeout(collectBlocks, 50)
     return
   }
 
@@ -119,5 +121,5 @@ export async function rpcEventWatcher() {
   setTimeout(checkRestart, 30000)
   setTimeout(collectBlocks, 1000)
   setTimeout(collectValidators, 5000)
-  setTimeout(collectProposals, 5200)
+  setTimeout(collectProposals, 6000)
 }
