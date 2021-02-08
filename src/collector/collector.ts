@@ -12,7 +12,7 @@ import { collectorGeneral } from './general'
 import { calculateValidatorsReturn, collectValidator } from './staking'
 import { collectProposal } from './gov'
 import { collectDashboard } from './dashboard'
-import { startWatcher, startCollectBlocks } from './watcher'
+import { startWatcher, startPolling } from './watcher'
 import { collectRichList } from './richlist'
 import { collectUnvested } from './unvested'
 
@@ -31,7 +31,7 @@ const twentyMinute = parseDuration('20m')
 
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
-export const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
+const proposalCollector = new Semaphore('ProposalCollector', collectProposal, logger)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
@@ -45,10 +45,6 @@ const jobs = [
     cron: '0 * * * * *'
   },
   {
-    method: proposalCollector.run.bind(proposalCollector),
-    cron: '5 * * * * *'
-  },
-  {
     method: priceCollector.run.bind(priceCollector),
     cron: '50 * * * * *'
   },
@@ -56,6 +52,10 @@ const jobs = [
   {
     method: validatorCollector.run.bind(validatorCollector),
     cron: '30 1 * * * *'
+  },
+  {
+    method: proposalCollector.run.bind(proposalCollector),
+    cron: '30 5 * * * *'
   },
   // Per day
   {
@@ -85,10 +85,12 @@ async function createJobs() {
 const init = async () => {
   initializeSentry()
   await initORM()
-  await startWatcher()
-  await createJobs()
   await collectBlock()
-  await startCollectBlocks()
+  await collectProposal()
+  await collectValidator()
+  await createJobs()
+  await startWatcher()
+  await startPolling()
 }
 
 init().catch(logger.error)

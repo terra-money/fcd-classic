@@ -15,7 +15,13 @@ export type RpcResponse = {
   id: number | string
   result: {
     query?: string
-    data?: any
+    data?: {
+      type: string
+      value: any
+    }
+    events: {
+      [name: string]: string[]
+    }
   }
 }
 
@@ -41,16 +47,6 @@ export default class RPCWatcher {
     this.logger = config.logger
   }
 
-  private parseResponseIdToNumber(data: RpcResponse): number {
-    const id = parseInt(data.id.toString(), 10) // return NaN for invalid string
-
-    if (Number.isNaN(id)) {
-      return this.subscribers.length
-    }
-
-    return id
-  }
-
   /**
    * Retry to connect to the socket
    */
@@ -73,20 +69,26 @@ export default class RPCWatcher {
    * Process response message
    * @param data Response data from socket
    */
-  private messageEventProcessor(data: IMessage) {
-    if (!data.utf8Data) {
-      this.logger.error('No data received response message')
+  private messageEventProcessor(message: IMessage) {
+    if (!message.utf8Data) {
+      this.logger.error('No message received response message')
       return
     }
+
     try {
-      const resp: RpcResponse = JSON.parse(data.utf8Data)
-      // parsing needed for earlier version of tendermint v0.33
-      // it returns string formatted response id ID#event
-      resp.id = this.parseResponseIdToNumber(resp)
-      if (resp.id < this.subscribers.length) {
-        this.subscribers[resp.id].callback(resp)
-      } else {
-        this.logger.error('Invalid response id')
+      const resp: RpcResponse = JSON.parse(message.utf8Data)
+
+      if (typeof resp.jsonrpc === 'undefined' || typeof resp.id === 'undefined') {
+        // Skip invalid response
+        return
+      }
+
+      if (resp.result) {
+        const subscriber = this.subscribers.find((s) => s.query === resp.result.query)
+
+        if (subscriber) {
+          subscriber.callback(resp)
+        }
       }
     } catch (error) {
       this.logger.error('Error in response data parsing')

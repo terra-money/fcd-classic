@@ -6,7 +6,7 @@ import { plus, times, minus } from 'lib/math'
 import { convertValAddressToAccAddress } from 'lib/common'
 import { errorReport } from 'lib/errorReporting'
 
-type ValidatorVotingPower = {
+export type ValidatorVotingPower = {
   accountAddress: string
   operatorAddress: string
   votingPower: string
@@ -63,7 +63,7 @@ function getVotersVotingPowerArr(
   return validatorsVotingPower
 }
 
-export function getVoteCounts(votes: LcdProposalVote[]): VoteCount {
+function getVoteCount(votes: LcdProposalVote[]): VoteCount {
   const initial = {
     Yes: 0,
     No: 0,
@@ -95,16 +95,12 @@ export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]
   })
 }
 
-async function getLunaStaked() {
-  const stakingPool = await lcd.getStakingPool()
-  return stakingPool && stakingPool.bonded_tokens
-}
-
 async function getVoteDistributionAndTotal(proposal: LcdProposal, votes: LcdProposalVote[]) {
   if (proposal.proposal_status === 'VotingPeriod') {
     const { distribution, total } = tallying(votes)
     return { distribution, total }
   }
+
   const tally = await lcd.getProposalTally(proposal.id)
 
   const distribution = {
@@ -117,15 +113,18 @@ async function getVoteDistributionAndTotal(proposal: LcdProposal, votes: LcdProp
   return { distribution, total }
 }
 
-export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary | undefined> {
+export async function getVoteSummary(
+  proposal: LcdProposal,
+  votes: LcdProposalVote[],
+  validatorsVotingPower: ValidatorVotingPower[]
+): Promise<VoteSummary | undefined> {
   const { id, voting_end_time: votingEndTime } = proposal
-  const stakedLuna = await getLunaStaked()
-  const votes = await lcd.getProposalVotes(id)
+  const { bonded_tokens: stakedLuna } = await lcd.getStakingPool()
 
   const uniqueUserVotes = uniqBy(reverse(votes), 'voter') // can vote multiple times, doing reverse will took the latest votes
   const votersDelegations = (await Bluebird.map(uniqueUserVotes, (vote) => lcd.getDelegations(vote.voter))).flat()
-  const validatorsVotingPower = await getValidatorsVotingPower()
   const votersVotingPowerArr = getVotersVotingPowerArr(validatorsVotingPower, votersDelegations)
+
   uniqueUserVotes.forEach((vote) => {
     const votingPower = votersVotingPowerArr.find((v) => v.accountAddress === vote.voter)
 
@@ -137,9 +136,9 @@ export async function getVoteSummary(proposal: LcdProposal): Promise<VoteSummary
   })
 
   const { distribution, total } = await getVoteDistributionAndTotal(proposal, uniqueUserVotes)
-  const count = getVoteCounts(uniqueUserVotes)
+  const count = getVoteCount(uniqueUserVotes)
 
-  const votesObj = votes.reduce((acc, vote: LcdProposalVote) => {
+  const votesObj = uniqueUserVotes.reduce((acc, vote: LcdProposalVote) => {
     acc[vote.voter] = vote.option
     return acc
   }, {})

@@ -196,7 +196,7 @@ export async function getProposals(): Promise<LcdProposal[]> {
   return (await get(`/gov/proposals`)) || []
 }
 
-export function getProposal(proposalId: string): Promise<LcdProposal | undefined> {
+export function getProposal(proposalId: string): Promise<LcdProposal> {
   return get(`/gov/proposals/${proposalId}`)
 }
 

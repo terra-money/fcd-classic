@@ -133,15 +133,13 @@ export async function saveBlockInformation(
   logger.info(`collectBlock: begin transaction for block ${height}`)
 
   const result: BlockEntity | undefined = await getManager()
-    .transaction(async (transactionalEntityManager: EntityManager) => {
+    .transaction(async (mgr: EntityManager) => {
       // Save block rewards
-      const newBlockReward = await transactionalEntityManager
-        .getRepository(BlockRewardEntity)
-        .save(await getBlockReward(lcdBlock))
+      const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(lcdBlock))
       // new block height
       const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
       // Save block entity
-      const newBlockEntity = await transactionalEntityManager
+      const newBlockEntity = await mgr
         .getRepository(BlockEntity)
         .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
       // get block tx hashes
@@ -150,18 +148,18 @@ export async function saveBlockInformation(
       if (txHashes) {
         const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
         // save transactions
-        await saveTxs(transactionalEntityManager, newBlockEntity, txEntities)
+        await saveTxs(mgr, newBlockEntity, txEntities)
         // save wasm
-        await saveWasmCodeAndContract(transactionalEntityManager, txEntities)
+        await saveWasmCodeAndContract(mgr, txEntities)
       }
 
       // new block timestamp
       const newBlockTimeStamp = isNewMinuteBlock(latestIndexedBlock, newBlockEntity)
 
       if (newBlockTimeStamp) {
-        await setReward(transactionalEntityManager, newBlockTimeStamp)
-        await setSwap(transactionalEntityManager, newBlockTimeStamp)
-        await setNetwork(transactionalEntityManager, newBlockTimeStamp)
+        await setReward(mgr, newBlockTimeStamp)
+        await setSwap(mgr, newBlockTimeStamp)
+        await setNetwork(mgr, newBlockTimeStamp)
       }
 
       return newBlockEntity

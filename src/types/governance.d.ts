@@ -36,7 +36,7 @@ interface LcdProposal {
   voting_end_time: string
 }
 
-enum voteOption {
+enum VoteOption {
   no = 'No',
   yes = 'Yes',
   nowithveto = 'NoWithVeto',
@@ -46,7 +46,7 @@ enum voteOption {
 interface LcdProposalVote {
   proposal_id: string // number
   voter: string // terra address
-  option: voteOption
+  option: VoteOption
 }
 
 interface LcdProposalDeposit {
@@ -103,7 +103,7 @@ interface VoteSummary {
   total: string // total amount of luna voted
   votingEndTime: string // proposal vote ending time in unix
   stakedLuna: string // total staked luna amount
-  voters?: { [key: string]: string } //
+  voters?: { [key: string]: VoteOption }
 }
 
 interface ProposalBasic {

@@ -290,13 +290,9 @@ function getNewTxInfoByAccount(accountTxDocsArray: AccountTxEntity[][]): TxCount
   return accountNewTxCountObj
 }
 
-export async function saveTxs(
-  transactionEntityManager: EntityManager,
-  block: BlockEntity,
-  txEntities: TxEntity[]
-): Promise<void> {
+export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
   // save txs
-  await transactionEntityManager.save(txEntities)
+  await mgr.save(txEntities)
 
   logger.info(`SaveTx - Height: ${block.height}, ${txEntities.length} txs saved.`)
 
@@ -317,9 +313,9 @@ export async function saveTxs(
     )
   )
   // save updated accounts
-  await transactionEntityManager.save(updatedAccountEntity)
+  await mgr.save(updatedAccountEntity)
   logger.info(`SaveAccountTx - Height: ${block.height}, ${updatedAccountEntity.length} account updated.`)
 
-  const accountTxEntities = await transactionEntityManager.save(accountTxDocsArray.flat())
+  const accountTxEntities = await mgr.save(accountTxDocsArray.flat())
   logger.info(`SaveAccountTx - Height: ${block.height}, ${accountTxEntities.length} accountTxs saved.`)
 }

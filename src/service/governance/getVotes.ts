@@ -17,7 +17,7 @@ interface GetProposalVotesInput {
   proposalId: string
   page: number
   limit: number
-  option?: voteOption
+  option?: VoteOption
 }
 
 interface Vote {

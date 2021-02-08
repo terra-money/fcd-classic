@@ -1,7 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+import { Entity, Index, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 
 interface Voters {
-  [operatorAddr: string]: string
+  [address: string]: VoteOption
 }
 
 @Entity('proposal')

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import * as Bluebird from 'bluebird'
 import { uniq } from 'lodash'
 import * as sentry from '@sentry/node'
@@ -6,9 +7,10 @@ import { collectorLogger as logger } from 'lib/logger'
 import RPCWatcher, { RpcResponse } from 'lib/RPCWatcher'
 import * as lcd from 'lib/lcd'
 import config from 'config'
-import { proposalCollector } from './collector'
 import { saveValidatorDetail } from './staking/validatorDetails'
 import { collectBlock } from './block'
+import { saveProposalDetails } from './gov'
+import { getValidatorsVotingPower } from 'service/governance'
 
 const SOCKET_URL = `${config.RPC_URI}/websocket`
 const GOVERNANCE_Q = `tm.event='Tx' AND message.module='governance'`
@@ -20,6 +22,7 @@ const VALIDATOR_REGEX = /terravaloper([a-z0-9]{39})/g
  * 1. detectValidators extracts valoper... from stringified tx and add to the validatorUpdateSet
  * 2. collectValidators collects validator for addresses from validatorUpdateSet
  */
+const validatorEmitter = new EventEmitter({ captureRejections: true })
 const validatorUpdateSet = new Set<string>()
 
 async function detectValidators(data: RpcResponse) {
@@ -39,6 +42,7 @@ async function detectValidators(data: RpcResponse) {
       )
 
       addresses.forEach((address) => validatorUpdateSet.add(address))
+      validatorEmitter.emit('collect')
     } catch (err) {
       sentry.captureException(err)
     }
@@ -58,20 +62,45 @@ async function collectValidators() {
       .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
   )
 
-  setTimeout(collectValidators, 1000)
+  setTimeout(collectValidators, 5000)
 }
 
-let govUpdated = true
+const proposalUpdateSet = new Set<string>()
 
 async function collectProposals() {
-  if (!govUpdated) {
+  const proposalIds = Array.from(proposalUpdateSet.values())
+  proposalUpdateSet.clear()
+
+  if (proposalIds.length === 0) {
     setTimeout(collectProposals, 1000)
     return
   }
 
-  govUpdated = false
-  await proposalCollector.run().catch(sentry.captureException)
+  const proposalTallyingParams = await lcd.getProposalTallyingParams()
+  const proposalDepositParams = await lcd.getProposalDepositParams()
+  const validatorsVotingPower = await getValidatorsVotingPower()
+
+  await Bluebird.mapSeries(proposalIds, (id) =>
+    lcd
+      .getProposal(id)
+      .then((proposal) =>
+        saveProposalDetails(proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
+      )
+  )
+
   setTimeout(collectProposals, 5000)
+}
+
+async function detectProposals(resp: RpcResponse) {
+  Object.keys(resp.result.events).forEach((key) => {
+    if (key.includes('proposal_id')) {
+      resp.result.events[key].forEach((value) => {
+        if (!Number.isNaN(parseInt(value, 10))) {
+          proposalUpdateSet.add(value)
+        }
+      })
+    }
+  })
 }
 
 let blockUpdated = true
@@ -89,21 +118,20 @@ async function collectBlocks() {
 
 export async function startWatcher() {
   let eventCounter = 0
-
   const watcher = new RPCWatcher({
     url: SOCKET_URL,
     logger
   })
 
-  watcher.registerSubscriber(GOVERNANCE_Q, () => {
+  watcher.registerSubscriber(GOVERNANCE_Q, async (resp: RpcResponse) => {
     eventCounter += 1
-    govUpdated = true
+    await detectProposals(resp).catch(sentry.captureException)
   })
 
-  watcher.registerSubscriber(NEW_BLOCK_Q, async (data: RpcResponse) => {
+  watcher.registerSubscriber(NEW_BLOCK_Q, async (resp: RpcResponse) => {
     eventCounter += 1
     blockUpdated = true
-    await detectValidators(data).catch(sentry.captureException)
+    await detectValidators(resp).catch(sentry.captureException)
   })
 
   await watcher.start()
@@ -120,10 +148,10 @@ export async function startWatcher() {
   }
 
   setTimeout(checkRestart, 30000)
-  setTimeout(collectValidators, 5000)
-  setTimeout(collectProposals, 6000)
 }
 
-export async function startCollectBlocks() {
+export async function startPolling() {
   setTimeout(collectBlocks, 0)
+  setTimeout(collectValidators, 1000)
+  setTimeout(collectProposals, 2000)
 }
