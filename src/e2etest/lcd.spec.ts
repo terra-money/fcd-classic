@@ -454,12 +454,8 @@ describe('LCD', () => {
     await expect(lcd.getSwapResult({ offer_coin: '1000usdr', ask_denom: 'uusd' })).resolves.toMatchObject(coinObject)
   })
 
-  test('getOraclePrice: invalid', async () => {
-    await expect(lcd.getOraclePrice('invalid')).toReject()
-  })
-
-  test('getOraclePrice: success', async () => {
-    await expect(lcd.getOraclePrice('usdr')).resolves.toMatchObject({
+  test('getOraclePrices: success', async () => {
+    await expect(lcd.getOraclePrices()).resolves.toContainEqual({
       denom: expect.any(String),
       price: expect.any(String)
     })
