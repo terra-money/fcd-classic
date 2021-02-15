@@ -87,7 +87,7 @@ const init = async () => {
   await initORM()
   await collectBlock()
   await collectProposal()
-  await collectValidator()
+  // await collectValidator()
   await createJobs()
   await startWatcher()
   await startPolling()
