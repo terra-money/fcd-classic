@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events'
 import * as Bluebird from 'bluebird'
 import { uniq } from 'lodash'
 import * as sentry from '@sentry/node'
@@ -22,7 +21,6 @@ const VALIDATOR_REGEX = /terravaloper([a-z0-9]{39})/g
  * 1. detectValidators extracts valoper... from stringified tx and add to the validatorUpdateSet
  * 2. collectValidators collects validator for addresses from validatorUpdateSet
  */
-const validatorEmitter = new EventEmitter({ captureRejections: true })
 const validatorUpdateSet = new Set<string>()
 
 async function detectValidators(data: RpcResponse) {
@@ -42,7 +40,6 @@ async function detectValidators(data: RpcResponse) {
       )
 
       addresses.forEach((address) => validatorUpdateSet.add(address))
-      validatorEmitter.emit('collect')
     } catch (err) {
       sentry.captureException(err)
     }
