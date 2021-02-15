@@ -281,7 +281,7 @@ export async function getSwapResult(params: { offer_coin: string; ask_denom: str
 ///////////////////////////////////////////////
 // Oracle
 ///////////////////////////////////////////////
-export async function getOraclePrices(): Promise<{ denom: string; price: string }[]> {
+export async function getOraclePrices(): Promise<Coin[]> {
   return (await get(`/oracle/denoms/exchange_rates`)) || []
 }
 
@@ -300,7 +300,7 @@ export async function getOracleActives(): Promise<string[]> {
 export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
   return (await getOraclePrices()).filter(Boolean).reduce((prev, item) => {
     if (item) {
-      prev[item.denom] = item.price
+      prev[item.denom] = item.amount
     }
 
     return prev
