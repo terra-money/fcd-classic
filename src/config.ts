@@ -18,7 +18,8 @@ const {
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
   FOUNDATION_WALLET_ADDRESS,
-  PRUNING_KEEP_EVERY
+  PRUNING_KEEP_EVERY,
+  BANK_WALLETS
 } = process.env
 
 const config = {
@@ -31,6 +32,7 @@ const config = {
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
+  BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
   SENTRY_DSN,
   SC_AUTH_KEY,
   USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'false'),

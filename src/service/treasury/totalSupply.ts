@@ -9,11 +9,7 @@ export async function getTotalSupply(input: string): Promise<string> {
   }
 
   const denom = isActiveCurrency(input) ? currencyToDenom(input.toLowerCase()) : input
-  const response = await lcd.getIssuanceByDenom(denom)
+  const supply = (await lcd.getTotalSupply()).find((c) => c.denom === denom)?.amount || '0'
 
-  if (response.denom !== denom) {
-    throw new Error('denom in response is differ from input')
-  }
-
-  return input !== denom ? div(response.issuance, 1000000) : response.issuance
+  return input !== denom ? div(supply, 1000000) : supply
 }

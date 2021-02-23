@@ -340,13 +340,6 @@ export async function getTotalSupply(): Promise<Coin[]> {
   return (await get(`/supply/total`)) || []
 }
 
-export async function getIssuanceByDenom(denom: string): Promise<{ denom: string; issuance: string }> {
-  // columbus-2, const issuance = denom === 'uluna' ? await getLunaSupply() : await get(`/supply/total/${denom}`);
-  const totalSupply = await getTotalSupply()
-  const supply = totalSupply.find((s) => s.denom === denom) || { amount: '0' }
-  return { denom, issuance: supply.amount }
-}
-
 export async function getAllActiveIssuance(): Promise<{ [denom: string]: string }> {
   return (await getTotalSupply()).reduce((acc, item) => {
     acc[item.denom] = item.amount

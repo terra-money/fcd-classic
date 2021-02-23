@@ -481,20 +481,6 @@ describe('LCD', () => {
     await expect(lcd.getMissedOracleVotes(VALID_VALOPER_ADDRESS)).resolves.toBeString()
   })
 
-  test('getIssuanceByDenom: invalid / not found', async () => {
-    await expect(lcd.getIssuanceByDenom('invalid')).resolves.toMatchObject({
-      denom: 'invalid',
-      issuance: '0'
-    })
-  })
-
-  test('getIssuanceByDenom: success', async () => {
-    await expect(lcd.getIssuanceByDenom('usdr')).resolves.toMatchObject({
-      denom: 'usdr',
-      issuance: expect.any(String)
-    })
-  })
-
   test('getTotalSupply', async () => {
     await expect(lcd.getTotalSupply()).resolves.toContainEqual(coinObject)
   })
