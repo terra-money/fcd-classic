@@ -506,4 +506,11 @@ describe('LCD', () => {
   test('getTaxCap', async () => {
     await expect(lcd.getTaxCap('usdr')).resolves.toBe('1000000')
   })
+
+  test('getTaxCaps', async () => {
+    await expect(lcd.getTaxCaps()).resolves.toContainEqual({
+      denom: expect.any(String),
+      tax_cap: expect.any(String)
+    })
+  })
 })

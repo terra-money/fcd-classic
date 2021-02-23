@@ -73,7 +73,6 @@ module.exports = {
 | USE_LOG_FILE        | Creates logs/* when enabled     | false                                        | All                                |
 | SC_AUTH_KEY         | Authentication key for SocketCluster | <required>                              | API                                |
 | HEIGHT_REPORT_INTERVAL | Interval for SC height notification | 5000                                  | API                                |
-| TAX_CAP_TARGETS     | Cap of Tax                      | ["usdr"]                                     | API                                |
 | ACTIVE_DENOMS       | Active Denominations            | ["uluna","usdr","ukrw","uusd","umnt"]        | API                                |
 | ACTIVE_CURRENCY     | Active Currencies               | ["luna","sdt","krt","ust","mnt"]             | API                                |
 | DISABLE_API         | Disable REST APIs               | false                                        | API                                |

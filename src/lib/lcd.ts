@@ -381,6 +381,28 @@ export async function getTaxCap(denom: string, height?: string): Promise<string>
   return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
 }
 
+export async function getTaxCaps(height?: string): Promise<{ denom: string; tax_cap: string }[]> {
+  // NOTE: tax cap with specific height must be queried by node's configuration
+  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
+  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+  const taxCaps =
+    (await get(
+      '/treasury/tax_caps',
+      height
+        ? {
+            height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString()
+          }
+        : undefined
+    )) || []
+
+  taxCaps.push({
+    denom: 'uluna',
+    tax_cap: '1000000'
+  })
+
+  return taxCaps
+}
+
 export async function getContractStore(contractAddress: string, query: any): Promise<Record<string, unknown>> {
   return get(`/wasm/contracts/${contractAddress}/store?query_msg=${JSON.stringify(query)}`)
 }

@@ -28,13 +28,7 @@ export async function saveGeneral() {
           return acc
         }, {})
     ),
-    lcd.getOracleActives().then((activeDenoms) =>
-      Bluebird.map(activeDenoms, async (denom: string) => {
-        const taxCap = await lcd.getTaxCap(denom)
-        return { denom, taxCap }
-      })
-    ),
-
+    lcd.getTaxCaps().then((taxCaps) => taxCaps.map((taxCap) => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
     Promise.all([lcd.getStakingPool(), lcd.getAllActiveIssuance()]).then((results) => {
       const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }

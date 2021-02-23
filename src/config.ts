@@ -10,7 +10,6 @@ const {
   SC_AUTH_KEY,
   USE_LOG_FILE,
   HEIGHT_REPORT_INTERVAL,
-  TAX_CAP_TARGETS,
   ACTIVE_DENOMS,
   ACTIVE_CURRENCY,
   DISABLE_API,
@@ -43,7 +42,6 @@ const config = {
   // Reporter module
   HEIGHT_REPORT_INTERVAL: HEIGHT_REPORT_INTERVAL ? +HEIGHT_REPORT_INTERVAL : 5000,
   // Chain parameters
-  TAX_CAP_TARGETS: TAX_CAP_TARGETS ? (JSON.parse(TAX_CAP_TARGETS) as string[]) : ['usdr'],
   ACTIVE_DENOMS: ACTIVE_DENOMS
     ? (JSON.parse(ACTIVE_DENOMS) as string[])
     : ['uluna', 'usdr', 'ukrw', 'uusd', 'umnt', 'ueur'],

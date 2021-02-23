@@ -30,8 +30,7 @@ async function getAvgBondedTokensByDate(
   [date: string]: string
 }> {
   const latestDate = await getLatestDateOfGeneralInfo()
-
-  const { issuance } = await lcd.getIssuanceByDenom('uluna')
+  const issuance = (await lcd.getTotalSupply()).find((e) => e.denom === 'uluna')?.amount || '0'
   const stakingQb = getRepository(GeneralInfoEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')

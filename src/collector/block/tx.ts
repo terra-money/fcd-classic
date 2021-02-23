@@ -19,15 +19,7 @@ type TaxCapAndRate = {
 }
 
 async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
-  const taxCaps: { [denom: string]: string } = mapValues(
-    keyBy(
-      await Promise.all(
-        config.ACTIVE_DENOMS.map((denom) => lcd.getTaxCap(denom, height).then((amount) => ({ denom, amount })))
-      ),
-      'denom'
-    ),
-    'amount'
-  )
+  const taxCaps: { [denom: string]: string } = mapValues(keyBy(await lcd.getTaxCaps(), 'denom'), 'tax_cap')
   const taxRate = await lcd.getTaxRate(height)
 
   return {
