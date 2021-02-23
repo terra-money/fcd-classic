@@ -1,3 +1,4 @@
+import * as Bluebird from 'bluebird'
 import { getRepository } from 'typeorm'
 import { UnvestedEntity } from 'orm'
 import { minus, div, plus } from 'lib/math'
@@ -7,7 +8,6 @@ import config from 'config'
 import { getTotalSupply } from './totalSupply'
 import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from './token'
 import getLunaBalance from './getLunaBalance'
-import Bluebird from 'bluebird'
 import * as lcd from 'lib/lcd'
 
 const getLunaBalanceMemoized = memoizeCache(getLunaBalance, { promise: true, maxAge: 5 * 60 * 1000 /* 5 minutes */ })
