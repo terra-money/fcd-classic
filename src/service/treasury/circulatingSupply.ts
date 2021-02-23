@@ -4,11 +4,11 @@ import { UnvestedEntity } from 'orm'
 import { minus, div, plus } from 'lib/math'
 import { currencyToDenom, isActiveCurrency } from 'lib/common'
 import memoizeCache from 'lib/memoizeCache'
+import * as lcd from 'lib/lcd'
 import config from 'config'
 import { getTotalSupply } from './totalSupply'
 import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from './token'
 import getLunaBalance from './getLunaBalance'
-import * as lcd from 'lib/lcd'
 
 const getLunaBalanceMemoized = memoizeCache(getLunaBalance, { promise: true, maxAge: 5 * 60 * 1000 /* 5 minutes */ })
 
