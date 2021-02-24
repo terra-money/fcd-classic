@@ -15,7 +15,7 @@ let ASSETS_BY_SYMBOL: {
   }
 }
 
-let TOKEN_SYMBOLS: string[] = []
+export let TOKEN_SYMBOLS: string[] = []
 
 async function syncWhitelistUncached() {
   const res = await rp(`https://whitelist.mirror.finance/${config.CHAIN_ID.split('-')[0]}.json`, {

@@ -11,6 +11,7 @@ import { APIError, ErrorTypes } from 'lib/error'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
+import { getDelegators } from 'service/staking'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
@@ -28,28 +29,6 @@ function getSelfDelegation(
         weight: selfDelegations[0].weight
       }
     : { amount: '0', weight: '0' }
-}
-
-async function getDelegators(operatorAddress: string): Promise<Delegator[]> {
-  const lcdDelegators = await lcd.getValidatorDelegations(operatorAddress)
-
-  if (!lcdDelegators) {
-    return []
-  }
-
-  const delegateTotal = lcdDelegators.reduce((acc, curr) => {
-    return plus(acc, curr.shares)
-  }, '0')
-
-  const delegators: Delegator[] = lcdDelegators.map((delegator) => {
-    return {
-      address: delegator.delegator_address,
-      amount: delegator.shares,
-      weight: div(delegator.shares, delegateTotal)
-    }
-  })
-
-  return orderBy(delegators, [(d) => Number(d.weight)], ['desc'])
 }
 
 function getUptime(signingInfo: LcdValidatorSigningInfo): number {

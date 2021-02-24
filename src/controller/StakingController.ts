@@ -12,7 +12,7 @@ import {
   getValidatorDetail,
   getDelegationTxs,
   getClaims,
-  getDelegators,
+  getPaginatedDelegators,
   getValidatorAnnualAvgReturn,
   getTotalStakingReturn
 } from 'service/staking'
@@ -245,13 +245,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async delegators(ctx): Promise<void> {
-    success(
-      ctx,
-      await getDelegators({
-        ...ctx.params,
-        ...ctx.request.query
-      })
-    )
+    success(ctx, await getPaginatedDelegators(ctx.params.operatorAddr, ctx.request.query.page, ctx.request.query.limit))
   }
 
   /**
