@@ -2,9 +2,8 @@ import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 import config from 'config'
-import cache from 'lib/memoizeCache'
 
-let ASSETS_BY_SYMBOL: {
+const ASSETS_BY_SYMBOL: {
   [symbol: string]: {
     symbol: string
     name: string
@@ -13,11 +12,11 @@ let ASSETS_BY_SYMBOL: {
     lpToken: string
     status: string
   }
-}
+} = {}
 
-export let TOKEN_SYMBOLS: string[] = []
+export const TOKEN_SYMBOLS: string[] = []
 
-async function syncWhitelistUncached() {
+export async function init() {
   const res = await rp(`https://whitelist.mirror.finance/${config.CHAIN_ID.split('-')[0]}.json`, {
     json: true
   }).catch(() => ({}))
@@ -29,18 +28,14 @@ async function syncWhitelistUncached() {
 
   const whitelist = res.whitelist || {}
 
-  ASSETS_BY_SYMBOL = Object.keys(whitelist).reduce((prev, curr) => {
-    prev[whitelist[curr].symbol.toLowerCase()] = whitelist[curr]
-    return prev
-  }, {})
-
-  TOKEN_SYMBOLS = Object.keys(whitelist).map((address) => whitelist[address].symbol.toLowerCase())
+  Object.keys(whitelist).forEach((address) => {
+    const key = whitelist[address].symbol.toLowerCase()
+    ASSETS_BY_SYMBOL[key] = whitelist[address]
+    TOKEN_SYMBOLS.push(key)
+  })
 }
 
-export const syncWhitelist = cache(syncWhitelistUncached, { promise: true, maxAge: 60 * 1000, preFetch: 0.66 })
-
-export async function isToken(symbol: string) {
-  await syncWhitelist()
+export function isToken(symbol: string) {
   return TOKEN_SYMBOLS.includes(symbol.toLowerCase())
 }
 

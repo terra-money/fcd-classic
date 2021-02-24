@@ -31,7 +31,6 @@ const config = {
   FCD_URI: FCD_URI || 'https://tequila-fcd.terra.dev',
   RPC_URI: RPC_URI || 'http://localhost:26657',
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
-  MANTLE_URI: MANTLE_URI || 'https://tequila-mantle.terra.dev/graphql',
   MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',

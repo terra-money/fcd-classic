@@ -66,8 +66,8 @@ export async function saveProposalDetails(
         tallyingParameters: proposalTallyingParams,
         depositParams: proposalDepositParams,
         totalDeposit: proposal.total_deposit,
-        deposits,
-        votes,
+        ...(deposits && { deposits }),
+        ...(votes && { votes }),
         ...(proposer && { proposer: proposer.proposer })
       }
 

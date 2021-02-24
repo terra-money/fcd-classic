@@ -28,7 +28,7 @@ export async function createServer() {
   initializeSentry()
 
   await initORM()
-  await token.syncWhitelist()
+  await token.init()
 
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())

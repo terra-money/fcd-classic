@@ -4,7 +4,7 @@ import * as lcd from 'lib/lcd'
 import { isToken, getTotalSupply as getTokenTotalSupply } from './token'
 
 export async function getTotalSupply(input: string): Promise<string> {
-  if (await isToken(input)) {
+  if (isToken(input)) {
     return getTokenTotalSupply(input)
   }
 

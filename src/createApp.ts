@@ -15,7 +15,6 @@ import { errorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
 import proxy from 'lib/bypass'
 import { apiLogger as logger } from 'lib/logger'
-import controllers from 'controller'
 
 const API_VERSION_PREFIX = '/v1'
 
@@ -71,7 +70,7 @@ function createSwaggerApp(): Koa {
   return app
 }
 
-function createAPIApp(): Koa {
+async function createAPIApp(): Promise<Koa> {
   const app = new Koa()
 
   app
@@ -95,11 +94,13 @@ function createAPIApp(): Koa {
       })
     )
 
-  // add controllers
-  configureRoutes(app, controllers)
+  // If we import controller before setting up variables for validation,
+  // Joi will not allow us to validate it
+  await import('./controller').then((module) => {
+    configureRoutes(app, module.default)
+  })
 
   app.use(notFoundMiddleware)
-
   return app
 }
 
@@ -117,7 +118,7 @@ export default async (disableAPI = false): Promise<Koa> => {
 
   const apiDocApp = createApiDocApp()
   const swaggerApp = createSwaggerApp()
-  const apiApp = createAPIApp()
+  const apiApp = await createAPIApp()
 
   app
     .use(morgan('common'))

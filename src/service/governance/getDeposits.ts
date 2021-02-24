@@ -35,7 +35,7 @@ export default async function getProposalDeposits(input: GetProposalDepositsInpu
     // chainId: config.CHAIN_ID
   })
 
-  if (!proposal || !proposal.deposits.length) {
+  if (!proposal) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')
   }
 
