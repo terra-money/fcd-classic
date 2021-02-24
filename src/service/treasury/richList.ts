@@ -7,7 +7,7 @@ export async function getRichList(
   page: number,
   limit: number
 ): Promise<{ account: string; amount: string }[]> {
-  if (isToken(denom)) {
+  if (await isToken(denom)) {
     return getTokenRichList(denom, page, limit)
   }
 

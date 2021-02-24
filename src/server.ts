@@ -9,6 +9,7 @@ import { apiLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
 import { initSocket } from 'socket'
 import reporter from 'reporter'
+import * as token from 'service/treasury/token'
 
 const packageJson = require('../package.json')
 
@@ -27,6 +28,8 @@ export async function createServer() {
   initializeSentry()
 
   await initORM()
+  await token.syncWhitelist()
+
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())
 

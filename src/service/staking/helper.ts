@@ -151,28 +151,6 @@ export async function getValidator(param: GetValidatorParam): Promise<GetValidat
   }
 }
 
-export async function getDelegators(opertorAddress: string): Promise<Delegator[]> {
-  const lcdDelegators = await lcd.getValidatorDelegations(opertorAddress)
-
-  if (!lcdDelegators) {
-    return []
-  }
-
-  const delegateTotal = lcdDelegators.reduce((acc, curr) => {
-    return plus(acc, curr.shares)
-  }, '0')
-
-  const delegators: Delegator[] = lcdDelegators.map((delegator) => {
-    return {
-      address: delegator.delegator_address,
-      amount: delegator.shares,
-      weight: div(delegator.shares, delegateTotal)
-    }
-  })
-
-  return orderBy(delegators, [(d) => Number(d.weight)], ['desc'])
-}
-
 function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) {
   qb.andWhere(
     new Brackets((q) => {

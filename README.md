@@ -64,11 +64,13 @@ module.exports = {
 |---------------------|---------------------------------|----------------------------------------------|------------------------------------|
 | SERVER_PORT         | Listening port for API server   | 3060                                         | API                                |
 | SENTRY_DSN          | Sentry DSN for error management |                                              | All                                |
-| CHAIN_ID            | Chain ID of Terra network       | tequila-0004                                    | API, Collector                     |
-| LCD_URI             | LCD URI for Terra network       | https://tequila-lcd.terra.dev                   | API, Collector, Validator Scrapper |
-| FCD_URI             | FCD URI for Terra network       | https://tequila-fcd.terra.dev                   | Collector                          |
-| RPC_URI             | RPC URI for Terra network       | <required>                                   | API, Collector                          |
-| BYPASS_URI          | Terra LCD address               | https://tequila-lcd.terra.dev                   | API                                |
+| CHAIN_ID            | Chain ID of Terra network       | tequila-0004                                 | API, Collector                     |
+| LCD_URI             | LCD URI for Terra network       | https://tequila-lcd.terra.dev                | API, Collector, Validator Scrapper |
+| FCD_URI             | FCD URI for Terra network       | https://tequila-fcd.terra.dev                | Collector                          |
+| RPC_URI             | RPC URI for Terra network       | <required>                                   | API, Collector                     |
+| BYPASS_URI          | Terra LCD address               | https://tequila-lcd.terra.dev                | API                                |
+| MANTLE_URI          | Mantle endpoint                 | https://tequila-mantle.terra.dev/graphql     | API, Collector                     |
+| MIRROR_GRAPH_URI    | Mirror GraphQL endpoint         | https://tequila-graph.mirror.finance/graphql | API                                |
 | STATION_STATUS_JSON | URL for Station version control | https://terra.money/station/version-web.json | API                                |
 | USE_LOG_FILE        | Creates logs/* when enabled     | false                                        | All                                |
 | SC_AUTH_KEY         | Authentication key for SocketCluster | <required>                              | API                                |
@@ -78,8 +80,7 @@ module.exports = {
 | DISABLE_API         | Disable REST APIs               | false                                        | API                                |
 | DISABLE_SOCKET      | Dsiable Web Socket              | false                                        | API                                |
 | EXCLUDED_ROUTES     | List of regular expression string for excluding routes | []                    | API                                |
-| MIN_GAS_PRICES      | Minimum gas price by denom object| {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"}                    | API                                |
-
+| MIN_GAS_PRICES      | Minimum gas price by denom object| {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"}| API  |
 
 > In Terra, we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 

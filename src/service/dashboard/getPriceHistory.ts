@@ -30,6 +30,6 @@ export async function getPriceHistoryUncached(dayCount?: number): Promise<{ [key
   }, {})
 }
 
-const getPriceHistory = memoizeCache(getPriceHistoryUncached, { promise: true, maxAge: 3600, preFetch: 0.66 })
+const getPriceHistory = memoizeCache(getPriceHistoryUncached, { promise: true, maxAge: 60 * 1000, preFetch: 0.66 })
 
 export default getPriceHistory

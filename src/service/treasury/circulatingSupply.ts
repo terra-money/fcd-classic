@@ -13,7 +13,7 @@ import getLunaBalance from './getLunaBalance'
 const getLunaBalanceMemoized = memoizeCache(getLunaBalance, { promise: true, maxAge: 5 * 60 * 1000 /* 5 minutes */ })
 
 export async function getCirculatingSupply(input: string): Promise<string> {
-  if (isToken(input)) {
+  if (await isToken(input)) {
     return getTokenCirculatingSupply(input)
   }
 
