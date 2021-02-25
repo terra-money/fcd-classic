@@ -17,6 +17,7 @@ import { saveWasmCodeAndContract } from './wasm'
 import { setReward } from 'collector/reward'
 import { setSwap } from 'collector/swap'
 import { setNetwork } from 'collector/network'
+import { detectAndUpdateProposal } from 'collector/gov'
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   const latestBlock = await getRepository(BlockEntity).find({
@@ -151,6 +152,8 @@ export async function saveBlockInformation(
         await saveTxs(mgr, newBlockEntity, txEntities)
         // save wasm
         await saveWasmCodeAndContract(mgr, txEntities)
+        // save proposals
+        await detectAndUpdateProposal(mgr, txEntities)
       }
 
       // new block timestamp

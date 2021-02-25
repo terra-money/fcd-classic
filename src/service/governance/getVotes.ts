@@ -57,14 +57,17 @@ export default async function getVotes(input: GetProposalVotesInput): Promise<Ge
     }
   }
 
-  const votes: Vote[] = await Promise.all(
-    uniqBy(reverse(proposal.votes), 'voter').map((v) =>
-      getAccountInfo(v.voter).then((accInfo) => ({
-        answer: v.option,
-        voter: accInfo
-      }))
-    )
+  const uniqueVotes: Vote[] = await Promise.all(
+    uniqBy(reverse(proposal.votes), 'voter')
+      .map((v) =>
+        getAccountInfo(v.voter).then((accInfo) => ({
+          answer: v.option,
+          voter: accInfo
+        }))
+      )
   )
+
+  const votes = !input.option ? uniqueVotes : uniqueVotes.filter(v => v.answer === input.option)
 
   return {
     totalCnt: votes.length,

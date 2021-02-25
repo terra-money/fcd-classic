@@ -1,3 +1,6 @@
+import * as Bluebird from 'bluebird'
+import { EntityManager, getManager } from 'typeorm'
+import { TxEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 
@@ -5,7 +8,41 @@ import { removeDeletedProposals } from './removeDeletedProposals'
 import { saveProposalDetails } from './saveProposal'
 import { getValidatorsVotingPower } from 'service/governance'
 
-export async function collectProposal() {
+export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[]) {
+  const proposalUpdateSet = new Set<string>()
+
+  txs.forEach(tx => {
+    tx.data.logs.forEach(log => {
+      if (log.events) {
+        log.events.forEach(event => {
+          event.attributes.forEach(attr => {
+            if (attr.key === 'proposal_id') {
+              if (!Number.isNaN(parseInt(attr.value, 10))) {
+                proposalUpdateSet.add(attr.value)
+              }
+            }
+          })
+        })
+      }
+    })
+  })
+
+  if (proposalUpdateSet.size) {
+    const proposalIds = Array.from(proposalUpdateSet.values())
+    const [proposalTallyingParams, proposalDepositParams] = await Promise.all([lcd.getProposalTallyingParams(), lcd.getProposalDepositParams()])
+    const validatorsVotingPower = await getValidatorsVotingPower()
+
+    await Bluebird.mapSeries(proposalIds, (id) =>
+      lcd
+        .getProposal(id)
+        .then((proposal) =>
+          saveProposalDetails(mgr, proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
+        )
+    )
+  }  
+}
+
+export async function collectProposals() {
   logger.info('Proposal collector started.')
 
   const proposals: LcdProposal[] = await lcd.getProposals()
@@ -17,7 +54,7 @@ export async function collectProposal() {
 
   for (const proposal of proposals) {
     try {
-      await saveProposalDetails(proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
+      await saveProposalDetails(getManager(), proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
     } catch (error) {
       logger.error(`Failed to save proposal ${proposal.id}`)
       logger.error(error)
