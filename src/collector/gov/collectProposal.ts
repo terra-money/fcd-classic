@@ -11,25 +11,32 @@ import { getValidatorsVotingPower } from 'service/governance'
 export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[]) {
   const proposalUpdateSet = new Set<string>()
 
-  txs.forEach(tx => {
-    tx.data.logs.forEach(log => {
-      if (log.events) {
-        log.events.forEach(event => {
-          event.attributes.forEach(attr => {
-            if (attr.key === 'proposal_id') {
-              if (!Number.isNaN(parseInt(attr.value, 10))) {
-                proposalUpdateSet.add(attr.value)
-              }
+  txs.forEach((tx) => {
+    if (Array.isArray(tx.data.logs)) {
+      tx.data.logs.forEach((log) => {
+        if (Array.isArray(log.events)) {
+          log.events.forEach((event) => {
+            if (Array.isArray(event.attributes)) {
+              event.attributes.forEach((attr) => {
+                if (attr.key === 'proposal_id') {
+                  if (!Number.isNaN(parseInt(attr.value, 10))) {
+                    proposalUpdateSet.add(attr.value)
+                  }
+                }
+              })
             }
           })
-        })
-      }
-    })
+        }
+      })
+    }
   })
 
   if (proposalUpdateSet.size) {
     const proposalIds = Array.from(proposalUpdateSet.values())
-    const [proposalTallyingParams, proposalDepositParams] = await Promise.all([lcd.getProposalTallyingParams(), lcd.getProposalDepositParams()])
+    const [proposalTallyingParams, proposalDepositParams] = await Promise.all([
+      lcd.getProposalTallyingParams(),
+      lcd.getProposalDepositParams()
+    ])
     const validatorsVotingPower = await getValidatorsVotingPower()
 
     await Bluebird.mapSeries(proposalIds, (id) =>
@@ -39,7 +46,7 @@ export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[
           saveProposalDetails(mgr, proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
         )
     )
-  }  
+  }
 }
 
 export async function collectProposals() {
@@ -54,7 +61,13 @@ export async function collectProposals() {
 
   for (const proposal of proposals) {
     try {
-      await saveProposalDetails(getManager(), proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
+      await saveProposalDetails(
+        getManager(),
+        proposal,
+        proposalTallyingParams,
+        proposalDepositParams,
+        validatorsVotingPower
+      )
     } catch (error) {
       logger.error(`Failed to save proposal ${proposal.id}`)
       logger.error(error)
