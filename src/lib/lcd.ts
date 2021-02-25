@@ -32,7 +32,7 @@ async function get(url: string, params?: { [key: string]: string }): Promise<any
     }
 
     if (err.statusCode === 400) {
-      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR)
+      throw new APIError(ErrorTypes.INVALID_REQUEST_ERROR, undefined, url, err)
     }
 
     throw new APIError(ErrorTypes.LCD_ERROR, err.statusCode, err.message, err)
