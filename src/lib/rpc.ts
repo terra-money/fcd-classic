@@ -49,8 +49,10 @@ export async function getRewards(height: number): Promise<Reward[]> {
   }
 
   const events = blockResult.results
-    ? blockResult.results.begin_block.events // columbus-1 to 3
-    : blockResult.begin_block_events // columbus-4
+    ? // columbus-1 to 3
+      blockResult.results.begin_block.events
+    : // columbus-4
+      [...blockResult.begin_block_events, ...(blockResult.end_block_events || [])]
 
   const decodedRewardsAndCommission: Reward[] = compact(
     (events || []).map((event) => {

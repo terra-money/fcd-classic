@@ -93,7 +93,7 @@ export async function getBlockReward(block: LcdBlock): Promise<DeepPartial<Block
 
         rewards.reduce(totalRewardReducer, totalReward)
         rewards.reduce(validatorRewardReducer, rewardPerVal)
-      } else if (item.type === 'commission' && item.amount) {
+      } else if (item.type === 'commission') {
         const commissions = item.amount
           .split(',')
           .map((amount) => ({ ...splitDenomAndAmount(amount), validator: item.validator }))
