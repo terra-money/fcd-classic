@@ -13,17 +13,16 @@ import { normalizeRewardAndCommissionToLuna, getValidatorRewardAndCommissionSum 
 async function getExistingValidatorsMap(
   timestamp: Date
 ): Promise<{
-  [operatorAddress: string]: boolean
+  [operatorAddress: string]: ValidatorReturnInfoEntity
 }> {
-  const existingValidator = await getRepository(ValidatorReturnInfoEntity).find({
-    select: ['operatorAddress'],
+  const existingReturnInfos = await getRepository(ValidatorReturnInfoEntity).find({
     where: {
       timestamp
     }
   })
 
-  const valMap = existingValidator.reduce((valMap, validator: ValidatorReturnInfoEntity) => {
-    valMap[validator.operatorAddress] = true
+  const valMap = existingReturnInfos.reduce((valMap, returnInfo: ValidatorReturnInfoEntity) => {
+    valMap[returnInfo.operatorAddress] = returnInfo
     return valMap
   }, {})
   return valMap
@@ -31,24 +30,20 @@ async function getExistingValidatorsMap(
 
 export async function getValidatorsReturnOfTheDay(
   fromTs: number,
-  validatorsList: LcdValidator[]
+  validatorsList: LcdValidator[],
+  updateExisting = false
 ): Promise<ValidatorReturnInfoEntity[]> {
   const retEntity: ValidatorReturnInfoEntity[] = []
-
   const timestamp = startOfDay(fromTs)
 
-  logger.info(`Starting return for day of ${timestamp}`)
+  logger.info(`Calculating validators return of ${timestamp}`)
 
-  logger.info('price info from db')
   const priceObj = await getAvgPrice(fromTs, fromTs + ONE_DAY_IN_MS)
-
   const valMap = await getExistingValidatorsMap(timestamp)
 
   for (const validator of validatorsList) {
-    logger.info(`${validator.operator_address}: calculating return`)
-
-    if (valMap[validator.operator_address]) {
-      logger.info(`${validator.operator_address}: already exists in db`)
+    if (!updateExisting && valMap[validator.operator_address]) {
+      logger.info(`row already exists: ${validator.operator_address}`)
       continue
     }
 
@@ -59,15 +54,20 @@ export async function getValidatorsReturnOfTheDay(
         await getValidatorRewardAndCommissionSum(validator.operator_address, fromTs, fromTs + ONE_DAY_IN_MS),
         priceObj
       )
+
       logger.info(`${validator.operator_address}: ${timestamp} => reward ${reward} with commission of ${commission}`)
-      const valRetEntity = new ValidatorReturnInfoEntity()
+
+      const valRetEntity = valMap[validator.operator_address] || new ValidatorReturnInfoEntity()
+
       valRetEntity.operatorAddress = validator.operator_address
       valRetEntity.timestamp = timestamp
       valRetEntity.reward = reward
       valRetEntity.commission = commission
       valRetEntity.avgVotingPower = validatorAvgVotingPower
+
       retEntity.push(valRetEntity)
     }
   }
+
   return retEntity
 }

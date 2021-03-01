@@ -48,18 +48,14 @@ export async function calculateValidatorsReturn() {
   // used -10 for just to make sure it doesn't calculate for today
   toTs -= 10
 
-  const valRetInfoEntityList: ValidatorReturnInfoEntity[] = []
+  const validatorReturnRepo = getRepository(ValidatorReturnInfoEntity)
 
   for (let tsIt = fromTs; tsIt < toTs && tsIt < latestBlockTs; tsIt = tsIt + ONE_DAY_IN_MS) {
     const dailyEntityList = await getValidatorsReturnOfTheDay(tsIt, validatorsList)
 
-    valRetInfoEntityList.push(...dailyEntityList)
-
+    await validatorReturnRepo.save(dailyEntityList)
     logger.info(`Calculated and got return for day of ${startOfDay(tsIt)}`)
   }
-  if (valRetInfoEntityList.length) {
-    await getRepository(ValidatorReturnInfoEntity).save(valRetInfoEntityList)
-    logger.info(`Stored daily ${valRetInfoEntityList.length} daily return`)
-  }
+
   logger.info('Validator return calculator completed.')
 }
