@@ -14,7 +14,7 @@ const agent = new protocol.Agent({
 
 const NOT_FOUND_REGEX = /(?:not found|no del|not ex|failed to find|unknown prop|empty bytes|No price reg)/i
 
-async function get(url: string, params?: { [key: string]: string }): Promise<any> {
+async function get(url: string, params?: { [key: string]: string | undefined }): Promise<any> {
   const options = {
     method: 'GET',
     rejectUnauthorized: false,
@@ -185,8 +185,8 @@ export async function getValidatorDelegations(validatorOperKey: string): Promise
   return (await get(`/staking/validators/${validatorOperKey}/delegations`)) || []
 }
 
-export function getStakingPool(): Promise<LcdStakingPool> {
-  return get(`/staking/pool`)
+export function getStakingPool(height?: string): Promise<LcdStakingPool> {
+  return get(`/staking/pool`, { height })
 }
 
 ///////////////////////////////////////////////

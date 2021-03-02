@@ -43,13 +43,14 @@ async function calculateAirdropAtHeight(
   const { assets } = (await lcd.getContractStore(getToken('mir').pair, { pool: {} }, height)) as any
   const [{ amount: uusdAmount }, { amount: assetAmount }] = assets
   const mirPriceInUST = new BigNumber(uusdAmount).div(assetAmount)
+  const airdrop = mirPriceInUST.dividedBy(lunaPriceInUST).multipliedBy(mirAmount).toFixed(0)
 
-  console.log('mir price', mirPriceInUST.toString(), 'ust price', lunaPriceInUST)
+  console.log('mir price', mirPriceInUST.toString(), 'ust price', lunaPriceInUST, 'airdrop', airdrop)
 
   return {
     height,
     timestamp: new Date(lcdBlock.block.header.time),
-    airdrop: mirPriceInUST.dividedBy(lunaPriceInUST).multipliedBy(mirAmount).toFixed(0)
+    airdrop
   }
 }
 
@@ -71,16 +72,14 @@ async function main() {
   const rawAirdrops = await getAirdrops()
 
   await getManager().transaction((mgr) =>
-    Bluebird.mapSeries(rawAirdrops, (rawAirdrop) => {
-      mgr
-        .findOneOrFail(DashboardEntity, {
-          timestamp: startOfDay(rawAirdrop.timestamp)
-        })
-        .then((dashboard) => {
-          dashboard.airdrop = rawAirdrop.airdrop
-          console.log(`setting airdrop ${dashboard.airdrop} for ${dashboard.timestamp}`)
-          // return mgr.save(dashboard);
-        })
+    Bluebird.mapSeries(rawAirdrops, async (rawAirdrop) => {
+      const dashboard = await mgr.findOneOrFail(DashboardEntity, {
+        timestamp: startOfDay(rawAirdrop.timestamp)
+      })
+
+      dashboard.airdrop = rawAirdrop.airdrop
+      console.log(`setting airdrop ${dashboard.airdrop} for ${dashboard.timestamp}`)
+      return mgr.update(DashboardEntity, { id: dashboard.id }, dashboard)
     })
   )
 

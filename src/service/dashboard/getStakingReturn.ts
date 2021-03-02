@@ -24,7 +24,7 @@ async function getStakingReturnUncached(count?: number): Promise<StakingDailyRet
   const dashboardHistory = await getDashboardHistory(requiredPrevDaysHistory)
   let movingAvgSum = '0'
   const stakingReturn = dashboardHistory.reduce((retArray, item: DashboardEntity) => {
-    const dailyReturn = Number(item.avgStaking) ? div(item.reward, item.avgStaking) : '0'
+    const dailyReturn = Number(item.avgStaking) ? div(plus(item.reward, item.airdrop), item.avgStaking) : '0'
     movingAvgSum = plus(movingAvgSum, dailyReturn)
 
     if (retArray.length >= MOVING_AVG_WINDOW_IN_DAYS) {
