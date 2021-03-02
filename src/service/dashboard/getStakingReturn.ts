@@ -1,11 +1,10 @@
+import { getRepository } from 'typeorm'
 import { chain } from 'lodash'
-
-import { DashboardEntity } from 'orm'
-
+import { startOfToday, subDays } from 'date-fns'
 import { plus, div, times, minus } from 'lib/math'
 import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'
 import memoizeCache from 'lib/memoizeCache'
-
+import { DashboardEntity } from 'orm'
 import { getDashboardHistory } from './dashboardHistory'
 
 interface StakingDailyReturn {
@@ -54,3 +53,13 @@ async function getStakingReturnUncached(count?: number): Promise<StakingDailyRet
 
 // We will clear memoization at the beginning of each days
 export default memoizeCache(getStakingReturnUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
+
+export async function getAirdropAnnualAvgReturn(): Promise<string> {
+  const { avgReturn } = await getRepository(DashboardEntity)
+    .createQueryBuilder()
+    .select('SUM(airdrop / avg_staking) * 365 / COUNT(*)', 'avgReturn')
+    .where('timestamp >= :date', { date: subDays(startOfToday(), 30) })
+    .getRawOne()
+
+  return avgReturn
+}

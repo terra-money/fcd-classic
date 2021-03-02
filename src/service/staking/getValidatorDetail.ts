@@ -10,6 +10,7 @@ import { div, plus } from 'lib/math'
 import memoizeCache from 'lib/memoizeCache'
 
 import { getBalance } from 'service/bank'
+import { getAirdropAnnualAvgReturn } from 'service/dashboard'
 
 import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
 import { getCommissions, getMyDelegation, getUndelegateSchedule, generateValidatorResponse } from './helper'
@@ -34,9 +35,10 @@ async function getValidatorInfo(operatorAddr: string): Promise<ValidatorResponse
     chainId: config.CHAIN_ID
   })
   const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operatorAddr)
+  const airdropReturn = await getAirdropAnnualAvgReturn()
 
   if (validator) {
-    return generateValidatorResponse(validator, { stakingReturn, isNewValidator })
+    return generateValidatorResponse(validator, { stakingReturn: plus(stakingReturn, airdropReturn), isNewValidator })
   }
 
   return undefined

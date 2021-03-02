@@ -3,10 +3,10 @@ import { getConnection } from 'typeorm'
 export async function getValidatorAnnualAvgReturn(operatorAddress: string): Promise<ValidatorAnnualReturn> {
   const rawQuery = `
 SELECT operator_address,
-  SUM((reward - commission) / (avg_voting_power)) * 365 / COUNT(*) AS annual_return,
+  SUM((reward - commission) / avg_voting_power) * 365 / COUNT(*) AS annual_return,
   COUNT(*) AS data_point_count
 FROM validator_return_info
-WHERE TIMESTAMP >= DATE(NOW() - INTERVAL '30 day')
+WHERE timestamp >= DATE(NOW() - INTERVAL '30 day')
 AND operator_address = $1
 AND avg_voting_power > 0
 GROUP BY operator_address;`

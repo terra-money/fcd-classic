@@ -1,18 +1,18 @@
 import { orderBy } from 'lodash'
 import { getRepository, getConnection } from 'typeorm'
-
-import { generateValidatorResponse } from './helper'
-
+import { plus } from 'lib/math'
 import { ValidatorInfoEntity } from 'orm'
 import config from 'config'
+import { getAirdropAnnualAvgReturn } from 'service/dashboard'
+import { generateValidatorResponse } from './helper'
 
 export async function getValidatorsReturn(): Promise<{ [operatorAddress: string]: ValidatorAnnualReturn }> {
   const rawQuery = `
 SELECT operator_address,
-  SUM((reward - commission)/(avg_voting_power)) * 365 / COUNT(*) AS annual_return,
+  SUM((reward - commission) / avg_voting_power) * 365 / COUNT(*) AS annual_return,
   COUNT(*) AS data_point_count
 FROM validator_return_info
-WHERE TIMESTAMP >= DATE(now() - INTERVAL '30 day')
+WHERE timestamp >= DATE(now() - INTERVAL '30 day')
 AND avg_voting_power > 0
 GROUP BY operator_address;`
 
@@ -26,9 +26,11 @@ GROUP BY operator_address;`
     return {}
   }
 
+  const airdropReturn = await getAirdropAnnualAvgReturn()
+
   return validatorReturn.reduce((acc, returnInfo) => {
     acc[returnInfo.operator_address] = {
-      stakingReturn: returnInfo.annual_return,
+      stakingReturn: plus(returnInfo.annual_return, airdropReturn),
       isNewValidator: returnInfo.data_point_count < 15 ? true : false
     }
     return acc
@@ -38,6 +40,7 @@ GROUP BY operator_address;`
 export default async function getValidators(): Promise<ValidatorResponse[]> {
   const validatorsList = await getRepository(ValidatorInfoEntity).find({ chainId: config.CHAIN_ID })
   const validatorsReturns = await getValidatorsReturn()
+
   const validators = validatorsList.map((validator) => {
     const { operatorAddress } = validator
     return generateValidatorResponse(
