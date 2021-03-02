@@ -9,36 +9,30 @@ export default class GeneralInfoEntity {
   @Column({ unique: true })
   datetime: Date
 
-  @Column({ type: 'float', nullable: true })
-  taxRate: number | null
+  @Column({ type: 'float' })
+  taxRate: number
 
-  @Column({ type: 'float', nullable: true })
-  stakingRatio: number | null
+  @Column({ type: 'float' })
+  stakingRatio: number
 
-  @Column({ type: 'jsonb', nullable: true })
-  taxProceeds: Coins | null
+  @Column({ type: 'jsonb' })
+  taxProceeds: Coins
 
-  @Column({ type: 'jsonb', nullable: true })
-  issuances: DenomMap | null
+  @Column({ type: 'jsonb' })
+  issuances: DenomMap
 
-  @Column({ type: 'jsonb', nullable: true })
-  communityPool: DenomMap | null
+  @Column({ type: 'jsonb' })
+  communityPool: DenomMap
 
-  @Column({ type: 'jsonb', nullable: true })
-  taxCaps: DenomTaxCap[] | null
+  @Column({ type: 'jsonb' })
+  taxCaps: DenomTaxCap[]
 
-  @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  seigniorageProceeds: string | null
+  @Column({ type: 'decimal', precision: 40, scale: 10 })
+  seigniorageProceeds: string
 
-  @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  bondedTokens: string | null
+  @Column({ type: 'decimal', precision: 40, scale: 10 })
+  bondedTokens: string
 
-  @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  notBondedTokens: string | null
-
-  @Column()
-  totalAccountCount: number
-
-  @Column()
-  activeAccountCount: number
+  @Column({ type: 'decimal', precision: 40, scale: 10 })
+  notBondedTokens: string
 }

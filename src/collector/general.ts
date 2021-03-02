@@ -45,8 +45,6 @@ export async function saveGeneral() {
     seigniorageProceeds,
     bondedTokens,
     notBondedTokens,
-    totalAccountCount: 0, // TODO: legacy column. Will be removed on next release
-    activeAccountCount: 0, // TODO: legacy column. Will be removed on next release
     issuances,
     taxCaps,
     communityPool

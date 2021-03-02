@@ -8,6 +8,7 @@ import createApp from 'createApp'
 import { apiLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
 import { initSocket } from 'socket'
+import reporter from 'reporter'
 import * as token from 'service/treasury/token'
 
 const packageJson = require('../package.json')
@@ -37,6 +38,7 @@ export async function createServer() {
   if (!config.DISABLE_SOCKET) {
     logger.info(`Adding Socket`)
     socket = initSocket(server)
+    await reporter()
   }
 
   server.listen(config.PORT, () => {

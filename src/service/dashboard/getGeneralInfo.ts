@@ -49,21 +49,19 @@ async function getLatestGenInfo(): Promise<GeneralInfoEntity> {
 
 export default async function getGeneralInfo(): Promise<GeneralInfoReturn> {
   const prices = await getLatestPrices()
-
   const latestInfo = await getLatestGenInfo()
   const { taxRate, issuances, communityPool, bondedTokens, notBondedTokens, stakingRatio, taxCaps } = latestInfo
 
-  const stakingPool = {
-    stakingRatio: stakingRatio.toString(),
-    bondedTokens,
-    notBondedTokens
-  }
   return {
     prices,
     taxRate: taxRate.toString(),
     taxCaps,
     issuances,
-    stakingPool,
+    stakingPool: {
+      stakingRatio: stakingRatio.toString(),
+      bondedTokens,
+      notBondedTokens
+    },
     communityPool
   }
 }
