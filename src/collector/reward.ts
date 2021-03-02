@@ -138,9 +138,9 @@ export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> 
     const reward = new RewardEntity()
     reward.denom = denom
     reward.datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-    reward.tax = get(rewards, `tax.${denom}`) ? get(rewards, `tax.${denom}`) : '0'
+    reward.tax = get(rewards, `tax.${denom}`, '0.0')
     reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
-    reward.gas = get(rewards, `gas.${denom}`) ? get(rewards, `gas.${denom}`) : '0'
+    reward.gas = get(rewards, `gas.${denom}`, '0.0')
     reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
     reward.sum = rewardSum[denom]
     reward.commission = commission[denom]

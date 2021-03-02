@@ -39,7 +39,6 @@ export async function saveGeneral() {
 
   const genInfo: DeepPartial<GeneralInfoEntity> = {
     datetime,
-    currentEpoch: undefined,
     taxRate: taxRate ? Number(taxRate) : NaN,
     stakingRatio: stakingRatio ? Number(stakingRatio) : NaN,
     taxProceeds,

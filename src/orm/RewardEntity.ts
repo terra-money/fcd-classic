@@ -33,8 +33,8 @@ export default class RewardEntity {
   oracleUsd: string
 
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  sum: string
+  sum: string | null
 
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  commission: string
+  commission: string | null
 }

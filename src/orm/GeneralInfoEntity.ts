@@ -9,35 +9,32 @@ export default class GeneralInfoEntity {
   @Column({ unique: true })
   datetime: Date
 
-  @Column({ nullable: true })
-  currentEpoch: number
+  @Column({ type: 'float', nullable: true })
+  taxRate: number | null
 
   @Column({ type: 'float', nullable: true })
-  taxRate: number
-
-  @Column({ type: 'float', nullable: true })
-  stakingRatio: number
+  stakingRatio: number | null
 
   @Column({ type: 'jsonb', nullable: true })
-  taxProceeds: Coins
+  taxProceeds: Coins | null
 
   @Column({ type: 'jsonb', nullable: true })
-  issuances: DenomMap
+  issuances: DenomMap | null
 
   @Column({ type: 'jsonb', nullable: true })
-  communityPool: DenomMap
+  communityPool: DenomMap | null
 
   @Column({ type: 'jsonb', nullable: true })
-  taxCaps: DenomTaxCap[]
+  taxCaps: DenomTaxCap[] | null
 
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  seigniorageProceeds: string
+  seigniorageProceeds: string | null
 
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  bondedTokens: string
+  bondedTokens: string | null
 
   @Column({ type: 'decimal', precision: 40, scale: 10, nullable: true })
-  notBondedTokens: string
+  notBondedTokens: string | null
 
   @Column()
   totalAccountCount: number

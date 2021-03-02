@@ -8,6 +8,7 @@ import * as lcd from 'lib/lcd'
 import config from 'config'
 import { saveValidatorDetail } from './staking/validatorDetails'
 import { collectBlock } from './block'
+import { reportLatestBlockHeight, reportStationStatus } from 'reporter'
 
 const SOCKET_URL = `${config.RPC_URI}/websocket`
 const NEW_BLOCK_Q = `tm.event='NewBlock'`
@@ -50,6 +51,9 @@ async function collectValidators() {
 
 async function processNewBlock(data: RpcResponse) {
   const marshalTxs = data.result.data?.value.block?.data.txs as string[]
+  const height = data.result.data?.value.block?.header.height as string
+
+  reportLatestBlockHeight(height)
 
   if (marshalTxs) {
     try {
@@ -92,6 +96,9 @@ export async function startWatcher() {
   await watcher.start()
 
   const checkRestart = async () => {
+    // NOTE: Not sure this is the right place..
+    reportStationStatus()
+
     if (eventCounter === 0) {
       logger.info('watcher: event counter is zero. restarting..')
       await startWatcher()

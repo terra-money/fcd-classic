@@ -1,5 +1,4 @@
 import * as sentry from '@sentry/node'
-import { get } from 'lodash'
 import { getTime, getMinutes } from 'date-fns'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
 
@@ -39,11 +38,11 @@ async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
 
 function getBlockEntity(
   blockHeight: number,
-  block: LcdBlock,
+  lcdBlock: LcdBlock,
   blockReward: BlockRewardEntity
 ): DeepPartial<BlockEntity> {
-  const chainId = get(block, 'block.header.chain_id')
-  const timestamp = get(block, 'block.header.time')
+  const chainId = lcdBlock.block.header.chain_id
+  const timestamp = lcdBlock.block.header.time
 
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
@@ -68,10 +67,10 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
   return acc
 }
 
-export async function getBlockReward(block: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
-  const height = get(block, 'block.header.height')
-  const chainId = get(block, 'block.header.chain_id')
-  const timestamp = get(block, 'block.header.time')
+export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
+  const height = lcdBlock.block.header.height
+  const chainId = lcdBlock.block.header.chain_id
+  const timestamp = lcdBlock.block.header.time
 
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
@@ -138,7 +137,7 @@ export async function saveBlockInformation(
       // Save block rewards
       const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(lcdBlock))
       // new block height
-      const newBlockHeight = Number(get(lcdBlock, 'block.header.height'))
+      const newBlockHeight = +height
       // Save block entity
       const newBlockEntity = await mgr
         .getRepository(BlockEntity)

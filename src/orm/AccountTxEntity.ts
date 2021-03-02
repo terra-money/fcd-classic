@@ -8,7 +8,7 @@ export default class AccountTxEntity {
   id: number
 
   @Index('account_tx_chain_id')
-  @Column({ nullable: true })
+  @Column()
   chainId: string
 
   @Index('account_tx_account')

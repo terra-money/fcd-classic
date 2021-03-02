@@ -18,7 +18,7 @@ export default class BlockEntity {
   height: number
 
   @Index('block_timestamp')
-  @Column({ nullable: true })
+  @Column()
   timestamp: Date
 
   @OneToMany(() => TxEntity, (txs) => txs.block, {
