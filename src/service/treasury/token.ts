@@ -3,15 +3,17 @@ import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 import config from 'config'
 
+interface Asset {
+  symbol: string
+  name: string
+  token: string
+  pair: string
+  lpToken: string
+  status: string
+}
+
 const ASSETS_BY_SYMBOL: {
-  [symbol: string]: {
-    symbol: string
-    name: string
-    token: string
-    pair: string
-    lpToken: string
-    status: string
-  }
+  [symbol: string]: Asset
 } = {}
 
 export const TOKEN_SYMBOLS: string[] = []
@@ -33,6 +35,10 @@ export async function init() {
     ASSETS_BY_SYMBOL[key] = whitelist[address]
     TOKEN_SYMBOLS.push(key)
   })
+}
+
+export function getToken(symbol: string) {
+  return ASSETS_BY_SYMBOL[symbol.toLowerCase()]
 }
 
 export function isToken(symbol: string) {

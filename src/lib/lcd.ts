@@ -281,8 +281,13 @@ export async function getSwapResult(params: { offer_coin: string; ask_denom: str
 ///////////////////////////////////////////////
 // Oracle
 ///////////////////////////////////////////////
-export async function getOraclePrices(): Promise<Coin[]> {
-  return (await get(`/oracle/denoms/exchange_rates`)) || []
+export async function getOraclePrices(height?: string): Promise<Coin[]> {
+  return (
+    (await get(
+      `/oracle/denoms/exchange_rates`,
+      height ? { height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString() } : undefined
+    )) || []
+  )
 }
 
 export async function getOracleActives(): Promise<string[]> {
@@ -403,6 +408,13 @@ export async function getTaxCaps(height?: string): Promise<{ denom: string; tax_
   return taxCaps
 }
 
-export async function getContractStore(contractAddress: string, query: any): Promise<Record<string, unknown>> {
-  return get(`/wasm/contracts/${contractAddress}/store?query_msg=${JSON.stringify(query)}`)
+export async function getContractStore(
+  contractAddress: string,
+  query: any,
+  height?: string
+): Promise<Record<string, unknown>> {
+  return get(`/wasm/contracts/${contractAddress}/store`, {
+    query_msg: JSON.stringify(query),
+    height
+  })
 }

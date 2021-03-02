@@ -19,6 +19,9 @@ export default class DashboardEntity {
   reward: string // Unit = Luna
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
+  airdrop: string // Unit = Luna
+
+  @Column('decimal', { precision: 40, scale: 10, default: '0' })
   avgStaking: string
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
