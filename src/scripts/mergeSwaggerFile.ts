@@ -89,7 +89,7 @@ function normalizeSwagger(doc: Swagger): Swagger {
 }
 
 async function getLcdSwaggerObject(): Promise<Swagger> {
-  const doc = yaml.safeLoad(await rp(LCD_SWAGGER_URL))
+  const doc = yaml.load(await rp(LCD_SWAGGER_URL))
   return filterExcludedRoutes(normalizeSwagger(doc))
 }
 

@@ -1,2 +1,2 @@
 export * from './collectValidator'
-export * from './calculateValidatorsReturn'
+export * from './collectValidatorReturn'

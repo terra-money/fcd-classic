@@ -15,10 +15,10 @@ export default class ValidatorReturnInfoEntity {
   timestamp: Date
 
   @Column('decimal', { precision: 40, scale: 10 })
-  reward: string
+  reward: string // Unit = Luna
 
   @Column('decimal', { precision: 40, scale: 10 })
-  commission: string
+  commission: string // Unit = Luna
 
   @Column('decimal', { precision: 40, scale: 10 })
   avgVotingPower: string

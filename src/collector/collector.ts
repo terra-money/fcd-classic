@@ -9,7 +9,7 @@ import { initializeSentry } from 'lib/errorReporting'
 import { collectBlock } from './block'
 import { collectPrice } from './price'
 import { collectorGeneral } from './general'
-import { calculateValidatorsReturn, collectValidator } from './staking'
+import { collectValidatorReturn, collectValidator } from './staking'
 import { collectProposals } from './gov'
 import { collectDashboard } from './dashboard'
 import { startWatcher, startPolling } from './watcher'
@@ -33,7 +33,7 @@ const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
 const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposals, logger)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
-const returnCalculator = new Semaphore('ReturnCalculator', calculateValidatorsReturn, logger, twentyMinute)
+const returnCalculator = new Semaphore('ReturnCalculator', collectValidatorReturn, logger, twentyMinute)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
 const richListCollector = new Semaphore('RichListCollector', collectRichList, logger, twentyMinute)
 const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, twentyMinute)

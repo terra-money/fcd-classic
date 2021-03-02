@@ -1,5 +1,5 @@
 import { default as parseDuration } from 'parse-duration'
-import * as bech32 from 'bech32'
+import { bech32 } from 'bech32'
 import * as bech32buffer from 'bech32-buffer'
 import { orderBy } from 'lodash'
 import config from 'config'

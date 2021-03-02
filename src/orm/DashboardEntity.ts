@@ -16,13 +16,13 @@ export default class DashboardEntity {
   txVolume: DenomMap
 
   @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
-  reward: string
+  reward: string // Unit = Luna
 
   @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
   avgStaking: string
 
   @Column('decimal', { precision: 40, scale: 10, default: '0', nullable: true })
-  taxReward: string
+  taxReward: string // Unit = KRT
 
   @Column({ default: 0 })
   activeAccount: number
