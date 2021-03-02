@@ -7,13 +7,16 @@ import * as lcd from 'lib/lcd'
 import { init as initToken, getToken } from 'service/treasury/token'
 
 const MIR_AT_SNAPSHOT = '9150000000000'
-const SNAPSHOT_HEIGHT = 680000
+// const SNAPSHOT_HEIGHT = 680000
 const SNAPSHOT_DIST_AT = 825000
 const DIST_STARTED_AT = 920000
+// Tequila
+// const SNAPSHOT_HEIGHT = 1350000
+// const SNAPSHOT_DIST_AT = 1375000
+// const DIST_STARTED_AT = 1380000
 const MIR_EVERY_100K = '345283000000'
 const DIST_INTERVAL = 100000
-const MILLISECONDS_IN_YEAR = 365 * 24 * 3600 * 1000
-const DIST_END_AT = 920000 + DIST_INTERVAL * 53
+const DIST_END_AT = DIST_STARTED_AT + DIST_INTERVAL * 53
 
 /**
  * Returns MIR token airdrop in Luna unit at given height
