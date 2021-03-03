@@ -5,7 +5,6 @@ const {
   FCD_URI,
   RPC_URI,
   BYPASS_URI,
-  MANTLE_URI,
   MIRROR_GRAPH_URI,
   STATION_STATUS_JSON,
   SENTRY_DSN,
@@ -18,7 +17,6 @@ const {
   DISABLE_SOCKET,
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
-  FOUNDATION_WALLET_ADDRESS,
   PRUNING_KEEP_EVERY,
   BANK_WALLETS
 } = process.env
@@ -33,7 +31,6 @@ const config = {
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
-  FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
   SENTRY_DSN,
   SC_AUTH_KEY,
