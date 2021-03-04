@@ -58,7 +58,7 @@ export async function getAirdropAnnualAvgReturn(): Promise<string> {
   const { avgReturn } = await getRepository(DashboardEntity)
     .createQueryBuilder()
     .select('SUM(airdrop / avg_staking) * 365 / COUNT(*)', 'avgReturn')
-    .where('timestamp >= :date', { date: subDays(startOfToday(), 30) })
+    .where('timestamp >= :date', { date: subDays(startOfToday(), 36) })
     .getRawOne()
 
   return avgReturn
