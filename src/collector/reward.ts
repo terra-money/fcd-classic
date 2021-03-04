@@ -5,7 +5,7 @@ import config from 'config'
 import { TxEntity, RewardEntity, BlockEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
-import logger from 'lib/logger'
+import { collectorLogger as logger } from 'lib/logger'
 import { plus, minus } from 'lib/math'
 import { isNumeric, splitDenomAndAmount } from 'lib/common'
 import { getDateRangeOfLastMinute, getQueryDateTime, getStartOfPreviousMinuteTs } from 'lib/time'
@@ -147,13 +147,12 @@ export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> 
 
     const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
     reward.oracle = Number(oracle) < 0 ? '0' : oracle
-
     reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
     return reward
   })
 }
 
-export async function setReward(transactionEntityManager: EntityManager, timestamp: number) {
+export async function collectReward(transactionEntityManager: EntityManager, timestamp: number) {
   const rewardEntity = await getRewardDocs(timestamp)
   await transactionEntityManager.save(rewardEntity)
   logger.info(`Save reward ${getDateRangeOfLastMinute(timestamp).from} success.`)

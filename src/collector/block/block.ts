@@ -13,9 +13,9 @@ import * as rpc from 'lib/rpc'
 import { saveTxs, generateTxEntities } from './tx'
 import { saveWasmCodeAndContract } from './wasm'
 
-import { setReward } from 'collector/reward'
-import { setSwap } from 'collector/swap'
-import { setNetwork } from 'collector/network'
+import { collectReward } from 'collector/reward'
+import { collectSwap } from 'collector/swap'
+import { collectNetwork } from 'collector/network'
 import { detectAndUpdateProposal } from 'collector/gov'
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
@@ -114,17 +114,6 @@ export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<Bl
   return blockReward
 }
 
-export function isNewMinuteBlock(prevBlock: BlockEntity | undefined, newBlock: BlockEntity): number {
-  const prevBlockTime = prevBlock ? prevBlock.timestamp : undefined
-  const newBlockTime = newBlock.timestamp
-
-  if (prevBlockTime && getMinutes(prevBlockTime) !== getMinutes(newBlockTime)) {
-    return getTime(newBlockTime)
-  }
-
-  return 0
-}
-
 export async function saveBlockInformation(
   lcdBlock: LcdBlock,
   latestIndexedBlock: BlockEntity | undefined
@@ -156,12 +145,12 @@ export async function saveBlockInformation(
       }
 
       // new block timestamp
-      const newBlockTimeStamp = isNewMinuteBlock(latestIndexedBlock, newBlockEntity)
+      if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
+        const newBlockTimeStamp = newBlockEntity.timestamp.getTime()
 
-      if (newBlockTimeStamp) {
-        await setReward(mgr, newBlockTimeStamp)
-        await setSwap(mgr, newBlockTimeStamp)
-        await setNetwork(mgr, newBlockTimeStamp)
+        await collectReward(mgr, newBlockTimeStamp)
+        await collectSwap(mgr, newBlockTimeStamp)
+        await collectNetwork(mgr, newBlockTimeStamp)
       }
 
       return newBlockEntity
