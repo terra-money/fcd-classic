@@ -59,6 +59,7 @@ export async function getAirdropAnnualAvgReturn(): Promise<string> {
     .createQueryBuilder()
     .select('SUM(airdrop / avg_staking) * 365 / COUNT(*)', 'avgReturn')
     .where('timestamp >= :date', { date: subDays(startOfToday(), 33) })
+    .andWhere('avg_stakig != 0')
     .getRawOne()
 
   return avgReturn
