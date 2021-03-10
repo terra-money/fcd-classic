@@ -164,12 +164,11 @@ export default class TransactionController extends KoaController {
         .allow('')
         .regex(/^\d{1,16}$/),
       order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
-      memo: Joi.string().description('Tx memo'),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('To timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
+      limit: Joi.number().default(10).min(10).max(500).description('Items per page'),
       offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR

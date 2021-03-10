@@ -9,7 +9,6 @@ export interface GetTxListParam {
   offset?: number
   account?: string
   block?: string
-  memo?: string
   action?: string
   limit: number
   page: number
@@ -23,43 +22,6 @@ interface GetTxsReturn {
   page: number
   limit: number
   txs: ParsedTxInfo[] | ({ id: number } & Transaction.LcdTransaction)[]
-}
-
-export async function getTxFromMemo(param: GetTxListParam): Promise<GetTxsReturn> {
-  if (!param.memo) {
-    throw new Error(`memo is required.`)
-  }
-
-  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-
-  const qb = getRepository(TxEntity)
-    .createQueryBuilder()
-    .where(`data->'tx'->'value'->>'memo' = :memo`, { memo: param.memo })
-    .orderBy(`timestamp`, order)
-    .take(param.limit)
-
-  if (param.offset) {
-    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
-  } else {
-    qb.skip(param.limit * (param.page - 1))
-  }
-
-  if (param.from) {
-    qb.andWhere('timestamp >= :from', { from: getQueryDateTime(param.from) })
-  }
-
-  if (param.to) {
-    qb.andWhere('timestamp <= :to', { to: getQueryDateTime(param.to) })
-  }
-
-  const [txs, total] = await qb.getManyAndCount()
-
-  return {
-    totalCnt: total,
-    page: param.page,
-    limit: param.limit,
-    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
-  }
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
@@ -227,8 +189,6 @@ export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn>
     txList = await getTxFromAccount(param, false)
   } else if (param.block) {
     txList = await getTxFromBlock(param)
-  } else if (param.memo) {
-    txList = await getTxFromMemo(param)
   } else {
     txList = await getTxs(param)
   }
