@@ -276,7 +276,8 @@ export default class TransactionController extends KoaController {
       from: Joi.number().min(0).description('From timestamp unix time'),
       to: Joi.number().min(0).description('to timestamp unix time'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).max(500).description('Items per page')
+      limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
