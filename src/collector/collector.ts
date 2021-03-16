@@ -5,6 +5,7 @@ import { default as parseDuration } from 'parse-duration'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
+import { init as initToken } from 'service/treasury/token'
 
 import { collectBlock } from './block'
 import { collectPrice } from './price'
@@ -85,6 +86,7 @@ async function createJobs() {
 const init = async () => {
   initializeSentry()
   await initORM()
+  await initToken()
   await collectBlock()
   // await collectValidator()
   await createJobs()
