@@ -1,5 +1,5 @@
 import * as sentry from '@sentry/node'
-import { getTime, getMinutes } from 'date-fns'
+import { getMinutes } from 'date-fns'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
 
 import config from 'config'
@@ -146,7 +146,7 @@ export async function saveBlockInformation(
 
       // new block timestamp
       if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
-        const newBlockTimeStamp = newBlockEntity.timestamp.getTime()
+        const newBlockTimeStamp = new Date(newBlockEntity.timestamp).getTime()
 
         await collectReward(mgr, newBlockTimeStamp)
         await collectSwap(mgr, newBlockTimeStamp)
