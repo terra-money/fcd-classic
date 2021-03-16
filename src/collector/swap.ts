@@ -210,7 +210,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
   return docs
 }
 
-export async function setSwap(transactionalEntityManager: EntityManager, timestamp: number) {
+export async function collectSwap(transactionalEntityManager: EntityManager, timestamp: number) {
   const swaps = await setSwapFromTx(timestamp)
   await transactionalEntityManager.save(swaps)
   logger.info(`Save swap - success.`)

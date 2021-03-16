@@ -137,7 +137,7 @@ export async function setNetworkFromTx(now: number) {
   await bulkSave(docs)
 }
 
-export async function setNetwork(transactionalEntityManager: EntityManager, timestamp: number) {
+export async function collectNetwork(transactionalEntityManager: EntityManager, timestamp: number) {
   const docs = await getNetworkDocs(timestamp)
   await transactionalEntityManager.save(docs)
   logger.info(`Save network - success.`)
