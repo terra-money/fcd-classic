@@ -54,7 +54,7 @@ export function extractAddressFromContractMsg(value: { [key: string]: any }): { 
         }
 
         return {
-          swap: [value.sender]
+          market: [value.sender]
         }
       } else if (executeMsg.transfer && executeMsg.transfer.recipient) {
         // Send token to another address
@@ -75,7 +75,7 @@ export function extractAddressFromContractMsg(value: { [key: string]: any }): { 
         }
 
         return {
-          swap: [value.sender]
+          market: [value.sender]
         }
       }
     }
