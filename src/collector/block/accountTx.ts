@@ -43,25 +43,39 @@ export function extractAddressFromContractMsg(value: { [key: string]: any }): { 
     const executeMsg = JSON.parse(Buffer.from(value.execute_msg, 'base64').toString())
 
     if (findAssetByToken(value.contract)) {
-      if (executeMsg.send && executeMsg.send.to) {
+      // Sell to TerraSwap
+      if (executeMsg.send) {
         // `to` can be assigned when selling tokens
+        if (executeMsg.send.to) {
+          return {
+            send: [value.sender],
+            receive: [executeMsg.send.to]
+          }
+        }
+
         return {
-          send: [value.sender],
-          receive: [executeMsg.send.to]
+          swap: [value.sender]
         }
       } else if (executeMsg.transfer && executeMsg.transfer.recipient) {
-        // send token to another address
+        // Send token to another address
         return {
           send: [value.sender],
           receive: [executeMsg.transfer.recipient]
         }
       }
     } else if (findAssetByPair(value.contract)) {
-      // `to` can be assigned when buying (swap ust to cw20) tokens
-      if (executeMsg.swap && executeMsg.swap.to) {
+      // Buy from TerraSwap
+      if (executeMsg.swap) {
+        // `to` can be assigned when buying (swap ust to cw20) tokens
+        if (executeMsg.swap.to) {
+          return {
+            send: [value.sender],
+            receive: [executeMsg.swap.to]
+          }
+        }
+
         return {
-          send: [value.sender],
-          receive: [executeMsg.swap.to]
+          swap: [value.sender]
         }
       }
     }
