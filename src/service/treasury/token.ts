@@ -12,6 +12,14 @@ interface Asset {
   status: string
 }
 
+const ASSETS_BY_TOKEN: {
+  [token: string]: Asset
+} = {}
+
+const ASSETS_BY_PAIR: {
+  [pair: string]: Asset
+} = {}
+
 const ASSETS_BY_SYMBOL: {
   [symbol: string]: Asset
 } = {}
@@ -31,10 +39,21 @@ export async function init() {
   const whitelist = res.whitelist || {}
 
   Object.keys(whitelist).forEach((address) => {
+    ASSETS_BY_TOKEN[address] = whitelist[address]
+    ASSETS_BY_PAIR[whitelist[address].pair] = whitelist[address]
+
     const key = whitelist[address].symbol.toLowerCase()
     ASSETS_BY_SYMBOL[key] = whitelist[address]
     TOKEN_SYMBOLS.push(key)
   })
+}
+
+export function findAssetByPair(address: string): Asset | undefined {
+  return ASSETS_BY_PAIR[address]
+}
+
+export function findAssetByToken(address: string): Asset | undefined {
+  return ASSETS_BY_TOKEN[address]
 }
 
 export function getToken(symbol: string) {

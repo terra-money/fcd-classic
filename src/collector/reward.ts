@@ -69,12 +69,7 @@ async function getFees(
   // .where("tx.block_id is not null");
 
   const txs = await qb.getMany()
-
-  const rewardMerger = (obj, src) => {
-    return mergeWith(obj, src, (o, s) => {
-      return plus(o, s)
-    })
-  }
+  const rewardMerger = (obj, src) => mergeWith(obj, src, (o, s) => plus(o, s))
 
   return txs.reduce(
     (acc, tx) => {

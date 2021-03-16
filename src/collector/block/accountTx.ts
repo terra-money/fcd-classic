@@ -2,6 +2,7 @@ import { getRepository, MoreThan } from 'typeorm'
 import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
 import { get, uniq } from 'lodash'
+import { findAssetByPair, findAssetByToken } from 'service/treasury/token'
 
 async function getRecentlySyncedTx(): Promise<number> {
   const latestSynced = await getRepository(AccountTxEntity).find({
@@ -35,6 +36,40 @@ export async function getTargetTx(tx?: TxEntity): Promise<TxEntity | undefined> 
   })
 
   return targetTxs[0]
+}
+
+export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
+  try {
+    const executeMsg = JSON.parse(Buffer.from(value.execute_msg, 'base64').toString())
+
+    if (findAssetByToken(value.contract)) {
+      if (executeMsg.send && executeMsg.send.to) {
+        // `to` can be assigned when selling tokens
+        return {
+          send: [value.sender],
+          receive: [executeMsg.send.to]
+        }
+      } else if (executeMsg.transfer && executeMsg.transfer.recipient) {
+        // send token to another address
+        return {
+          send: [value.sender],
+          receive: [executeMsg.transfer.recipient]
+        }
+      }
+    } else if (findAssetByPair(value.contract)) {
+      // `to` can be assigned when buying (swap ust to cw20) tokens
+      if (executeMsg.swap && executeMsg.swap.to) {
+        return {
+          send: [value.sender],
+          receive: [executeMsg.swap.to]
+        }
+      }
+    }
+
+    return {}
+  } catch (e) {
+    return {}
+  }
 }
 
 export default function getAddressFromMsg(
@@ -153,11 +188,10 @@ export default function getAddressFromMsg(
       break
     }
 
-    case 'wasm/MsgExecuteContract':
-      result = {
-        contract: [value.sender, value.contract]
-      }
+    case 'wasm/MsgExecuteContract': {
+      result = mergeWith({ contract: [value.sender, value.contract] }, extractAddressFromContractMsg(value), union)
       break
+    }
 
     case 'wasm/MsgMigrateContract':
       result = {
@@ -220,10 +254,9 @@ export default function getAddressFromMsg(
 export function generateAccountTxs(tx: TxEntity): AccountTxEntity[] {
   const msgs = tx.data.tx.value.msg
   const logs = tx.data.logs
-  const concatArray = (objValue, srcValue) => union(objValue, srcValue)
   const addrObj = msgs
     .map((msg, index) => getAddressFromMsg(msg, logs ? logs[index] : undefined))
-    .reduce((acc, item) => mergeWith(acc, item, concatArray), {})
+    .reduce((acc, item) => mergeWith(acc, item, union), {})
 
   return Object.keys(addrObj)
     .map((type) => {

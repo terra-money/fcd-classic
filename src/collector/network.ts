@@ -103,11 +103,7 @@ export async function getTxVol(timestamp?: number) {
 
   const [volumeFromSend, volumeFromMultiSend] = await Promise.all([volumeFromSendReq, volumeFromMultiSendReq])
 
-  const volumeMerger = (obj, src) => {
-    return plus(obj, src)
-  }
-
-  return mergeWith(volumeFromSend, volumeFromMultiSend, volumeMerger)
+  return mergeWith(volumeFromSend, volumeFromMultiSend, plus)
 }
 
 export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[]> {
