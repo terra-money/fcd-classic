@@ -70,9 +70,6 @@ export async function init() {
     ASSETS_BY_SYMBOL[key] = whitelist[address]
     TOKEN_SYMBOLS.push(key)
   })
-
-  console.log(ASSETS_BY_TOKEN)
-  console.log(ASSETS_BY_PAIR)
 }
 
 export function findAssetByPair(address: string): Asset | undefined {
