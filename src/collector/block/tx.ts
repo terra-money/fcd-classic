@@ -82,6 +82,8 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
 }
 
 function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate) {
+  if (!lcdTx.tx) return
+
   // get tax rate and tax caps
   const { taxRate, taxCaps } = taxInfo
 

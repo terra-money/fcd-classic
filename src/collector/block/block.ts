@@ -149,7 +149,7 @@ export async function saveBlockInformation(
         const newBlockTimeStamp = new Date(newBlockEntity.timestamp).getTime()
 
         await collectReward(mgr, newBlockTimeStamp)
-        await collectSwap(mgr, newBlockTimeStamp)
+        // await collectSwap(mgr, newBlockTimeStamp)
         await collectNetwork(mgr, newBlockTimeStamp)
       }
 
