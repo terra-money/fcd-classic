@@ -1,3 +1,4 @@
+import * as Bluebird from 'bluebird'
 import { get, mergeWith } from 'lodash'
 import { TxEntity, NetworkEntity } from 'orm'
 import { getRepository, EntityManager } from 'typeorm'
@@ -117,15 +118,23 @@ export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[
 
   const marketCapObj = getMarketCap(activeIssuances, activePrices)
 
-  return Object.keys(activeIssuances).map((denom) => {
-    const network = new NetworkEntity()
-    network.denom = denom
-    network.datetime = new Date(getStartOfPreviousMinuteTs(now))
-    network.supply = activeIssuances[denom]
-    network.marketCap = marketCapObj[denom]
-    network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
-    return network
+  return Bluebird.map(Object.keys(activeIssuances), async (denom) => {
+    const datetime = new Date(getStartOfPreviousMinuteTs(now))
+    const ent = await getRepository(NetworkEntity).findOne({ denom, datetime })
+    if (ent) return
+    return denom
   })
+    .filter(Boolean)
+    .map((denom: string) => {
+      const datetime = new Date(getStartOfPreviousMinuteTs(now))
+      const network = new NetworkEntity()
+      network.denom = denom
+      network.datetime = datetime
+      network.supply = activeIssuances[denom]
+      network.marketCap = marketCapObj[denom]
+      network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
+      return network
+    })
 }
 
 export async function setNetworkFromTx(now: number) {

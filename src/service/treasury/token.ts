@@ -141,7 +141,7 @@ export async function getTotalSupply(symbol: string): Promise<string> {
 
   const res = await getContractStore(asset.token, { token_info: {} })
 
-  if (!res || res.symbol !== asset.symbol || typeof res.total_supply !== 'string') {
+  if (!res || typeof res.total_supply !== 'string') {
     return ''
   }
 

@@ -1,3 +1,4 @@
+import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
 import { get, mergeWith } from 'lodash'
 
@@ -129,22 +130,29 @@ export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> 
     getAllActivePrices(getStartOfPreviousMinuteTs(timestamp))
   ])
 
-  return Object.keys(issuances).map((denom) => {
-    const reward = new RewardEntity()
-    reward.denom = denom
-    reward.datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-    reward.tax = get(rewards, `tax.${denom}`, '0.0')
-    reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
-    reward.gas = get(rewards, `gas.${denom}`, '0.0')
-    reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
-    reward.sum = rewardSum[denom]
-    reward.commission = commission[denom]
-
-    const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
-    reward.oracle = Number(oracle) < 0 ? '0' : oracle
-    reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
-    return reward
+  return Bluebird.map(Object.keys(issuances), async (denom) => {
+    const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
+    const ent = await getRepository(RewardEntity).findOne({ denom, datetime })
+    if (ent) return
+    return denom
   })
+    .filter(Boolean)
+    .map((denom: string) => {
+      const reward = new RewardEntity()
+      reward.denom = denom
+      reward.datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
+      reward.tax = get(rewards, `tax.${denom}`, '0.0')
+      reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
+      reward.gas = get(rewards, `gas.${denom}`, '0.0')
+      reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
+      reward.sum = rewardSum[denom]
+      reward.commission = commission[denom]
+
+      const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
+      reward.oracle = Number(oracle) < 0 ? '0' : oracle
+      reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
+      return reward
+    })
 }
 
 export async function collectReward(transactionEntityManager: EntityManager, timestamp: number) {
