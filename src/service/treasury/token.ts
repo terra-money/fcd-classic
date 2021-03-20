@@ -2,6 +2,7 @@ import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 import config from 'config'
+import * as anchor from 'service/treasury/anchor'
 
 interface Asset {
   symbol: string
@@ -121,6 +122,10 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
 export async function getCirculatingSupply(symbol: string): Promise<string> {
   if (symbol.toLowerCase() === 'mir') {
     return (await getMirSupply()).circulatingSupply
+  }
+
+  if (symbol.toLowerCase() === 'anc') {
+    return anchor.getCirculatingSupply()
   }
 
   return getTotalSupply(symbol)
