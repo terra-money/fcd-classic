@@ -1,4 +1,4 @@
-import { getRepository, Raw, FindConditions } from 'typeorm'
+import { getRepository, Raw, FindConditions, LessThan } from 'typeorm'
 
 import { WasmContractEntity } from 'orm'
 import config from 'config'
@@ -9,12 +9,17 @@ import { parseWasmTxMemo, ParsedMemo } from './helpers'
 import { getWasmCodeDetails, WasmCodeDetails } from './wasmCode'
 
 function buildContractFindConditions(
+  offset?: number,
   owner?: string,
   search?: string,
   codeId?: string
 ): FindConditions<WasmContractEntity>[] {
   const commonCondition: FindConditions<WasmContractEntity> = {
     chainId: config.CHAIN_ID
+  }
+
+  if (offset) {
+    commonCondition['id'] = LessThan(offset)
   }
 
   if (owner) {
@@ -26,6 +31,7 @@ function buildContractFindConditions(
   }
 
   let whereCondition: FindConditions<WasmContractEntity>[] = [commonCondition]
+
   if (search) {
     whereCondition = [
       {
@@ -38,10 +44,12 @@ function buildContractFindConditions(
       }
     ]
   }
+
   return whereCondition
 }
 
 type WasmContractDetails = {
+  id: number
   owner: string
   code_id: string
   init_msg: string
@@ -54,8 +62,9 @@ type WasmContractDetails = {
   code: WasmCodeDetails
 }
 
-function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetails {
+function transformToContractDetails(contract: WasmContractEntity): WasmContractDetails {
   return {
+    id: contract.id,
     owner: contract.owner,
     code_id: contract.codeId,
     init_msg: contract.initMsg,
@@ -70,6 +79,7 @@ function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetai
 }
 
 type WasmContractParams = {
+  offset: number
   page: number
   limit: number
   owner?: string
@@ -78,6 +88,7 @@ type WasmContractParams = {
 }
 
 export async function getWasmContracts({
+  offset,
   page,
   limit,
   owner,
@@ -90,18 +101,19 @@ export async function getWasmContracts({
   contracts: WasmContractDetails[]
 }> {
   const [result, totalCnt] = await getRepository(WasmContractEntity).findAndCount({
-    where: buildContractFindConditions(owner, search, codeId),
-    skip: limit * (page - 1),
+    where: buildContractFindConditions(offset, owner, search, codeId),
+    skip: offset ? undefined : limit * (page - 1),
     take: limit,
     order: {
       timestamp: 'DESC'
     }
   })
+
   return {
     totalCnt,
     page,
     limit,
-    contracts: result.map(getWasmContractDetails)
+    contracts: result.map(transformToContractDetails)
   }
 }
 
@@ -114,5 +126,6 @@ export async function getWasmContract(contractAddress: string): Promise<WasmCont
   if (!contract) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Contract not found')
   }
-  return getWasmContractDetails(contract)
+
+  return transformToContractDetails(contract)
 }

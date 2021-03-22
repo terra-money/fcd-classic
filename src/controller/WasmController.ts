@@ -93,7 +93,8 @@ export default class WasmController extends KoaController {
       search: Joi.string().description('full text search query'),
       codeId: Joi.string().regex(/^\d+$/).description('Code id'),
       page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).description('Items per page')
+      limit: Joi.number().default(10).min(1).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
