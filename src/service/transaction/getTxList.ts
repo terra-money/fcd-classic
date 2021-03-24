@@ -1,4 +1,3 @@
-import { chain } from 'lodash'
 import { getRepository, getConnection, FindConditions } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
@@ -13,6 +12,7 @@ export interface GetTxListParam {
   order?: string
   chainId?: string
 }
+
 interface GetTxsReturn {
   limit: number
   txs: ParsedTxInfo[] | ({ id: number } & Transaction.LcdTransaction)[]
@@ -36,11 +36,16 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   })
 
   const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
-  const offset = param.offset
 
   return {
     limit: param.limit,
-    txs: chain(txs).drop(offset).take(param.limit).value()
+    txs: txs.reduce((prev, curr) => {
+      if (prev.length < param.limit && (!param.offset || curr.id < param.offset)) {
+        prev.push(curr)
+      }
+
+      return prev
+    }, [] as ({ id: number } & Transaction.LcdTransaction)[])
   }
 }
 
