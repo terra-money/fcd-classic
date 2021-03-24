@@ -56,8 +56,6 @@ function testProposalVoteCountAndDistribution(proposal) {
 
 function testVote(body) {
   expect(body).toMatchObject({
-    totalCnt: expect.any(Number),
-    page: expect.any(Number),
     limit: expect.any(Number),
     votes: expect.arrayContaining([
       {
@@ -130,8 +128,6 @@ describe('Governance', () => {
     const { body } = await agent.get(`/v1/gov/proposals/${TEST_PROPOSAL_ID}/deposits`).expect(200)
 
     expect(body).toMatchObject({
-      totalCnt: expect.any(Number),
-      page: expect.any(Number),
       limit: expect.any(Number),
       deposits: expect.arrayContaining([
         {

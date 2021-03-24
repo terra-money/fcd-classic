@@ -117,8 +117,6 @@ describe('Staking', () => {
     const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_DELEGATED}/delegations`).expect(200)
 
     expect(body).toMatchObject({
-      totalCnt: expect.any(Number),
-      page: expect.any(Number),
       limit: expect.any(Number),
       events: expect.arrayContaining([
         {
@@ -135,8 +133,6 @@ describe('Staking', () => {
     const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_CLAIMED}/claims`).expect(200)
 
     expect(body).toMatchObject({
-      totalCnt: expect.any(Number),
-      page: expect.any(Number),
       limit: expect.any(Number),
       claims: expect.arrayContaining([
         {
@@ -153,8 +149,6 @@ describe('Staking', () => {
     const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_DELEGATED}/delegators?limit=50`).expect(200)
 
     expect(body).toMatchObject({
-      totalCnt: expect.any(Number),
-      page: expect.any(Number),
       limit: expect.any(Number),
       delegators: expect.arrayContaining([
         {

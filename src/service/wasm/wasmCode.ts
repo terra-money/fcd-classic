@@ -1,4 +1,4 @@
-import { getRepository, WhereExpression } from 'typeorm'
+import { getRepository, LessThan } from 'typeorm'
 
 import { WasmCodeEntity } from 'orm'
 import config from 'config'
@@ -7,19 +7,8 @@ import { APIError, ErrorTypes } from 'lib/error'
 
 import { parseWasmTxMemo, ParsedMemo } from './helpers'
 
-function addWasmCodeFilter(qb: WhereExpression, sender?: string, search?: string) {
-  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
-  if (sender) {
-    qb.andWhere(`sender = :sender`, { sender })
-  }
-
-  if (search) {
-    qb.andWhere(`tx_memo ILIKE :search_str`, { search_str: `%${search}%` })
-  }
-}
-
 type WasmCodeParams = {
-  page: number
+  offset: number
   limit: number
   sender?: string
   search?: string
@@ -44,30 +33,34 @@ export function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
 }
 
 export async function getWasmCodes({
-  page,
+  offset,
   limit,
   sender,
   search
 }: WasmCodeParams): Promise<{
-  totalCnt: number
-  page: number
   limit: number
   codes: WasmCodeDetails[]
 }> {
   const qb = getRepository(WasmCodeEntity).createQueryBuilder()
 
-  addWasmCodeFilter(qb, sender, search)
+  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
 
-  const totalCnt = await qb.getCount()
+  if (offset) {
+    qb.andWhere('offset = :offset', { offset: LessThan(offset) })
+  }
 
-  qb.skip(limit * (page - 1))
-    .take(limit)
-    .orderBy(`timestamp`, 'DESC')
+  if (sender) {
+    qb.andWhere(`sender = :sender`, { sender })
+  }
+
+  if (search) {
+    qb.andWhere(`tx_memo ILIKE :search_str`, { search_str: `%${search}%` })
+  }
+
+  qb.take(limit).orderBy(`timestamp`, 'DESC')
 
   const result = await qb.getMany()
   return {
-    totalCnt,
-    page,
     limit,
     codes: result.map(getWasmCodeDetails)
   }

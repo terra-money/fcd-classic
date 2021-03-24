@@ -49,8 +49,6 @@ interface GetValidatorReturn {
 
 interface GetRawDelegationTxsParam {
   operatorAddr: string
-  from?: string
-  to?: string
   page: number
   limit: number
 }
@@ -205,7 +203,6 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
 export async function getRawDelegationTxs(
   data: GetRawDelegationTxsParam
 ): Promise<{
-  totalCnt: number
   txs: (Transaction.LcdTransaction & { chainId: string })[]
 }> {
   const offset = (data.page - 1) * data.limit
@@ -213,14 +210,10 @@ export async function getRawDelegationTxs(
   const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
   addDelegateFilterToQuery(qb, data.operatorAddr)
 
-  data.from && qb.andWhere(`timestamp >= '${data.from}'`)
-  data.to && qb.andWhere(`timestamp < '${data.to}'`)
-
   qb.skip(offset).take(data.limit).orderBy('timestamp', 'DESC')
-  const [txs, totalCnt] = await qb.getManyAndCount()
+  const txs = await qb.getMany()
 
   return {
-    totalCnt,
     txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
   }
 }

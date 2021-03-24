@@ -20,7 +20,6 @@ interface GetDelegationEventsReturn {
 }
 
 interface DelegationTxsReturn {
-  totalCnt: number // total tx
   page: number // tx page no of pagination
   limit: number // tx count per page
   events: GetDelegationEventsReturn[]
@@ -107,7 +106,6 @@ export default async function getDelegationTxs(data: GetDelegationEventsParam): 
     .filter(Boolean)
 
   return {
-    totalCnt: rawTxs.totalCnt,
     page: data.page,
     limit: data.limit,
     events

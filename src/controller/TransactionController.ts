@@ -93,8 +93,6 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [page=1] # of page
    * @apiParam {number} [limit=10] Size of page
    *
-   * @apiSuccess {number} totalCnt total number of txs
-   * @apiSuccess {number} page page number of pagination
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info
@@ -165,9 +163,7 @@ export default class TransactionController extends KoaController {
         .regex(/^\d{1,16}$/),
       order: Joi.string().valid(['', 'ASC', 'DESC', 'asc', 'desc']).description('Tx order'),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
-      from: Joi.number().min(0).description('From timestamp unix time'),
-      to: Joi.number().min(0).description('To timestamp unix time'),
-      page: Joi.number().default(1).min(1).description('Page number'),
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
       limit: Joi.number().default(10).min(10).max(500).description('Items per page'),
       offset: Joi.number().description('id offset')
     },
@@ -241,8 +237,6 @@ export default class TransactionController extends KoaController {
    * @apiParam {number} [from] Timestamp from
    * @apiParam {number} [to] Timestamp to
    *
-   * @apiSuccess {number} totalCnt total number of txs
-   * @apiSuccess {number} page page number of pagination
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {string} txs.timestamp tx time

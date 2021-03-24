@@ -119,8 +119,6 @@ function addOptionalProperties(parsedTx: ParsedTxInfo): ParsedTxInfo {
 
 function testPagination(body): void {
   expect(body).toMatchObject({
-    totalCnt: expect.any(Number),
-    page: expect.any(Number),
     limit: expect.any(Number)
   })
 }

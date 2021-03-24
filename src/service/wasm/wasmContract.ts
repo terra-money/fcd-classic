@@ -95,12 +95,10 @@ export async function getWasmContracts({
   search,
   codeId
 }: WasmContractParams): Promise<{
-  totalCnt: number
-  page: number
   limit: number
   contracts: WasmContractDetails[]
 }> {
-  const [result, totalCnt] = await getRepository(WasmContractEntity).findAndCount({
+  const result = await getRepository(WasmContractEntity).find({
     where: buildContractFindConditions(offset, owner, search, codeId),
     skip: offset ? undefined : limit * (page - 1),
     take: limit,
@@ -110,8 +108,6 @@ export async function getWasmContracts({
   })
 
   return {
-    totalCnt,
-    page,
     limit,
     contracts: result.map(transformToContractDetails)
   }

@@ -20,8 +20,6 @@ export default class WasmController extends KoaController {
    * @apiParam {string} [limit=10] Limit
    * @apiParam {string} [search] full text search query in name and description
    *
-   * @apiSuccess {number} totalCnt total number of txs
-   * @apiSuccess {number} page page number of pagination
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} codes wasm code info list
    * @apiSuccess {string} codes.txhash
@@ -40,8 +38,9 @@ export default class WasmController extends KoaController {
     query: {
       sender: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('WASM code sender'),
       search: Joi.string().description('full text search query'),
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(10).min(1).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -59,8 +58,6 @@ export default class WasmController extends KoaController {
    * @apiParam {string} [search] full text search query in name and description
    * @apiParam {number} [codeId] code id
    *
-   * @apiSuccess {number} totalCnt total number of txs
-   * @apiSuccess {number} page page number of pagination
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} contracts contracts info
    * @apiSuccess {string} contracts.txhash
@@ -92,7 +89,7 @@ export default class WasmController extends KoaController {
       owner: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('contract owner'),
       search: Joi.string().description('full text search query'),
       codeId: Joi.string().regex(/^\d+$/).description('Code id'),
-      page: Joi.number().default(1).min(1).description('Page number'),
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
       limit: Joi.number().default(10).min(1).description('Items per page'),
       offset: Joi.number().description('id offset')
     },
@@ -111,8 +108,6 @@ export default class WasmController extends KoaController {
    * @apiParam {string} [page=1] Page
    * @apiParam {string} [limit=10] Limit
    *
-   * @apiSuccess {number} totalCnt total number of txs
-   * @apiSuccess {number} page page number of pagination
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx tx info

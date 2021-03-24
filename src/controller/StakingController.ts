@@ -139,7 +139,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} events Delegation event list
@@ -182,7 +181,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} claims Claim list
@@ -224,7 +222,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} delegator Delegator list
