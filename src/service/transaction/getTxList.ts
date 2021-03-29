@@ -14,8 +14,9 @@ export interface GetTxListParam {
 }
 
 interface GetTxsReturn {
+  next?: number
   limit: number
-  txs: ParsedTxInfo[] | ({ id: number } & Transaction.LcdTransaction)[]
+  txs: ({ id: number } & Transaction.LcdTransaction)[]
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
@@ -35,7 +36,12 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
     relations: ['txs']
   })
 
-  const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
+  const txs = blockWithTxs
+    ? blockWithTxs.txs.map((item) => ({
+        id: item.id,
+        ...item.data
+      }))
+    : []
 
   return {
     limit: param.limit,
@@ -49,7 +55,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   }
 }
 
-export async function getTxFromAccount(param: GetTxListParam, parse: boolean): Promise<GetTxsReturn> {
+export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsReturn> {
   if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
@@ -72,22 +78,31 @@ export async function getTxFromAccount(param: GetTxListParam, parse: boolean): P
     distinctTxQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
   }
 
-  const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit)}`
+  const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
 
   const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
   const txs = await getConnection().query(query, params)
 
+  let next
+
+  if (param.limit + 1 === txs.length) {
+    next = txs[param.limit - 1].id
+    txs.length -= 1
+  }
+
   return {
+    next,
     limit: param.limit,
-    txs: parse
-      ? await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
-      : txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
+    txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
   }
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const qb = getRepository(TxEntity).createQueryBuilder().take(param.limit).orderBy('timestamp', order)
+  const qb = getRepository(TxEntity)
+    .createQueryBuilder()
+    .take(param.limit + 1)
+    .orderBy('timestamp', order)
 
   if (param.offset) {
     qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
@@ -95,18 +110,29 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
 
   const txs = await qb.getMany()
 
+  let next
+
+  // we have next result
+  if (param.limit + 1 === txs.length) {
+    next = txs[param.limit - 1].id
+    txs.length -= 1
+  }
+
   return {
+    next,
     limit: param.limit,
     txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 
 interface GetTxListReturn {
+  next?: number
   limit: number
   txs: Transaction.LcdTransaction[]
 }
 
 interface GetMsgListReturn {
+  next?: number
   limit: number
   txs: ParsedTxInfo[]
 }
@@ -115,24 +141,22 @@ export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn>
   let txs
 
   if (param.account) {
-    txs = await getTxFromAccount(param, false)
+    txs = await getTxFromAccount(param)
   } else if (param.block) {
     txs = await getTxFromBlock(param)
   } else {
     txs = await getTxs(param)
   }
 
-  return {
-    limit: txs.limit,
-    txs: txs.txs
-  }
+  return txs
 }
 
 export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
-  const parsedTxs = await getTxFromAccount(param, true)
+  const { next, limit, txs } = await getTxFromAccount(param)
 
   return {
-    limit: parsedTxs.limit,
-    txs: parsedTxs.txs as ParsedTxInfo[]
+    next,
+    limit,
+    txs: await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
   }
 }

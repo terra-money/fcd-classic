@@ -164,8 +164,9 @@ export default class WasmController extends KoaController {
   @Validate({
     query: {
       sender: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('tx sender'),
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(10).min(1).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(10).min(1).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     params: {
       contractAddress: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('Contract address')

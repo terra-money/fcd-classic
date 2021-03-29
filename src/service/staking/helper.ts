@@ -49,8 +49,8 @@ interface GetValidatorReturn {
 
 interface GetRawDelegationTxsParam {
   operatorAddr: string
-  page: number
-  limit: number
+  limit?: number
+  offset?: number
 }
 
 export function getUptime(signingInfo: LcdValidatorSigningInfo): number {
@@ -201,20 +201,38 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
 }
 
 export async function getRawDelegationTxs(
-  data: GetRawDelegationTxsParam
+  param: GetRawDelegationTxsParam
 ): Promise<{
-  txs: (Transaction.LcdTransaction & { chainId: string })[]
+  txs: (Transaction.LcdTransaction & { id: number; chainId: string })[]
+  next?: number
 }> {
-  const offset = (data.page - 1) * data.limit
+  const qb = getRepository(TxEntity)
+    .createQueryBuilder('tx')
+    .select(['tx.id', 'tx.chainId', 'tx.data'])
+    .orderBy('timestamp', 'DESC')
 
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
-  addDelegateFilterToQuery(qb, data.operatorAddr)
+  if (param.limit) {
+    qb.take(param.limit + 1)
+  }
 
-  qb.skip(offset).take(data.limit).orderBy('timestamp', 'DESC')
+  if (param.offset) {
+    qb.where(`id < :offset`, { offset: param.offset })
+  }
+
+  addDelegateFilterToQuery(qb, param.operatorAddr)
+
   const txs = await qb.getMany()
+  let next
+
+  // we have next result
+  if (param.limit && param.limit + 1 === txs.length) {
+    next = txs[param.limit - 1].id
+    txs.length -= 1
+  }
 
   return {
-    txs: txs.map((tx) => ({ ...tx.data, chainId: tx.chainId } as Transaction.LcdTransaction & { chainId: string }))
+    next,
+    txs: txs.map((tx) => ({ ...tx.data, id: tx.id, chainId: tx.chainId }))
   }
 }
 
@@ -277,24 +295,14 @@ export async function getAvgVotingPowerUncached(
   }
 
   const { voting_power: votingPowerNow } = votingPowerInfo
+  const { events } = await getDelegationTxs({ operatorAddr })
 
-  const fromStr = getQueryDateTime(fromTs)
-  const toStr = getQueryDateTime(toTs)
-
-  const { events: delegationBetweenRange } = await getDelegationTxs({
-    operatorAddr,
-    from: fromStr,
-    to: toStr,
-    page: 1,
-    limit: 1000
+  const fromStr = new Date(fromTs).toISOString()
+  const delegationBetweenRange = events.filter((ev) => {
+    const time = new Date(ev.timestamp).getTime()
+    return time >= fromTs && time < toTs
   })
-
-  const { events: delegationEventsAfterToday } = await getDelegationTxs({
-    operatorAddr,
-    from: toStr,
-    page: 1,
-    limit: 1000
-  })
+  const delegationEventsAfterToday = events.filter((ev) => new Date(ev.timestamp).getTime() >= toTs)
 
   const getWeightedVotingPower = (votingPowerNow) => {
     const votingPowerAtEndTime = delegationEventsAfterToday.reduce((acc, event) => {
@@ -314,6 +322,7 @@ export async function getAvgVotingPowerUncached(
     }
 
     delegationBetweenRange.push({
+      id: 0,
       chainId: config.CHAIN_ID,
       txhash: '',
       height: '', // TODO: remove

@@ -113,5 +113,4 @@ interface ParsedTxInfo {
   memo: string
   success: boolean
   errorMessage?: string
-  chainId: string
 }

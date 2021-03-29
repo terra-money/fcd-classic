@@ -38,8 +38,9 @@ export async function getWasmCodes({
   sender,
   search
 }: WasmCodeParams): Promise<{
-  limit: number
   codes: WasmCodeDetails[]
+  limit: number
+  next?: number
 }> {
   const qb = getRepository(WasmCodeEntity).createQueryBuilder()
 
@@ -57,12 +58,21 @@ export async function getWasmCodes({
     qb.andWhere(`tx_memo ILIKE :search_str`, { search_str: `%${search}%` })
   }
 
-  qb.take(limit).orderBy(`timestamp`, 'DESC')
+  qb.take(limit + 1).orderBy(`timestamp`, 'DESC')
 
   const result = await qb.getMany()
+
+  let next
+
+  if (limit + 1 === result.length) {
+    next = result[limit - 1].id
+    result.length -= 1
+  }
+
   return {
+    codes: result.map(getWasmCodeDetails),
     limit,
-    codes: result.map(getWasmCodeDetails)
+    next
   }
 }
 

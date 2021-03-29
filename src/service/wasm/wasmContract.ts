@@ -80,7 +80,6 @@ function transformToContractDetails(contract: WasmContractEntity): WasmContractD
 
 type WasmContractParams = {
   offset: number
-  page: number
   limit: number
   owner?: string
   search?: string
@@ -89,27 +88,33 @@ type WasmContractParams = {
 
 export async function getWasmContracts({
   offset,
-  page,
   limit,
   owner,
   search,
   codeId
 }: WasmContractParams): Promise<{
-  limit: number
   contracts: WasmContractDetails[]
+  limit: number
+  next?: number
 }> {
   const result = await getRepository(WasmContractEntity).find({
     where: buildContractFindConditions(offset, owner, search, codeId),
-    skip: offset ? undefined : limit * (page - 1),
-    take: limit,
+    take: limit + 1,
     order: {
       timestamp: 'DESC'
     }
   })
+  let next
+
+  if (limit + 1 === result.length) {
+    next = result[limit - 1].id
+    result.length -= 1
+  }
 
   return {
+    contracts: result.map(transformToContractDetails),
     limit,
-    contracts: result.map(transformToContractDetails)
+    next
   }
 }
 

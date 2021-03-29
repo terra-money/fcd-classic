@@ -158,8 +158,9 @@ export default class StakingController extends KoaController {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(5).min(1).max(100).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(5).min(1).max(50).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -199,8 +200,9 @@ export default class StakingController extends KoaController {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(5).min(1).max(100).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(5).min(1).max(100).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
