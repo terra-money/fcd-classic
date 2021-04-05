@@ -72,7 +72,6 @@ module.exports = {
 | MIRROR_GRAPH_URI    | Mirror GraphQL endpoint         | https://tequila-graph.mirror.finance/graphql | API                                |
 | STATION_STATUS_JSON | URL for Station version control | https://terra.money/station/version-web.json | API                                |
 | USE_LOG_FILE        | Creates logs/* when enabled     | false                                        | All                                |
-| SC_AUTH_KEY         | Authentication key for SocketCluster | <required>                              | API                                |
 | HEIGHT_REPORT_INTERVAL | Interval for SC height notification | 5000                                  | API                                |
 | ACTIVE_DENOMS       | Active Denominations            | ["uluna","usdr","ukrw","uusd","umnt"]        | API                                |
 | ACTIVE_CURRENCY     | Active Currencies               | ["luna","sdt","krt","ust","mnt"]             | API                                |
