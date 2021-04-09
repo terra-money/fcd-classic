@@ -20,38 +20,36 @@ interface GetTxsReturn {
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
-  const where: FindConditions<BlockEntity> = {}
+  const qb = await getRepository(BlockEntity)
+    .createQueryBuilder('block')
+    .where('block.height = :height AND block.chainId = :chainId', {
+      height: param.block,
+      chainId: param.chainId || config.CHAIN_ID
+    })
 
-  if (param.block) {
-    where.height = +param.block
+  if (param.offset) {
+    qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
+  } else {
+    qb.leftJoinAndSelect('block.txs', 'txs')
   }
 
-  where.chainId = param.chainId || config.CHAIN_ID
+  qb.orderBy('txs.id', 'DESC').limit(param.limit + 1)
 
-  const blockWithTxs = await getRepository(BlockEntity).findOne({
-    where,
-    order: {
-      id: 'DESC'
-    },
-    relations: ['txs']
-  })
+  const blockWithTxs = await qb.getOne()
+  const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
 
-  const txs = blockWithTxs
-    ? blockWithTxs.txs.map((item) => ({
-        id: item.id,
-        ...item.data
-      }))
-    : []
+  let next
+
+  // we have next result
+  if (param.limit + 1 === txs.length) {
+    next = txs[param.limit - 1].id
+    txs.length -= 1
+  }
 
   return {
+    next,
     limit: param.limit,
-    txs: txs.reduce((prev, curr) => {
-      if (prev.length < param.limit && (!param.offset || curr.id < param.offset)) {
-        prev.push(curr)
-      }
-
-      return prev
-    }, [] as ({ id: number } & Transaction.LcdTransaction)[])
+    txs
   }
 }
 
