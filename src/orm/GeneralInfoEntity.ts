@@ -5,7 +5,6 @@ export default class GeneralInfoEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Index('index_gi_datetime')
   @Column({ unique: true })
   datetime: Date
 

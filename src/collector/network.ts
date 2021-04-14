@@ -1,3 +1,4 @@
+import * as Bluebird from 'bluebird'
 import { get, mergeWith } from 'lodash'
 import { TxEntity, NetworkEntity } from 'orm'
 import { getRepository, EntityManager } from 'typeorm'
@@ -103,11 +104,7 @@ export async function getTxVol(timestamp?: number) {
 
   const [volumeFromSend, volumeFromMultiSend] = await Promise.all([volumeFromSendReq, volumeFromMultiSendReq])
 
-  const volumeMerger = (obj, src) => {
-    return plus(obj, src)
-  }
-
-  return mergeWith(volumeFromSend, volumeFromMultiSend, volumeMerger)
+  return mergeWith(volumeFromSend, volumeFromMultiSend, plus)
 }
 
 export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[]> {
@@ -121,15 +118,23 @@ export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[
 
   const marketCapObj = getMarketCap(activeIssuances, activePrices)
 
-  return Object.keys(activeIssuances).map((denom) => {
-    const network = new NetworkEntity()
-    network.denom = denom
-    network.datetime = new Date(getStartOfPreviousMinuteTs(now))
-    network.supply = activeIssuances[denom]
-    network.marketCap = marketCapObj[denom]
-    network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
-    return network
+  return Bluebird.map(Object.keys(activeIssuances), async (denom) => {
+    const datetime = new Date(getStartOfPreviousMinuteTs(now))
+    const ent = await getRepository(NetworkEntity).findOne({ denom, datetime })
+    if (ent) return
+    return denom
   })
+    .filter(Boolean)
+    .map((denom: string) => {
+      const datetime = new Date(getStartOfPreviousMinuteTs(now))
+      const network = new NetworkEntity()
+      network.denom = denom
+      network.datetime = datetime
+      network.supply = activeIssuances[denom]
+      network.marketCap = marketCapObj[denom]
+      network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
+      return network
+    })
 }
 
 export async function setNetworkFromTx(now: number) {
@@ -137,7 +142,7 @@ export async function setNetworkFromTx(now: number) {
   await bulkSave(docs)
 }
 
-export async function setNetwork(transactionalEntityManager: EntityManager, timestamp: number) {
+export async function collectNetwork(transactionalEntityManager: EntityManager, timestamp: number) {
   const docs = await getNetworkDocs(timestamp)
   await transactionalEntityManager.save(docs)
   logger.info(`Save network - success.`)

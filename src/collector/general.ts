@@ -1,8 +1,5 @@
-import * as Bluebird from 'bluebird'
 import { getRepository, DeepPartial } from 'typeorm'
-
 import { GeneralInfoEntity } from 'orm'
-
 import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
@@ -61,7 +58,7 @@ export async function saveGeneral() {
   }
 }
 
-export async function collectorGeneral() {
+export async function collectGeneral() {
   await saveGeneral()
     .then(() => {
       logger.info(`Save general - success.`)

@@ -171,11 +171,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
 
   const txs = await qb.getMany()
 
-  const rewardMerger = (obj, src) => {
-    return mergeWith(obj, src, (o, s) => {
-      return plus(o, s)
-    })
-  }
+  const rewardMerger = (obj, src) => mergeWith(obj, src, (o, s) => plus(o, s))
 
   const swapValues: SwapValueDetails = txs.reduce((acc, tx) => mergeWith(acc, getSwapValues(tx), rewardMerger), {
     in: {},
@@ -210,7 +206,7 @@ async function setSwapFromTx(now: number): Promise<SwapEntity[]> {
   return docs
 }
 
-export async function setSwap(transactionalEntityManager: EntityManager, timestamp: number) {
+export async function collectSwap(transactionalEntityManager: EntityManager, timestamp: number) {
   const swaps = await setSwapFromTx(timestamp)
   await transactionalEntityManager.save(swaps)
   logger.info(`Save swap - success.`)

@@ -2,6 +2,7 @@ import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 import config from 'config'
+import * as anchor from 'service/treasury/anchor'
 
 interface Asset {
   symbol: string
@@ -12,6 +13,14 @@ interface Asset {
   status: string
 }
 
+const ASSETS_BY_TOKEN: {
+  [token: string]: Asset
+} = {}
+
+const ASSETS_BY_PAIR: {
+  [pair: string]: Asset
+} = {}
+
 const ASSETS_BY_SYMBOL: {
   [symbol: string]: Asset
 } = {}
@@ -19,22 +28,57 @@ const ASSETS_BY_SYMBOL: {
 export const TOKEN_SYMBOLS: string[] = []
 
 export async function init() {
-  const res = await rp(`https://whitelist.mirror.finance/${config.CHAIN_ID.split('-')[0]}.json`, {
+  const tokensRes = await rp(`https://assets.terra.money/cw20/tokens.json`, {
     json: true
   }).catch(() => ({}))
 
-  if (TOKEN_SYMBOLS.length && !res.whitelist) {
-    // Skip initializing with empty result if there's one exists
+  const pairsRes = await rp(`https://assets.terra.money/cw20/pairs.json`, {
+    json: true
+  }).catch(() => ({}))
+
+  let key
+
+  if (config.CHAIN_ID.startsWith('columbus')) {
+    key = 'mainnet'
+  } else if (config.CHAIN_ID.startsWith('tequila')) {
+    key = 'testnet'
+  } else {
+    console.log('no token info for this chain-id')
     return
   }
 
-  const whitelist = res.whitelist || {}
+  const tokens = tokensRes[key]
+  const pairs = pairsRes[key]
+  const whitelist: { [address: string]: Asset } = {}
+
+  Object.keys(tokens).forEach((address) => {
+    const asset = { ...tokens[address] }
+
+    Object.keys(pairs).forEach((pairAddr) => {
+      if (pairs[pairAddr][1] === address) {
+        asset.pair = pairAddr
+      }
+    })
+
+    whitelist[address] = asset
+  })
 
   Object.keys(whitelist).forEach((address) => {
+    ASSETS_BY_TOKEN[address] = whitelist[address]
+    ASSETS_BY_PAIR[whitelist[address].pair] = whitelist[address]
+
     const key = whitelist[address].symbol.toLowerCase()
     ASSETS_BY_SYMBOL[key] = whitelist[address]
     TOKEN_SYMBOLS.push(key)
   })
+}
+
+export function findAssetByPair(address: string): Asset | undefined {
+  return ASSETS_BY_PAIR[address]
+}
+
+export function findAssetByToken(address: string): Asset | undefined {
+  return ASSETS_BY_TOKEN[address]
 }
 
 export function getToken(symbol: string) {
@@ -80,6 +124,10 @@ export async function getCirculatingSupply(symbol: string): Promise<string> {
     return (await getMirSupply()).circulatingSupply
   }
 
+  if (symbol.toLowerCase() === 'anc') {
+    return anchor.getCirculatingSupply()
+  }
+
   return getTotalSupply(symbol)
 }
 
@@ -98,7 +146,7 @@ export async function getTotalSupply(symbol: string): Promise<string> {
 
   const res = await getContractStore(asset.token, { token_info: {} })
 
-  if (!res || res.symbol !== asset.symbol || typeof res.total_supply !== 'string') {
+  if (!res || typeof res.total_supply !== 'string') {
     return ''
   }
 

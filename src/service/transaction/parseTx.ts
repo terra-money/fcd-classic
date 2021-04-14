@@ -1,5 +1,4 @@
 import * as Bluebird from 'bluebird'
-import { TxEntity } from 'orm'
 import { isSuccessfulTx } from 'lib/tx'
 import parseMsg from './parseMsg'
 
@@ -29,27 +28,25 @@ function failedRawLogToLogs(
 }
 
 export default async function parseTx(
-  tx: Pick<TxEntity, 'id' | 'data' | 'chainId'>,
+  tx: { id: number } & Transaction.LcdTransaction,
   account?: string
 ): Promise<ParsedTxInfo> {
-  const lcdTx = tx.data
-  const success = isSuccessfulTx(lcdTx)
-  const errorMessage = !success ? lcdTx.raw_log || '' : undefined
+  const success = isSuccessfulTx(tx)
+  const errorMessage = !success ? tx.raw_log || '' : undefined
 
-  const logs: Transaction.Log[] = lcdTx.logs ? lcdTx.logs : failedRawLogToLogs(lcdTx.raw_log)
-  const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(tx.data.tx.value.msg, (msg, i) =>
+  const logs: Transaction.Log[] = tx.logs ? tx.logs : failedRawLogToLogs(tx.raw_log)
+  const parsedMsgs: ParsedTxMsgInfo[] = await Bluebird.map(tx.tx.value.msg, (msg, i) =>
     parseMsg(msg, logs[i], account, success)
   )
 
   return {
     id: tx.id,
-    timestamp: lcdTx.timestamp,
-    txhash: lcdTx.txhash,
+    timestamp: tx.timestamp,
+    txhash: tx.txhash,
     msgs: parsedMsgs,
-    txFee: lcdTx.tx.value.fee.amount,
-    memo: lcdTx.tx.value.memo,
+    txFee: tx.tx.value.fee.amount,
+    memo: tx.tx.value.memo,
     success,
-    errorMessage,
-    chainId: tx.chainId
+    errorMessage
   }
 }

@@ -5,10 +5,11 @@ import { default as parseDuration } from 'parse-duration'
 
 import { collectorLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
+import { init as initToken } from 'service/treasury/token'
 
 import { collectBlock } from './block'
 import { collectPrice } from './price'
-import { collectorGeneral } from './general'
+import { collectGeneral } from './general'
 import { collectValidatorReturn, collectValidator } from './staking'
 import { collectProposals } from './gov'
 import { collectDashboard } from './dashboard'
@@ -30,7 +31,7 @@ const tenMinute = parseDuration('10m')
 const twentyMinute = parseDuration('20m')
 
 const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
-const generalCollector = new Semaphore('GeneralCollector', collectorGeneral, logger)
+const generalCollector = new Semaphore('GeneralCollector', collectGeneral, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposals, logger)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', collectValidatorReturn, logger, twentyMinute)
@@ -85,6 +86,7 @@ async function createJobs() {
 const init = async () => {
   initializeSentry()
   await initORM()
+  await initToken()
   await collectBlock()
   // await collectValidator()
   await createJobs()

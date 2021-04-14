@@ -9,7 +9,7 @@ import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { times, minus, plus } from 'lib/math'
 
-import { getAccountTxDocs } from './accountTx'
+import { generateAccountTxs } from './accountTx'
 
 type TaxCapAndRate = {
   taxRate: string
@@ -81,7 +81,9 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
   return []
 }
 
-async function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate): Promise<void> {
+function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate) {
+  if (!lcdTx.tx) return
+
   // get tax rate and tax caps
   const { taxRate, taxCaps } = taxInfo
 
@@ -160,7 +162,7 @@ function syncMsgType(tx: object): object {
   return JSON.parse(replaced)
 }
 
-export async function getTxDoc(
+export async function getLcdTx(
   chainId: string,
   txhash: string,
   taxInfo: TaxCapAndRate
@@ -171,18 +173,18 @@ export async function getTxDoc(
     return
   }
 
-  let txDoc
+  let modifiedDoc
   try {
     // JSONB에서 \u0000을 넣으려 할때 에러가 나서 처리해줌
     const txStr = JSON.stringify(tx)
-    txDoc = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
+    modifiedDoc = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
 
     if (chainId === 'columbus-1') {
-      txDoc = syncMsgType(txDoc)
+      modifiedDoc = syncMsgType(modifiedDoc)
     }
 
-    if (txDoc.logs && txDoc.logs.constructor === Array) {
-      txDoc.logs = txDoc.logs.map((item) => {
+    if (modifiedDoc.logs && modifiedDoc.logs.constructor === Array) {
+      modifiedDoc.logs = modifiedDoc.logs.map((item) => {
         if (item.log && item.log.constructor === String) {
           item.log = JSON.parse(item.log)
         }
@@ -190,27 +192,27 @@ export async function getTxDoc(
       })
     }
 
-    await assignGasAndTax(txDoc, taxInfo)
+    assignGasAndTax(modifiedDoc, taxInfo)
   } catch (err) {
     logger.error(err)
     throw err
   }
 
-  return txDoc
+  return modifiedDoc
 }
 
 export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
   // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
-  const txDocs = await Bluebird.map(txHashes, (txHash) => getTxDoc(config.CHAIN_ID, txHash, taxInfo))
+  const lcdTxs = await Bluebird.map(txHashes, (txHash) => getLcdTx(config.CHAIN_ID, txHash, taxInfo))
 
   // If we use node cluster, this can be occured.
-  if (txDocs.length !== txDocs.filter(Boolean).length) {
+  if (lcdTxs.length !== lcdTxs.filter(Boolean).length) {
     throw new Error('transaction not found on node')
   }
 
-  return txDocs.map((txDoc) => {
+  return lcdTxs.map((txDoc) => {
     const txEntity = new TxEntity()
     txEntity.chainId = config.CHAIN_ID
 
@@ -233,12 +235,12 @@ async function getUpdatedTxCountAccountEntity(
   let account = await getRepository(AccountEntity).findOne({ address })
 
   if (!account) {
-    logger.info(`CreateAccount - ${address}`)
     account = new AccountEntity()
     account.address = address
     account.createdAt = txDate
     account.txcount = 0
   }
+
   // TODO: Change to updated at
   if (account.createdAt > txDate) {
     account.createdAt = txDate
@@ -249,65 +251,65 @@ async function getUpdatedTxCountAccountEntity(
 }
 
 function getUniqueAccountsByTx(accountTxDocs: AccountTxEntity[]): string[] {
-  return uniq(accountTxDocs.map((accountTxDoc) => accountTxDoc.account))
+  return uniq(accountTxDocs.map((d) => d.account))
 }
 
-interface NewTxCountTimeByAccount {
-  newTxCount: number
-  timestamp: Date
+interface NewTxInfo {
+  [accountAddress: string]: {
+    newTxCount: number
+    timestamp: Date
+  }
 }
 
-type TxCountAndTimeObject = { [accountAddress: string]: NewTxCountTimeByAccount }
-
-function getNewTxInfoByAccount(accountTxDocsArray: AccountTxEntity[][]): TxCountAndTimeObject {
+function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
   const uniqueAccountsPerTxs: string[][] = accountTxDocsArray.map((accountTxs) => getUniqueAccountsByTx(accountTxs))
-  const accountNewTxCountObj: TxCountAndTimeObject = {}
+  const newTxInfo: NewTxInfo = {}
 
   uniqueAccountsPerTxs.map((accountsPerTx, txIndex) => {
     accountsPerTx.map((account) => {
-      if (accountNewTxCountObj[account]) {
-        accountNewTxCountObj[account].newTxCount += 1
-        accountNewTxCountObj[account].timestamp =
-          accountNewTxCountObj[account].timestamp < accountTxDocsArray[txIndex][0].timestamp
+      if (newTxInfo[account]) {
+        newTxInfo[account].newTxCount += 1
+        newTxInfo[account].timestamp =
+          newTxInfo[account].timestamp < accountTxDocsArray[txIndex][0].timestamp
             ? accountTxDocsArray[txIndex][0].timestamp
-            : accountNewTxCountObj[account].timestamp
+            : newTxInfo[account].timestamp
       } else {
-        accountNewTxCountObj[account] = {
+        newTxInfo[account] = {
           newTxCount: 1,
           timestamp: accountTxDocsArray[txIndex][0].timestamp
         }
       }
     })
   })
-  return accountNewTxCountObj
+
+  return newTxInfo
 }
 
 export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
-  // save txs
+  // Save TxEntity
   await mgr.save(txEntities)
 
-  logger.info(`SaveTx - Height: ${block.height}, ${txEntities.length} txs saved.`)
+  // generate AccountTxEntities
+  const accountTxs: AccountTxEntity[][] = compact(txEntities).map((txEntity) => generateAccountTxs(txEntity))
 
-  // get tx and account
-  const accountTxDocsArray: AccountTxEntity[][] = compact(txEntities).map((txEntity) => getAccountTxDocs(txEntity))
+  // Extract new tx acount and latest timestamp by address and,
+  const newTxInfo = extractNewTxInfo(accountTxs)
 
-  // get new tx by account
-  const accountNewTxCountObj = getNewTxInfoByAccount(accountTxDocsArray)
-
-  // get updated account info
+  // Find or create AccountEntity and assign it and,
   const updatedAccountEntity: AccountEntity[] = await Promise.all(
-    Object.keys(accountNewTxCountObj).map((account) =>
-      getUpdatedTxCountAccountEntity(
-        account,
-        accountNewTxCountObj[account].newTxCount,
-        accountNewTxCountObj[account].timestamp
-      )
+    Object.keys(newTxInfo).map((account) =>
+      getUpdatedTxCountAccountEntity(account, newTxInfo[account].newTxCount, newTxInfo[account].timestamp)
     )
   )
-  // save updated accounts
-  await mgr.save(updatedAccountEntity)
-  logger.info(`SaveAccountTx - Height: ${block.height}, ${updatedAccountEntity.length} account updated.`)
 
-  const accountTxEntities = await mgr.save(accountTxDocsArray.flat())
-  logger.info(`SaveAccountTx - Height: ${block.height}, ${accountTxEntities.length} accountTxs saved.`)
+  // Save AccountEntity to the database
+  await mgr.save(updatedAccountEntity)
+
+  // Save AccountTxEntity to the database
+  const accountTxEntities = await mgr.save(accountTxs.flat())
+
+  logger.info(
+    `SaveTxs - height: ${block.height}, txs: ${txEntities.length}, ` +
+      `account: ${updatedAccountEntity.length}, accountTxs: ${accountTxEntities.length}`
+  )
 }

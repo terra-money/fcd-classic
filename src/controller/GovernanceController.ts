@@ -142,8 +142,6 @@ export default class GovernanceController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
-   * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} deposits Deposit list
    * @apiSuccess {string} deposits.txhash Txhash of the deposit transaction
@@ -188,8 +186,6 @@ export default class GovernanceController extends KoaController {
    * @apiParam {number} [limit=5] Page size
    * @apiParam {string} [option] 'Yes', 'No', 'NoWithVeto', 'Abstain'
    *
-   * @apiSuccess {number} totalCnt
-   * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} votes Vote list
    * @apiSuccess {string} votes.txhash Txhash of the vote transaction

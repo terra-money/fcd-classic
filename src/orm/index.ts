@@ -124,11 +124,37 @@ function initConnection(options: ConnectionOptions): Promise<Connection> {
 
 export async function init(): Promise<Connection[]> {
   const reader = new ConnectionOptionsReader()
-  const options = await reader.all()
+  const options = (await reader.all()) as PostgresConnectionOptions[]
 
   if (options.length && !options.filter((o) => o.name === 'default').length) {
     options[0]['name' as any] = 'default'
   }
 
-  return Bluebird.map(options, initConnection)
+  const { TYPEORM_HOST, TYPEORM_HOST_RO, TYPEORM_USERNAME, TYPEORM_PASSWORD, TYPEORM_DATABASE } = process.env
+
+  if (TYPEORM_HOST_RO) {
+    const replicaOptions = options.map((option) => ({
+      ...option,
+      replication: {
+        master: {
+          host: TYPEORM_HOST,
+          username: TYPEORM_USERNAME,
+          password: TYPEORM_PASSWORD,
+          database: TYPEORM_DATABASE
+        },
+        slaves: [
+          {
+            host: TYPEORM_HOST_RO,
+            username: TYPEORM_USERNAME,
+            password: TYPEORM_PASSWORD,
+            database: TYPEORM_DATABASE
+          }
+        ]
+      }
+    }))
+
+    return Bluebird.map(replicaOptions, initConnection)
+  } else {
+    return Bluebird.map(options, initConnection)
+  }
 }

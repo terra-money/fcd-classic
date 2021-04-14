@@ -1,4 +1,4 @@
-import { getRepository, Raw, FindConditions } from 'typeorm'
+import { getRepository, Raw, FindConditions, LessThan } from 'typeorm'
 
 import { WasmContractEntity } from 'orm'
 import config from 'config'
@@ -9,12 +9,17 @@ import { parseWasmTxMemo, ParsedMemo } from './helpers'
 import { getWasmCodeDetails, WasmCodeDetails } from './wasmCode'
 
 function buildContractFindConditions(
+  offset?: number,
   owner?: string,
   search?: string,
   codeId?: string
 ): FindConditions<WasmContractEntity>[] {
   const commonCondition: FindConditions<WasmContractEntity> = {
     chainId: config.CHAIN_ID
+  }
+
+  if (offset) {
+    commonCondition['id'] = LessThan(offset)
   }
 
   if (owner) {
@@ -26,6 +31,7 @@ function buildContractFindConditions(
   }
 
   let whereCondition: FindConditions<WasmContractEntity>[] = [commonCondition]
+
   if (search) {
     whereCondition = [
       {
@@ -38,10 +44,12 @@ function buildContractFindConditions(
       }
     ]
   }
+
   return whereCondition
 }
 
 type WasmContractDetails = {
+  id: number
   owner: string
   code_id: string
   init_msg: string
@@ -54,8 +62,9 @@ type WasmContractDetails = {
   code: WasmCodeDetails
 }
 
-function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetails {
+function transformToContractDetails(contract: WasmContractEntity): WasmContractDetails {
   return {
+    id: contract.id,
     owner: contract.owner,
     code_id: contract.codeId,
     init_msg: contract.initMsg,
@@ -70,7 +79,7 @@ function getWasmContractDetails(contract: WasmContractEntity): WasmContractDetai
 }
 
 type WasmContractParams = {
-  page: number
+  offset: number
   limit: number
   owner?: string
   search?: string
@@ -78,30 +87,34 @@ type WasmContractParams = {
 }
 
 export async function getWasmContracts({
-  page,
+  offset,
   limit,
   owner,
   search,
   codeId
 }: WasmContractParams): Promise<{
-  totalCnt: number
-  page: number
-  limit: number
   contracts: WasmContractDetails[]
+  limit: number
+  next?: number
 }> {
-  const [result, totalCnt] = await getRepository(WasmContractEntity).findAndCount({
-    where: buildContractFindConditions(owner, search, codeId),
-    skip: limit * (page - 1),
-    take: limit,
+  const result = await getRepository(WasmContractEntity).find({
+    where: buildContractFindConditions(offset, owner, search, codeId),
+    take: limit + 1,
     order: {
       timestamp: 'DESC'
     }
   })
+  let next
+
+  if (limit + 1 === result.length) {
+    next = result[limit - 1].id
+    result.length -= 1
+  }
+
   return {
-    totalCnt,
-    page,
+    contracts: result.map(transformToContractDetails),
     limit,
-    contracts: result.map(getWasmContractDetails)
+    next
   }
 }
 
@@ -114,5 +127,6 @@ export async function getWasmContract(contractAddress: string): Promise<WasmCont
   if (!contract) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Contract not found')
   }
-  return getWasmContractDetails(contract)
+
+  return transformToContractDetails(contract)
 }

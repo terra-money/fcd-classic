@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "0.8.2",
+  "version": "0.9.4",
   "description": "Terra FCD Suite",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
@@ -98,7 +98,6 @@
     "pg": "^8.5.1",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
-    "socketcluster-server": "^14.5.0",
     "ts-node": "^9.1.1",
     "tsconfig-paths": "^3.9.0",
     "typeorm": "^0.2.29",

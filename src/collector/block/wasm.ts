@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm'
+import { DeepPartial, EntityManager } from 'typeorm'
 import { get, filter } from 'lodash'
 
 import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
@@ -137,32 +137,39 @@ function getMsgTypeAndStatus(
   return ret
 }
 
-async function migrateContract(transactionEntityManager: EntityManager, wasmMigrationTxs: TxEntity[]) {
+async function updateContract(transactionEntityManager: EntityManager, wasmMigrationTxs: TxEntity[]) {
   for (const tx of wasmMigrationTxs) {
-    const { value } = getTxMsgTypeAndValueMemo(tx)
-    const { owner, contract, migrate_msg, new_code_id } = value
+    const { type, value } = getTxMsgTypeAndValueMemo(tx)
+    const wasmContract: DeepPartial<WasmContractEntity> = {}
+
+    if (type === 'wasm/MsgMigrateContract') {
+      // const { contract, owner, new_code_id, migrate_msg } = value
+      wasmContract.owner = value.owner
+      wasmContract.codeId = value.new_code_id
+      wasmContract.migrateMsg = Buffer.from(value.migrate_msg, 'base64').toString()
+    } else if (type === 'wasm/MsgUpdateContractOwner') {
+      // const { contract, new_owner, owner } = value
+      wasmContract.owner = value.new_owner
+    } else {
+      throw new Error('Unknown type')
+    }
 
     const existingContract = await transactionEntityManager.findOne(WasmContractEntity, {
-      owner,
-      contractAddress: contract
+      contractAddress: value.contract
     })
 
     if (!existingContract) {
       throw new Error('Failed to update contract')
     }
 
-    transactionEntityManager.update(WasmContractEntity, existingContract.id, {
-      migrateMsg: Buffer.from(migrate_msg, 'base64').toString(),
-      codeId: new_code_id
-    })
+    transactionEntityManager.update(WasmContractEntity, existingContract.id, wasmContract)
   }
-  return
 }
 
 export async function saveWasmCodeAndContract(transactionEntityManager: EntityManager, txEntities: TxEntity[]) {
   const wasmCodes: WasmCodeEntity[] = []
   const wasmContracts: WasmContractEntity[] = []
-  const wasmTxToMigrate: TxEntity[] = []
+  const wasmTxToUpdate: TxEntity[] = []
 
   txEntities.forEach((tx: TxEntity) => {
     const { msgType, failed } = getMsgTypeAndStatus(tx)
@@ -178,7 +185,10 @@ export async function saveWasmCodeAndContract(transactionEntityManager: EntityMa
         wasmContracts.push(generateWasmContractEntity(tx))
         break
       case 'wasm/MsgMigrateContract':
-        wasmTxToMigrate.push(tx)
+        wasmTxToUpdate.push(tx)
+        break
+      case 'wasm/MsgUpdateContractOwner':
+        wasmTxToUpdate.push(tx)
         break
       default:
         break
@@ -190,7 +200,7 @@ export async function saveWasmCodeAndContract(transactionEntityManager: EntityMa
   await transactionEntityManager.save(wasmContracts)
   logger.info(`Stored ${wasmCodes.length} codes and ${wasmContracts.length} contracts.`)
 
-  logger.info(`Migrating ${wasmTxToMigrate.length} contract`)
-  await migrateContract(transactionEntityManager, wasmTxToMigrate)
-  logger.info(`Migrated ${wasmTxToMigrate.length} contract`)
+  logger.info(`Migrating ${wasmTxToUpdate.length} contract`)
+  await updateContract(transactionEntityManager, wasmTxToUpdate)
+  logger.info(`Migrated ${wasmTxToUpdate.length} contract`)
 }

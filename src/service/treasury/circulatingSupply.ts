@@ -40,8 +40,6 @@ export async function getCirculatingSupply(input: string): Promise<string> {
         '0'
       )
       circulatingSupply = minus(circulatingSupply, total)
-    } else if (config.FOUNDATION_WALLET_ADDRESS) {
-      circulatingSupply = minus(circulatingSupply, await getLunaBalanceMemoized(config.FOUNDATION_WALLET_ADDRESS))
     }
   }
 

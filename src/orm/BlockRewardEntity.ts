@@ -30,7 +30,6 @@ export default class BlockRewardEntity {
   @Column({ type: 'jsonb' })
   commissionPerVal: object
 
-  @Index('block_reward_block')
   @OneToOne(() => BlockEntity, (block) => block.reward, { onDelete: 'CASCADE' })
   @JoinColumn()
   block: BlockEntity

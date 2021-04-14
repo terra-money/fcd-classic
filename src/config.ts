@@ -5,7 +5,6 @@ const {
   FCD_URI,
   RPC_URI,
   BYPASS_URI,
-  MANTLE_URI,
   MIRROR_GRAPH_URI,
   STATION_STATUS_JSON,
   SENTRY_DSN,
@@ -18,9 +17,10 @@ const {
   DISABLE_SOCKET,
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
-  FOUNDATION_WALLET_ADDRESS,
   PRUNING_KEEP_EVERY,
-  BANK_WALLETS
+  BANK_WALLETS,
+  ANCHOR_BANK_WALLETS,
+  ANCHOR_TOKEN_ADDRESS
 } = process.env
 
 const config = {
@@ -33,8 +33,18 @@ const config = {
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
-  FOUNDATION_WALLET_ADDRESS: FOUNDATION_WALLET_ADDRESS || '',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
+  ANCHOR_BANK_WALLETS: ANCHOR_BANK_WALLETS
+    ? (JSON.parse(ANCHOR_BANK_WALLETS) as string[])
+    : [
+        'terra1z7nxemcnm8kp7fs33cs7ge4wfuld307v80gypj',
+        'terra17g577z0pqt6tejhceh06y3lyeudfs3v90mzduy',
+        'terra1u5ywhlve3wugzqslqvm8ks2j0nsvrqjx0mgxpk',
+        'terra19nxz35c8f7t3ghdxrxherym20tux8eccar0c3k',
+        'terra1ee2l402v29yuem86uf29v9d6894fg3k6f5aj8f',
+        'terra199tvar8v3ayumfrdhtcf2sn7yrg2agf24j8k2x'
+      ],
+  ANCHOR_TOKEN_ADDRESS: ANCHOR_TOKEN_ADDRESS || 'terra1747mad58h0w4y589y3sk84r5efqdev9q4r02pc',
   SENTRY_DSN,
   SC_AUTH_KEY,
   USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'false'),
@@ -45,12 +55,10 @@ const config = {
   // Reporter module
   HEIGHT_REPORT_INTERVAL: HEIGHT_REPORT_INTERVAL ? +HEIGHT_REPORT_INTERVAL : 5000,
   // Chain parameters
-  ACTIVE_DENOMS: ACTIVE_DENOMS
-    ? (JSON.parse(ACTIVE_DENOMS) as string[])
-    : ['uluna', 'usdr', 'ukrw', 'uusd', 'umnt', 'ueur'],
+  ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'ueur'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
-    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'mnt', 'eur', 'eut'],
+    : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'eur', 'eut'],
   EXCLUDED_ROUTES: EXCLUDED_ROUTES
     ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp))
     : [
@@ -59,11 +67,10 @@ const config = {
   MIN_GAS_PRICES: MIN_GAS_PRICES
     ? (JSON.parse(MIN_GAS_PRICES) as CoinByDenoms)
     : ({
-        uluna: '0.015',
-        usdr: '0.015',
-        uusd: '0.015',
-        ukrw: '0.015',
-        umnt: '0.015'
+        uluna: '0.15',
+        uusd: '0.15',
+        usdr: '0.1018',
+        ukrw: '178.05'
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100
 }

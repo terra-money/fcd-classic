@@ -3,7 +3,7 @@ import { getRepository, WhereExpression } from 'typeorm'
 import { TxEntity } from 'orm'
 
 type GetContractTxsParams = {
-  page: number
+  offset: number
   limit: number
   contractAddress: string
   sender?: string
@@ -18,29 +18,37 @@ function addWasmContractTxFilter(qb: WhereExpression, contractAddress: string, s
 }
 
 export async function getContractTxs({
-  page,
+  offset,
   limit,
   sender,
   contractAddress
 }: GetContractTxsParams): Promise<{
-  total: number
-  page: number
+  next?: number
   limit: number
   contractTxs: Transaction.LcdTransaction[]
 }> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx')
+
+  if (offset) {
+    qb.where(`id < :offset`, { offset })
+  }
+
   addWasmContractTxFilter(qb, contractAddress, sender)
 
-  const total = await qb.getCount()
-
-  qb.skip(limit * (page - 1))
-    .take(limit)
-    .orderBy('timestamp', 'DESC')
+  qb.take(limit + 1).orderBy('timestamp', 'DESC')
 
   const result = await qb.getMany()
+
+  let next
+
+  // we have next result
+  if (limit + 1 === result.length) {
+    next = result[limit - 1].id
+    result.length -= 1
+  }
+
   return {
-    total,
-    page,
+    next,
     limit,
     contractTxs: result.map((tx) => tx.data as Transaction.LcdTransaction)
   }

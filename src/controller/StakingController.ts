@@ -4,8 +4,9 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
+import { plus } from 'lib/math'
 import { daysBeforeTs } from 'lib/time'
-
+import { getAirdropAnnualAvgReturn } from 'service/dashboard'
 import {
   getStaking,
   getValidators,
@@ -139,7 +140,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} events Delegation event list
@@ -158,8 +158,9 @@ export default class StakingController extends KoaController {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(5).min(1).max(100).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(5).min(1).max(50).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -182,7 +183,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} claims Claim list
@@ -200,8 +200,9 @@ export default class StakingController extends KoaController {
       operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
     },
     query: {
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(5).min(1).max(100).description('Items per page')
+      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
+      limit: Joi.number().default(5).min(1).max(100).description('Items per page'),
+      offset: Joi.number().description('id offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -224,7 +225,6 @@ export default class StakingController extends KoaController {
    * @apiParam {number} [page=1] Page number
    * @apiParam {number} [limit=5] Page size
    *
-   * @apiSuccess {number} totalCnt
    * @apiSuccess {number} page
    * @apiSuccess {number} limit
    * @apiSuccess {Object[]} delegator Delegator list
@@ -394,6 +394,8 @@ export default class StakingController extends KoaController {
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
     const { stakingReturn } = await getValidatorAnnualAvgReturn(ctx.params.operatorAddr)
-    success(ctx, stakingReturn)
+    const airdropReturn = await getAirdropAnnualAvgReturn()
+
+    success(ctx, plus(stakingReturn, airdropReturn))
   }
 }

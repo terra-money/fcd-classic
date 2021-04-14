@@ -7,8 +7,6 @@ import config from 'config'
 import createApp from 'createApp'
 import { apiLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
-import { initSocket } from 'socket'
-import reporter from 'reporter'
 import * as token from 'service/treasury/token'
 
 const packageJson = require('../package.json')
@@ -33,19 +31,11 @@ export async function createServer() {
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())
 
-  let socket
-
-  if (!config.DISABLE_SOCKET) {
-    logger.info(`Adding Socket`)
-    socket = initSocket(server)
-    await reporter()
-  }
-
   server.listen(config.PORT, () => {
     logger.info(`${packageJson.description} is listening on port ${config.PORT}`)
   })
 
-  return { server, socket }
+  return server
 }
 
 if (require.main === module) {

@@ -125,18 +125,17 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
 export interface GetClaimsParam {
   operatorAddr: string
   limit: number
-  page: number
+  offset?: number
 }
 
 interface ClaimTxReturn {
-  totalCnt: number
-  page: number
+  next?: number
   limit: number
   claims: DelegationClaim[]
 }
 
 interface ClaimTxList {
-  totalCnt: number // number of total Claim txs
+  next?: number
   txs: TxEntity[] // claims tx list
 }
 
@@ -163,28 +162,36 @@ function addClaimFilterToQuery(qb: WhereExpression, operatorAddress: string, acc
   )
 }
 
-async function getClaimTxs(data: GetClaimsParam): Promise<ClaimTxList> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select('tx.data').addSelect('tx.chainId')
+async function getClaimTxs({ operatorAddr, limit, offset }: GetClaimsParam): Promise<ClaimTxList> {
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select(['tx.id', 'tx.chainId', 'tx.data'])
 
-  const accountAddr = convertValAddressToAccAddress(data.operatorAddr)
-  addClaimFilterToQuery(qb, data.operatorAddr, accountAddr)
+  if (offset) {
+    qb.where(`id < :offset`, { offset })
+  }
 
-  const totalCnt = await qb.getCount()
+  const accountAddr = convertValAddressToAccAddress(operatorAddr)
+  addClaimFilterToQuery(qb, operatorAddr, accountAddr)
 
-  qb.skip(data.limit * (data.page - 1))
-    .take(data.limit)
-    .orderBy('timestamp', 'DESC')
+  qb.take(limit + 1).orderBy('timestamp', 'DESC')
+
   const txs = await qb.getMany()
-  return { totalCnt, txs }
+  let next
+
+  // we have next result
+  if (limit + 1 === txs.length) {
+    next = txs[limit - 1].id
+    txs.length -= 1
+  }
+
+  return { next, txs }
 }
 
-export default async function getClaims(data: GetClaimsParam): Promise<ClaimTxReturn> {
-  const { totalCnt, txs } = await getClaimTxs(data)
+export default async function getClaims(param: GetClaimsParam): Promise<ClaimTxReturn> {
+  const { next, txs } = await getClaimTxs(param)
 
   return {
-    totalCnt,
-    page: data.page,
-    limit: data.limit,
+    next,
+    limit: param.limit,
     claims: getMsgsFromTxs(txs)
   }
 }
