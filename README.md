@@ -20,7 +20,7 @@
 1. You __must__ use [columbus-4-tracking](https://github.com/terra-project/core/tree/columbus-4-tracking) for calculating taxes. This branch adds TaxCaps, TaxRate event in BeginBlocker
 1. `terrad start --tracking` parameter creates the Richlist in the /tmp at the beginning of each day. The more accounts you have, the longer it takes, so you don't have to use them if you don't need it.
 1. Setup a LCD
-1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration)
+1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration))
 
 ## Project setup
 
