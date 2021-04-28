@@ -79,7 +79,7 @@ export default class DashboardController extends KoaController {
   @Get('/tx_volume')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async getTxVolume(ctx): Promise<void> {
@@ -104,7 +104,7 @@ export default class DashboardController extends KoaController {
   @Get('/block_rewards')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async getBlockRewards(ctx): Promise<void> {
@@ -125,7 +125,7 @@ export default class DashboardController extends KoaController {
   @Get('/seigniorage_proceeds')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async getSeigniorageProc(ctx): Promise<void> {
@@ -148,7 +148,7 @@ export default class DashboardController extends KoaController {
   @Get('/staking_return')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async getStakingReturn(ctx): Promise<void> {
@@ -217,7 +217,7 @@ export default class DashboardController extends KoaController {
   @Get('/active_accounts')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async activeAccounts(ctx): Promise<void> {
@@ -242,7 +242,7 @@ export default class DashboardController extends KoaController {
   @Get('/registered_accounts')
   @Validate({
     query: {
-      count: Joi.number().default(0).min(0).description('Number days history')
+      count: Joi.number().default(0).min(0).max(30).description('Number days history')
     }
   })
   async registeredAccounts(ctx): Promise<void> {
