@@ -10,43 +10,6 @@ const Joi = Validator.Joi
 
 @Controller('/wasm')
 export default class WasmController extends KoaController {
-  // /**
-  //  * @api {get} /wasm/codes Get wasm codes info
-  //  * @apiName getWasmCodeList
-  //  * @apiGroup Wasm
-  //  *
-  //  * @apiParam {string} [sender] wasm code sender Account address
-  //  * @apiParam {string} [page=1] Page
-  //  * @apiParam {string} [limit=10] Limit
-  //  * @apiParam {string} [search] full text search query in name and description
-  //  *
-  //  * @apiSuccess {number} limit Per page item limit
-  //  * @apiSuccess {Object[]} codes wasm code info list
-  //  * @apiSuccess {string} codes.txhash
-  //  * @apiSuccess {string} codes.timestamp
-  //  * @apiSuccess {string} codes.sender
-  //  * @apiSuccess {string} codes.code_id sent code id
-  //  * @apiSuccess {Object} codes.info code info
-  //  * @apiSuccess {string} codes.info.name code name
-  //  * @apiSuccess {string} codes.info.description description
-  //  * @apiSuccess {string} codes.info.repo_url code repo url
-  //  * @apiSuccess {string} codes.info.memo tx memo
-  //  *
-  //  **/
-  // @Get('/codes')
-  // @Validate({
-  //   query: {
-  //     sender: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('WASM code sender'),
-  //     search: Joi.string().description('full text search query'),
-  //     page: Joi.number().default(1).min(1).description('Page number'), // deprecated
-  //     limit: Joi.number().default(10).min(1).description('Items per page'),
-  //     offset: Joi.number().description('id offset')
-  //   },
-  //   failure: ErrorCodes.INVALID_REQUEST_ERROR
-  // })
-  // async wasmCodes(ctx) {
-  //   success(ctx, await getWasmCodes(ctx.query))
-  // }
   /**
    * @api {get} /wasm/contracts Get wasm codes info
    * @apiName getWasmContractList
@@ -98,84 +61,6 @@ export default class WasmController extends KoaController {
   async wasmContracts(ctx) {
     success(ctx, await getWasmContracts(ctx.query))
   }
-  // /**
-  //  * @api {get} /wasm/contract/:contractAddress/txs Get wasm codes info
-  //  * @apiName getWasmContractTxs
-  //  * @apiGroup Wasm
-  //  *
-  //  * @apiParam {string} contractAddress contract address
-  //  * @apiParam {string} [sender] contract execution sender Account address
-  //  * @apiParam {string} [page=1] Page
-  //  * @apiParam {string} [limit=10] Limit
-  //  *
-  //  * @apiSuccess {number} limit Per page item limit
-  //  * @apiSuccess {Object[]} txs tx list
-  //  * @apiSuccess {Object} txs.tx tx info
-  //  * @apiSuccess {string} txs.tx.type Tx type
-  //  * @apiSuccess {Object} txs.tx.value
-  //  * @apiSuccess {Object} txs.tx.value.fee
-  //  * @apiSuccess {string} txs.tx.value.fee.gas
-  //  * @apiSuccess {Object[]} txs.tx.value.fee.amount
-  //  * @apiSuccess {string} txs.tx.value.fee.amount.denom
-  //  * @apiSuccess {string} txs.tx.value.fee.amount.amount
-  //  * @apiSuccess {string} txs.tx.value.memo
-  //  * @apiSuccess {Object[]} txs.tx.value.msg
-  //  * @apiSuccess {string} txs.tx.value.msg.type
-  //  * @apiSuccess {Object} txs.tx.value.msg.value
-  //  * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs
-  //  * @apiSuccess {string} txs.tx.value.msg.value.inputs.address
-  //  * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs.coins
-  //  * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.denom
-  //  * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.amount
-  //  *
-  //  * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs
-  //  * @apiSuccess {string} txs.tx.value.msg.value.outputs.address
-  //  * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs.coins
-  //  * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.denom
-  //  * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.amount
-  //  *
-  //  *
-  //  * @apiSuccess {Object[]} txs.tx.value.signatures
-  //  * @apiSuccess {string} txs.tx.value.signatures.signature
-  //  * @apiSuccess {Object} txs.tx.value.signatures.pub_key
-  //  * @apiSuccess {string} txs.tx.value.signatures.pub_key.type
-  //  * @apiSuccess {string} txs.tx.value.signatures.pub_key.value
-  //  *
-  //  *
-  //  * @apiSuccess {Object[]} txs.logs tx logs
-  //  * @apiSuccess {number} txs.logs.msg_index
-  //  * @apiSuccess {boolean} txs.logs.success
-  //  * @apiSuccess {Object} txs.logs.log
-  //  * @apiSuccess {string} txs.logs.log.tax
-  //  * @apiSuccess {Object[]} txs.logs.events
-  //  * @apiSuccess {string} txs.logs.events.type
-  //  * @apiSuccess {Object[]} txs.logs.events.attributes
-  //  * @apiSuccess {string} txs.logs.events.attributes.key
-  //  * @apiSuccess {string} txs.logs.events.attributes.value
-  //  *
-  //  * @apiSuccess {string} txs.height block height
-  //  * @apiSuccess {string} txs.txhash tx hash
-  //  * @apiSuccess {string} txs.raw_log tx raw log
-  //  * @apiSuccess {string} txs.gas_used total gas used in tx
-  //  * @apiSuccess {string} txs.timestamp timestamp tx in utc 0
-  //  * @apiSuccess {string} txs.gas_wanted gas wanted
-  //  **/
-  // @Get('/contract/:contractAddress/txs')
-  // @Validate({
-  //   query: {
-  //     sender: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('tx sender'),
-  //     page: Joi.number().default(1).min(1).description('Page number'), // deprecated
-  //     limit: Joi.number().default(10).min(1).description('Items per page'),
-  //     offset: Joi.number().description('id offset')
-  //   },
-  //   params: {
-  //     contractAddress: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('Contract address')
-  //   },
-  //   failure: ErrorCodes.INVALID_REQUEST_ERROR
-  // })
-  // async contractTxs(ctx) {
-  //   success(ctx, await getContractTxs({ ...ctx.query, ...ctx.params }))
-  // }
 
   /**
    * @api {get} /wasm/code/:code_id Get single wasm code details

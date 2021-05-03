@@ -59,8 +59,8 @@ function filterExcludeRoutes(urls: UrlItem[]) {
   apidoc.setPackageInfos(packageInfo)
 
   const parsedDoc: ApiDoc = apidoc.parse(options)
-
   const dest = path.join(__dirname, '..', '..', argv.o)
+
   if (!existsSync(dest)) {
     mkdirSync(dest)
   }
