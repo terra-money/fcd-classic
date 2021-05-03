@@ -2,8 +2,8 @@ import { plus } from 'lib/math'
 import { getDashboardHistory } from './dashboardHistory'
 import { DashboardEntity } from 'orm'
 
-export default async function getTransactionVol(count = 0): Promise<TxVolumeReturn> {
-  const dashboardHistory = await getDashboardHistory(count)
+export default async function getTransactionVol(): Promise<TxVolumeReturn> {
+  const dashboardHistory = await getDashboardHistory()
 
   const periodicDenomObj: DenomTxVolumeObject = {}
   const cumulativeDenomObj: DenomTxVolumeObject = {}

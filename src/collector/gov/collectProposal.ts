@@ -45,6 +45,7 @@ export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[
         .then((proposal) =>
           saveProposalDetails(mgr, proposal, proposalTallyingParams, proposalDepositParams, validatorsVotingPower)
         )
+        .catch(() => null)
     )
   }
 }

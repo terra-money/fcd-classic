@@ -28,28 +28,6 @@ export default class TreasuryController extends KoaController {
   }
 
   /**
-   * @api {get} /totalsupply/:denom Get total supply of coins
-   * @apiName getTotalSupply
-   * @apiGroup Treasury
-   *
-   * @apiParam {string} denom Coin denomination
-   *
-   * @apiSuccess {string} - total supply of denom
-   */
-  @Get('/totalsupply/:denom')
-  @Validate({
-    params: {
-      denom: Joi.string()
-        .required()
-        .valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY, TOKEN_SYMBOLS)
-        .description('Denom name')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async getTotalSupply(ctx) {
-    success(ctx, await getTotalSupply(ctx.params.denom))
-  }
-  /**
    * @api {get} /richlist/:denom Get richlist of coins
    * @apiName getRichlist
    * @apiGroup Treasury
@@ -76,6 +54,29 @@ export default class TreasuryController extends KoaController {
   })
   async getRichList(ctx) {
     success(ctx, await getRichList(ctx.params.denom, ctx.request.query.page, ctx.request.query.limit))
+  }
+
+  /**
+   * @api {get} /totalsupply/:denom Get total supply of coins
+   * @apiName getTotalSupply
+   * @apiGroup Treasury
+   *
+   * @apiParam {string} denom Coin denomination
+   *
+   * @apiSuccess {string} - total supply of denom
+   */
+  @Get('/totalsupply/:denom')
+  @Validate({
+    params: {
+      denom: Joi.string()
+        .required()
+        .valid(config.ACTIVE_DENOMS, config.ACTIVE_CURRENCY, TOKEN_SYMBOLS)
+        .description('Denom name')
+    },
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
+  })
+  async getTotalSupply(ctx) {
+    success(ctx, await getTotalSupply(ctx.params.denom))
   }
 
   /**

@@ -15,7 +15,7 @@ function buildContractFindConditions(
   codeId?: string
 ): FindConditions<WasmContractEntity>[] {
   const commonCondition: FindConditions<WasmContractEntity> = {
-    chainId: config.CHAIN_ID
+    // chainId: config.CHAIN_ID
   }
 
   if (offset) {
@@ -26,9 +26,9 @@ function buildContractFindConditions(
     commonCondition['owner'] = owner
   }
 
-  if (codeId) {
-    commonCondition['codeId'] = codeId
-  }
+  // if (codeId) {
+  //   commonCondition['codeId'] = codeId
+  // }
 
   let whereCondition: FindConditions<WasmContractEntity>[] = [commonCondition]
 
@@ -37,11 +37,11 @@ function buildContractFindConditions(
       {
         ...commonCondition,
         txMemo: Raw((alias) => `${alias} ILIKE '%${search}%'`)
-      },
-      {
-        ...commonCondition,
-        initMsg: Raw((alias) => `${alias} ILIKE '%${search}%'`)
       }
+      // {
+      //   ...commonCondition,
+      //   initMsg: Raw((alias) => `${alias} ILIKE '%${search}%'`)
+      // }
     ]
   }
 

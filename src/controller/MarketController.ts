@@ -19,7 +19,6 @@ export default class MarketController extends KoaController {
    *
    * @apiParam {string} denom Coin denomination
    * @apiParam {string} interval Price interval
-   * @apiParam {number} [count=50]
    *
    * @apiSuccess {number} lastPrice
    * @apiSuccess {string} oneDayVariation
@@ -33,8 +32,7 @@ export default class MarketController extends KoaController {
   @Validate({
     query: {
       interval: Joi.string().required().valid(Object.values(TimeIntervals)).description('Time interval'),
-      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denoms string'),
-      count: Joi.number().min(0).max(100000000).default(50).description('Price data points count')
+      denom: Joi.string().required().valid(config.ACTIVE_DENOMS).description('Denoms string')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

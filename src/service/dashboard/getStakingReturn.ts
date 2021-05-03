@@ -13,14 +13,8 @@ interface StakingDailyReturn {
   annualizedReturn: string
 }
 
-async function getStakingReturnUncached(count?: number): Promise<StakingDailyReturn[]> {
-  let requiredPrevDaysHistory
-
-  if (count) {
-    requiredPrevDaysHistory = count + MOVING_AVG_WINDOW_IN_DAYS
-  }
-
-  const dashboardHistory = await getDashboardHistory(requiredPrevDaysHistory)
+async function getStakingReturnUncached(): Promise<StakingDailyReturn[]> {
+  const dashboardHistory = await getDashboardHistory()
   let movingAvgSum = '0'
   const stakingReturn = dashboardHistory.reduce((retArray, item: DashboardEntity) => {
     const dailyReturn = Number(item.avgStaking) ? div(plus(item.reward, item.airdrop), item.avgStaking) : '0'
@@ -44,11 +38,7 @@ async function getStakingReturnUncached(count?: number): Promise<StakingDailyRet
     return retArray
   }, [] as StakingDailyReturn[])
 
-  return count
-    ? chain(stakingReturn)
-        .drop(stakingReturn.length - count)
-        .value()
-    : stakingReturn
+  return stakingReturn
 }
 
 // We will clear memoization at the beginning of each days
