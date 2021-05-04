@@ -1,4 +1,4 @@
-import { getRepository, getConnection, FindConditions } from 'typeorm'
+import { getRepository, getConnection } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
 import parseTx from './parseTx'

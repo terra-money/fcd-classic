@@ -3,8 +3,8 @@ import { compact } from 'lodash'
 import { DashboardEntity } from 'orm'
 import { getDashboardHistory } from './dashboardHistory'
 
-export default async function getAccountGrowth(count?: number): Promise<AccountGrowthReturn> {
-  const dashboardHistory = await getDashboardHistory(count)
+export default async function getAccountGrowth(): Promise<AccountGrowthReturn> {
+  const dashboardHistory = await getDashboardHistory()
 
   let cumulativeActiveAccount = 0
   const cumulative = dashboardHistory.map((item: DashboardEntity) => {

@@ -1,22 +1,18 @@
-import { getRepository, MoreThanOrEqual } from 'typeorm'
-import { subDays, startOfToday } from 'date-fns'
+import { getRepository } from 'typeorm'
 import { DashboardEntity } from 'orm'
+import memoizeCache from 'lib/memoizeCache'
 
-export async function getDashboardHistory(daysBefore?: number): Promise<DashboardEntity[]> {
-  const whereClause = {
-    // chainId: config.CHAIN_ID
-  }
-
-  if (daysBefore && !isNaN(subDays(startOfToday(), daysBefore).getTime())) {
-    // resolve invalid date issue
-    whereClause['timestamp'] = MoreThanOrEqual(subDays(startOfToday(), daysBefore))
-  }
-
+async function getDashboardHistoryUncached(): Promise<DashboardEntity[]> {
   const dashboards = await getRepository(DashboardEntity).find({
-    where: whereClause,
     order: {
       timestamp: 'ASC'
     }
   })
   return dashboards
 }
+
+export const getDashboardHistory = memoizeCache(getDashboardHistoryUncached, {
+  promise: true,
+  maxAge: 60 * 60 * 1000, // 1 hour cache
+  preFetch: 0.75 // fetch again after 45 mins
+})

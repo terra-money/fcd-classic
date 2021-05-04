@@ -2,8 +2,8 @@ import { plus } from 'lib/math'
 import { getDashboardHistory } from './dashboardHistory'
 import { DashboardEntity } from 'orm'
 
-export default async function getBlockRewards(daysBefore?: number): Promise<BlockRewardsReturn> {
-  const dashboardHistory = await getDashboardHistory(daysBefore)
+export default async function getBlockRewards(): Promise<BlockRewardsReturn> {
+  const dashboardHistory = await getDashboardHistory()
 
   const periodic: BlockRewardSumInfo[] = dashboardHistory.map((dashboard: DashboardEntity) => {
     return {
