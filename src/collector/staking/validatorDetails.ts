@@ -1,11 +1,11 @@
-import { filter, orderBy } from 'lodash'
+import { filter } from 'lodash'
 import { DeepPartial, getRepository } from 'typeorm'
 
 import config from 'config'
 import { ValidatorInfoEntity, ValidatorStatus } from 'orm'
 
 import * as lcd from 'lib/lcd'
-import { convertValAddressToAccAddress, sortDenoms } from 'lib/common'
+import { convertAddress, sortDenoms } from 'lib/common'
 import { div, plus, times } from 'lib/math'
 import { APIError, ErrorTypes } from 'lib/error'
 import { SLASHING_PERIOD } from 'lib/constant'
@@ -71,7 +71,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   }
 
   const { operator_address: operatorAddress, consensus_pubkey: consensusPubkey } = lcdValidator
-  const accountAddr = convertValAddressToAccAddress(operatorAddress)
+  const accountAddr = convertAddress('terra', operatorAddress)
   const { totalVotingPower, votingPowerByPubKey } = votingPower
 
   const delegators = await getDelegators(operatorAddress).catch(() => [])

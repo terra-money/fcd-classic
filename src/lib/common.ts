@@ -1,6 +1,5 @@
 import { default as parseDuration } from 'parse-duration'
 import { bech32 } from 'bech32'
-import * as bech32buffer from 'bech32-buffer'
 import { orderBy } from 'lodash'
 import config from 'config'
 
@@ -70,23 +69,19 @@ export function candleInitialTs(timestamp: number, timeframe: string): number {
   return timestamp - (timestamp % msc) - msc
 }
 
-export function convertValAddressToAccAddress(address: string): string {
+type Prefix = 'terra' | 'terrapub' | 'terravaloper' | 'terravaloperpub' | 'terravalcons' | 'terravalconspub'
+
+export function convertAddress(prefix: Prefix, address: string): string {
   const { words } = bech32.decode(address)
-  return bech32.encode('terra', words)
+  return bech32.encode(prefix, words)
 }
 
-export function convertValConAddressToDecodedHex(address: string): string {
-  const { data } = bech32buffer.decode(address)
-  return Buffer.from(data).toString('hex')
+export function convertAddressToHex(address: string): string {
+  return Buffer.from(bech32.fromWords(bech32.decode(address).words)).toString('hex')
 }
 
-export function convertAccAddressToValAddress(address: string): string {
-  const { words } = bech32.decode(address)
-  return bech32.encode('terravaloper', words)
-}
-
-export function convertHexToValConAddress(hexstring: string): string {
-  return bech32buffer.encode('terravalcons', Buffer.from(hexstring, 'hex'))
+export function convertHexToAddress(prefix: Prefix, hexstring: string): string {
+  return bech32.encode(prefix, bech32.toWords(Buffer.from(hexstring, 'hex')))
 }
 
 export function isNumeric(data: string): boolean {
