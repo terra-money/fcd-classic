@@ -3,7 +3,7 @@ import * as Bluebird from 'bluebird'
 
 import * as lcd from 'lib/lcd'
 import { plus, times, minus } from 'lib/math'
-import { convertValAddressToAccAddress } from 'lib/common'
+import { convertAddress } from 'lib/common'
 import { errorReport } from 'lib/errorReporting'
 
 export type ValidatorVotingPower = {
@@ -85,7 +85,7 @@ export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]
   const [votingPower, validators] = await Promise.all([lcd.getVotingPower(), lcd.getValidators()])
 
   return validators.map((item) => {
-    const accAddr = convertValAddressToAccAddress(item.operator_address)
+    const accAddr = convertAddress('terra', item.operator_address)
 
     return {
       accountAddress: accAddr,

@@ -1,7 +1,7 @@
 import { get } from 'lodash'
 import { getRepository, Brackets, WhereExpression } from 'typeorm'
 import { TxEntity } from 'orm'
-import { convertValAddressToAccAddress, sortDenoms, splitDenomAndAmount } from 'lib/common'
+import { convertAddress, sortDenoms, splitDenomAndAmount } from 'lib/common'
 
 function getClaimFromCol2(tx) {
   const tags = get(tx, 'data.tags')
@@ -169,7 +169,7 @@ async function getClaimTxs({ operatorAddr, limit, offset }: GetClaimsParam): Pro
     qb.where(`id < :offset`, { offset })
   }
 
-  const accountAddr = convertValAddressToAccAddress(operatorAddr)
+  const accountAddr = convertAddress('terra', operatorAddr)
   addClaimFilterToQuery(qb, operatorAddr, accountAddr)
 
   qb.take(limit + 1).orderBy('timestamp', 'DESC')
