@@ -3,6 +3,7 @@ import getMoniker from 'lib/getMoniker'
 import { splitDenomAndAmount } from 'lib/common'
 import { get } from 'lodash'
 import { getSwapCoinAndFee } from './helper'
+import nlp from 'compromise'
 
 type Params = Transaction.Message & { address?: string; log?: Transaction.Log }
 type Parsed = { tag: string; text: string; tax?: string }
@@ -287,8 +288,12 @@ export default async (
   const parsed: ParsedTxMsgInfo = await parser({ ...message, type, address, log })
 
   if (!success) {
-    parsed.text = `Fail to ${parsed.text}`
+    parsed.text = `Failed to ${convertToFailureMessage(parsed.text || '')}`
   }
 
   return parsed
+}
+
+export function convertToFailureMessage(text: string) {
+  return nlp(text).verbs().toPresentTense().toLowerCase()
 }
