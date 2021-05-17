@@ -2,8 +2,7 @@ import format from 'lib/format'
 import getMoniker from 'lib/getMoniker'
 import { splitDenomAndAmount } from 'lib/common'
 import { get } from 'lodash'
-import { getSwapCoinAndFee } from './helper'
-import nlp from 'compromise'
+import { convertToFailureMessage, getSwapCoinAndFee } from './helper'
 
 type Params = Transaction.Message & { address?: string; log?: Transaction.Log }
 type Parsed = { tag: string; text: string; tax?: string }
@@ -47,7 +46,7 @@ const slashing: Parser = ({ type, value: v }) => {
   const messages: { [type: string]: () => Parsed } = {
     MsgUnjail: () => ({
       tag,
-      text: `Unjail requested for ${v.address}`
+      text: `Requested unjail for ${v.address}`
     })
   }
 
@@ -292,8 +291,4 @@ export default async (
   }
 
   return parsed
-}
-
-export function convertToFailureMessage(text: string) {
-  return nlp(text).verbs().toPresentTense().toLowerCase()
 }

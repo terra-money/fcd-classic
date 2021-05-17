@@ -1,4 +1,5 @@
 import { get, filter } from 'lodash'
+import * as nlp from 'compromise'
 
 export const getSwapCoinAndFee = (log): { swapCoin: string; swapFee: string } => {
   let swapCoin = ''
@@ -26,4 +27,20 @@ export const getSwapCoinAndFee = (log): { swapCoin: string; swapFee: string } =>
   swapFee = filter(swapEvent.attributes, { key: 'swap_fee' })[0].value
 
   return { swapCoin, swapFee }
+}
+
+const exceptionalVerbsMap = {
+  deposite: 'deposit'
+}
+
+const getExceptionalVerbs = (verb: string) => exceptionalVerbsMap[verb] || verb
+
+export function convertToFailureMessage(text: string) {
+  const action = text.split(' ')
+
+  const doc = nlp(action[0]).verbs()
+  doc.toInfinitive()
+  doc.toLowerCase()
+
+  return `${getExceptionalVerbs(doc.text())} ${action.slice(1).join(' ')}`
 }
