@@ -20,7 +20,8 @@ const {
   PRUNING_KEEP_EVERY,
   BANK_WALLETS,
   ANCHOR_BANK_WALLETS,
-  ANCHOR_TOKEN_ADDRESS
+  ANCHOR_TOKEN_ADDRESS,
+  LEGACY_NETWORK
 } = process.env
 
 const config = {
@@ -72,7 +73,8 @@ const config = {
         usdr: '0.1018',
         ukrw: '178.05'
       } as CoinByDenoms),
-  PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100
+  PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
+  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false')
 }
 
 export default config

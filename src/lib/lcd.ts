@@ -134,18 +134,27 @@ export function getLatestBlock(): Promise<LcdBlock> {
 export async function getAccount(
   address: string
 ): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
-  return (
-    (await get(`/auth/accounts/${address}`)) || {
-      type: 'auth/Account',
-      value: {
-        address: '',
-        coins: null,
-        public_key: null,
-        account_number: '0',
-        sequence: '0'
-      }
+  const empty = {
+    type: 'auth/Account',
+    value: {
+      address: '',
+      coins: null,
+      public_key: null,
+      account_number: '0',
+      sequence: '0'
     }
-  )
+  }
+
+  if (config.LEGACY_NETWORK) {
+    return (await get(`/auth/accounts/${address}`)) || empty
+  }
+
+  const results = await Promise.all([get(`/auth/accounts/${address}`), get(`/bank/balances/${address}`)])
+
+  const account = results[0] || empty
+  account.value.coins = results[1]
+
+  return account
 }
 
 ///////////////////////////////////////////////
@@ -163,14 +172,20 @@ export async function getUnbondingDelegations(address: string): Promise<LcdUnbon
   return (await get(`/staking/delegators/${address}/unbonding_delegations`)) || []
 }
 
+const STATUS_MAPPINGS = {
+  unbonded: 'BOND_STATUS_UNBONDED', // 1
+  unbonding: 'BOND_STATUS_UNBONDING', // 2
+  bonded: 'BOND_STATUS_BONDED' // 3
+}
+
 export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'): Promise<LcdValidator[]> {
   if (status) {
-    return get(`/staking/validators?status=${status}`)
+    return get(`/staking/validators?status=${config.LEGACY_NETWORK ? status : STATUS_MAPPINGS[status]}`)
   }
 
-  const urlBonded = `/staking/validators?status=bonded`
-  const urlUnbonded = `/staking/validators?status=unbonded`
-  const urlUnbonding = `/staking/validators?status=unbonding`
+  const urlBonded = `/staking/validators?status=${config.LEGACY_NETWORK ? 'bonded' : STATUS_MAPPINGS.bonded}`
+  const urlUnbonded = `/staking/validators?status=${config.LEGACY_NETWORK ? 'unbonded' : STATUS_MAPPINGS.unbonded}`
+  const urlUnbonding = `/staking/validators?status=${config.LEGACY_NETWORK ? 'unbonding' : STATUS_MAPPINGS.unbonding}`
 
   const [bonded, unbonded, unbonding] = await Promise.all([get(urlBonded), get(urlUnbonded), get(urlUnbonding)])
 
@@ -263,8 +278,12 @@ export function getCommissions(validatorAddress: string): Promise<LcdRewardPool 
   return get(`/distribution/validators/${validatorAddress}`)
 }
 
-export async function getValidatorRewards(validatorOperAddress: string): Promise<LcdRewardPoolItem[]> {
-  return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)) || []
+export async function getValidatorRewards(validatorOperAddress: string): Promise<Coin[]> {
+  if (config.LEGACY_NETWORK) {
+    return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)) || []
+  }
+
+  return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)).rewards || []
 }
 
 export function getCommunityPool(): Promise<Coin[]> {
@@ -342,7 +361,11 @@ export async function getDenomIssuanceAfterGenesis(denom: string, day: number): 
 }
 
 export async function getTotalSupply(): Promise<Coin[]> {
-  return (await get(`/supply/total`)) || []
+  if (config.LEGACY_NETWORK) {
+    return (await get(`/supply/total`)) || []
+  }
+
+  return (await get('/cosmos/bank/v1beta1/supply')).supply || []
 }
 
 export async function getAllActiveIssuance(): Promise<{ [denom: string]: string }> {

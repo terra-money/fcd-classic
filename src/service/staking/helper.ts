@@ -120,7 +120,7 @@ export async function getValidator(param: GetValidatorParam): Promise<GetValidat
   const upTime = getUptime(signingInfo)
 
   let rewardPoolTotal = '0'
-  const rewardPool = lcdRewardPool.map(({ denom, amount }: LcdRewardPoolItem) => {
+  const rewardPool = lcdRewardPool.map(({ denom, amount }: Coin) => {
     const adjustedAmount = denom === 'uluna' ? amount : priceObj[denom] ? div(amount, priceObj[denom]) : 0
     rewardPoolTotal = plus(rewardPoolTotal, adjustedAmount)
     return { denom, amount, adjustedAmount }
@@ -200,9 +200,7 @@ function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) 
   )
 }
 
-export async function getRawDelegationTxs(
-  param: GetRawDelegationTxsParam
-): Promise<{
+export async function getRawDelegationTxs(param: GetRawDelegationTxsParam): Promise<{
   txs: (Transaction.LcdTransaction & { id: number; chainId: string })[]
   next?: number
 }> {

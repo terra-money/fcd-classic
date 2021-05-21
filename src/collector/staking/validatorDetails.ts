@@ -82,14 +82,14 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
 
   const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
 
-  const signingInfo = await lcd.getSigningInfo(consensusPubkey).catch(() => ({} as LcdValidatorSigningInfo))
+  const signingInfo = await lcd.getSigningInfo(operatorAddress).catch(() => ({} as LcdValidatorSigningInfo))
 
-  const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as LcdRewardPoolItem[])
+  const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
   const upTime = getUptime(signingInfo)
   let rewardPoolTotal = '0'
   const rewardPool = lcdRewardPool
-    ? lcdRewardPool.map(({ denom, amount }: LcdRewardPoolItem) => {
+    ? lcdRewardPool.map(({ denom, amount }: Coin) => {
         const adjustedAmount: string =
           denom === 'uluna' ? amount : activePrices[denom] ? div(amount, activePrices[denom]) : '0'
         rewardPoolTotal = plus(rewardPoolTotal, adjustedAmount)
@@ -128,6 +128,9 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
+
+  console.log(JSON.stringify(validatorDetails, null, 2))
+
   const repo = getRepository(ValidatorInfoEntity)
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 

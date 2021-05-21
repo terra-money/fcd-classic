@@ -1,8 +1,9 @@
 enum AccountType {
-  OLD_SIMPLE = 'auth/Account', // columbus-1
+  BASE_COL1 = 'auth/Account', // columbus-1
+  BASE_COL3 = 'core/Account', // columbus-3
+  BASE_COL5 = 'core/BaseAccount', // columbus-5
   VESTING = 'core/GradedVestingAccount', // columbus-1
   LAZY_VESTING = 'core/LazyGradedVestingAccount', // columbus-2
-  SIMPLE = 'core/Account', // columbus-3
   MODULE = 'supply/ModuleAccount' // columbus -3
 }
 
@@ -97,7 +98,11 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     }
   }
 
-  if (account.type === AccountType.SIMPLE || account.type === AccountType.OLD_SIMPLE) {
+  if (
+    account.type === AccountType.BASE_COL1 ||
+    account.type === AccountType.BASE_COL3 ||
+    account.type === AccountType.BASE_COL5
+  ) {
     return {
       value: (account as StandardAccount).value
     }

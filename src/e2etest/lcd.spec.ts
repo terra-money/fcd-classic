@@ -5,13 +5,13 @@ const UNKNOWN_TX_HASH = '0C7A5F320FD3B91CEC2BEBDF539E8B71E1C120B04F95DEF6FB09EEB
 const VALID_TX_HASH = 'ED3EA0E1AA684546B8FC1CA57625688876A6DD7C9DF283FCAE271128C52A5D14'
 
 const UNKNOWN_TERRA_ADDRESS = 'terra12c5s58hnc3c0pjr5x7u68upsgzg2r8fwq5nlsy'
-const VALID_TERRA_ADDRESS = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
+const VALID_TERRA_ADDRESS = 'terra1dcegyrekltswvyy0xy69ydgxn9x8x32zdtapd8'
 
 const UNKNOWN_VALOPER_ADDRESS = 'terravaloper1uwgg244kechjgqdyr9kyxtt7yyj5zqcugvna2d'
-const VALID_VALOPER_ADDRESS = 'terravaloper1vk20anceu6h9s00d27pjlvslz3avetkvnwmr35'
-const VALID_VALTERRA_ADDRESS = 'terra1vk20anceu6h9s00d27pjlvslz3avetkvnph7p8'
+const VALID_VALOPER_ADDRESS = 'terravaloper1dcegyrekltswvyy0xy69ydgxn9x8x32zdy3ua5'
+const VALID_VALTERRA_ADDRESS = 'terra1dcegyrekltswvyy0xy69ydgxn9x8x32zdtapd8'
 const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepqwgwyky5375uk0llhwf0ya5lmwy4up838jevfh3pyzf5s3hd96xjslnexul'
-
+terravalconspub1dcegyrekltswvyy0xy69ydgxn9x8x32z8g7u0d
 const coinObject = {
   denom: expect.any(String),
   amount: expect.any(String)
@@ -26,7 +26,10 @@ const validatorObject = {
     },
     update_time: expect.any(String)
   },
-  consensus_pubkey: expect.any(String),
+  consensus_pubkey: {
+    type: expect.any(String),
+    value: expect.any(String)
+  },
   delegator_shares: expect.any(String),
   description: {
     details: expect.any(String),
@@ -457,7 +460,7 @@ describe('LCD', () => {
   test('getOraclePrices: success', async () => {
     await expect(lcd.getOraclePrices()).resolves.toContainEqual({
       denom: expect.any(String),
-      price: expect.any(String)
+      amount: expect.any(String)
     })
   })
 

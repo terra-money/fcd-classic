@@ -54,7 +54,10 @@ interface LcdBlockHeader {
 
 interface LcdValidator {
   commission: LcdValidatorCommission
-  consensus_pubkey: string
+  consensus_pubkey: {
+    type: string
+    value: string
+  }
   delegator_shares: string
   description: LcdValidatorDescription
   jailed: boolean
@@ -91,7 +94,10 @@ interface LcdLatestValidatorSet {
 interface LcdLatestValidator {
   address: string
   proposer_priority: string
-  pub_key: string
+  pub_key: {
+    type: string
+    value: string
+  }
   voting_power: string
 }
 
@@ -104,15 +110,10 @@ interface LcdValidatorSigningInfo {
   tombstoned: boolean
 }
 
-interface LcdRewardPoolItem {
-  denom: string
-  amount: string
-}
-
 interface LcdRewardPool {
   operator_address: string
-  self_bond_rewards: LcdRewardPoolItem[]
-  val_commission: LcdRewardPoolItem[]
+  self_bond_rewards: Coin[]
+  val_commission: Coin[]
 }
 
 interface LcdValidatorDelegationItem {

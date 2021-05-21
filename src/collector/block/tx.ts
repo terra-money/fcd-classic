@@ -132,12 +132,8 @@ function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRa
   })
 
   lcdTx.logs.forEach((log, i) => {
-    if (log.log === '') {
-      log.log = {
-        tax: taxArr[i].join(',')
-      } as any
-    } else {
-      log.log['tax'] = taxArr[i].join(',')
+    log.log = {
+      tax: taxArr[i].join(',')
     }
   })
 }
@@ -183,9 +179,9 @@ export async function getLcdTx(
       modifiedDoc = syncMsgType(modifiedDoc)
     }
 
-    if (modifiedDoc.logs && modifiedDoc.logs.constructor === Array) {
+    if (modifiedDoc.logs && Array.isArray(modifiedDoc.logs)) {
       modifiedDoc.logs = modifiedDoc.logs.map((item) => {
-        if (item.log && item.log.constructor === String) {
+        if (item.log && item.log instanceof String) {
           item.log = JSON.parse(item.log)
         }
         return item
