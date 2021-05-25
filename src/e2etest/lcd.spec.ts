@@ -98,19 +98,6 @@ describe('LCD', () => {
     })
   })
 
-  test('getValidatorVotingPower: invalid / not found', async () => {
-    await expect(lcd.getValidatorVotingPower('invalid or not found')).resolves.toBeUndefined()
-  })
-
-  test('getValidatorVotingPower: success', async () => {
-    await expect(lcd.getValidatorVotingPower(VALID_VALCONSPUB_ADDRESS)).resolves.toMatchObject({
-      address: expect.any(String),
-      pub_key: expect.any(String),
-      proposer_priority: expect.any(String),
-      voting_power: expect.any(String)
-    })
-  })
-
   test('getBlock: invalid', async () => {
     await expect(lcd.getBlock('0')).toReject()
   })

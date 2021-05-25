@@ -114,12 +114,6 @@ export async function getVotingPower(): Promise<VotingPower> {
   return { totalVotingPower, votingPowerByPubKey }
 }
 
-export async function getValidatorVotingPower(consensusPubkey: string): Promise<LcdValidatorConsensus | undefined> {
-  const latestValidatorSet = await getLatestValidatorSet()
-  const { validators } = latestValidatorSet
-  return validators.find((v) => v.pub_key === consensusPubkey)
-}
-
 export function getBlock(height: string): Promise<LcdBlock> {
   return get(`/blocks/${height}`)
 }
