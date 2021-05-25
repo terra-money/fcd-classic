@@ -1,3 +1,4 @@
+import * as Bluebird from 'bluebird'
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 
@@ -5,22 +6,16 @@ import { saveValidatorDetail } from './validatorDetails'
 
 export async function collectValidator() {
   logger.info('Validator collector started.')
-  const validatorList = await lcd.getValidators()
-  logger.info(`Got a list of ${validatorList.length} validators`)
-  const votingPower = await lcd.getVotingPower()
-  const activePrices = await lcd.getActiveOraclePrices()
 
-  for (const lcdValidator of validatorList) {
-    logger.info(`Updating validator ${lcdValidator.operator_address}`)
+  const [extValidators, activePrices] = await Promise.all([lcd.getExtendedValidators(), lcd.getActiveOraclePrices()])
 
-    try {
-      await saveValidatorDetail({ lcdValidator, activePrices, votingPower })
-      logger.info('Update complete')
-    } catch (error) {
-      logger.info('Could not save validator info due to error ', lcdValidator.operator_address)
+  logger.info(`Got a list of ${extValidators.length} validators`)
+
+  await Bluebird.mapSeries(extValidators, (extValidator) =>
+    saveValidatorDetail(extValidator, activePrices).catch((error) => {
       logger.error(error)
-    }
-  }
+    })
+  )
 
   logger.info('Validator collector completed.')
 }

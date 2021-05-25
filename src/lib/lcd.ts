@@ -3,7 +3,7 @@ import * as rp from 'request-promise'
 
 import config from 'config'
 
-import { plus, getIntegerPortion } from 'lib/math'
+import { plus, times, div, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
 
 const protocol = require(config.LCD_URI.startsWith('https') ? 'https' : 'http')
@@ -85,33 +85,50 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 ///////////////////////////////////////////////
 // Tendermint RPC
 ///////////////////////////////////////////////
+async function getSigningInfos(): Promise<LcdValidatorSigningInfo[]> {
+  return (await get('/cosmos/slashing/v1beta1/signing_infos')).info
+}
+
 export function getLatestValidatorSet(): Promise<LcdValidatorSets> {
   return get(`/validatorsets/latest`)
 }
 
-export interface VotingPower {
-  totalVotingPower: string
-  votingPowerByPubKey: {
-    [pubKey: string]: string
-  }
+// Validator Database includes all LcdValidator, VotingPower and Uptime
+export interface ExtendedValidator {
+  lcdValidator: LcdValidator
+  votingPower: string
+  votingPowerWeight: string
+  signingInfo?: LcdValidatorSigningInfo
 }
 
-type VotingPowerByPubKey = { [pubKey: string]: string }
+export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
+  const [validators, validatorSet, signingInfos] = await Promise.all([
+    getValidators(),
+    getLatestValidatorSet(),
+    getSigningInfos()
+  ])
+  const totalVotingPower = validatorSet.validators.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
 
-export async function getVotingPower(): Promise<VotingPower> {
-  const latestValidatorSet = await getLatestValidatorSet()
-  let totalVotingPower = '0'
+  return validators.reduce((prev, lcdValidator) => {
+    const consVal = validatorSet.validators.find(
+      (consVal) => consVal.pub_key.value === lcdValidator.consensus_pubkey.value
+    )
 
-  const reducer = (acc: VotingPowerByPubKey, { pub_key, voting_power }: LcdValidatorConsensus): VotingPowerByPubKey => {
-    totalVotingPower = plus(totalVotingPower, voting_power)
-    return { ...acc, [pub_key]: voting_power }
-  }
+    if (!consVal) {
+      return prev
+    }
 
-  const votingPowerByPubKey = Array.isArray(latestValidatorSet.validators)
-    ? latestValidatorSet.validators.reduce(reducer, {})
-    : {}
+    const signingInfo = signingInfos.find((si) => si.address === consVal.address)
 
-  return { totalVotingPower, votingPowerByPubKey }
+    prev.push({
+      lcdValidator,
+      votingPower: times(consVal.voting_power, 1000000),
+      votingPowerWeight: div(consVal.voting_power, totalVotingPower),
+      signingInfo
+    })
+
+    return prev
+  }, [] as ExtendedValidator[])
 }
 
 export function getBlock(height: string): Promise<LcdBlock> {
@@ -235,13 +252,6 @@ export function getProposalVotingParams(): Promise<LcdProposalVotingParams> {
 
 export function getProposalTallyingParams(): Promise<LcdProposalTallyingParams> {
   return get(`/gov/parameters/tallying`)
-}
-
-///////////////////////////////////////////////
-// Slashing
-///////////////////////////////////////////////
-export function getSigningInfo(validatorPubKey: string): Promise<LcdValidatorSigningInfo> {
-  return get(`/slashing/validators/${validatorPubKey}/signing_info`)
 }
 
 ///////////////////////////////////////////////

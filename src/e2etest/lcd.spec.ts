@@ -91,13 +91,6 @@ describe('LCD', () => {
     })
   })
 
-  test('getVotingPower', async () => {
-    await expect(lcd.getVotingPower()).resolves.toMatchObject({
-      totalVotingPower: expect.any(String),
-      votingPowerByPubKey: {}
-    })
-  })
-
   test('getBlock: invalid', async () => {
     await expect(lcd.getBlock('0')).toReject()
   })
@@ -357,21 +350,6 @@ describe('LCD', () => {
         threshold: expect.any(String),
         veto: expect.any(String)
       })
-    })
-  })
-
-  test('getSigningInfo: invalid', async () => {
-    await expect(lcd.getSigningInfo('invalid')).toReject()
-  })
-
-  test('getSigningInfo: valid', async () => {
-    await expect(lcd.getSigningInfo(VALID_VALCONSPUB_ADDRESS)).resolves.toMatchObject({
-      address: expect.any(String), // terravalcons...
-      index_offset: expect.any(String),
-      jailed_until: expect.any(String),
-      missed_blocks_counter: expect.any(String),
-      start_height: expect.any(String),
-      tombstoned: expect.any(Boolean)
     })
   })
 

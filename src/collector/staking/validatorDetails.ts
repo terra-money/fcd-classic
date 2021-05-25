@@ -1,4 +1,4 @@
-import { filter } from 'lodash'
+import { extend, filter } from 'lodash'
 import { DeepPartial, getRepository } from 'typeorm'
 
 import config from 'config'
@@ -6,14 +6,11 @@ import { ValidatorInfoEntity, ValidatorStatus } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { convertAddress, sortDenoms } from 'lib/common'
-import { div, plus, times } from 'lib/math'
-import { APIError, ErrorTypes } from 'lib/error'
+import { div, plus } from 'lib/math'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
 import { Delegator, getDelegators } from 'service/staking'
-
-const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
 function getSelfDelegation(
   delegators: Delegator[],
@@ -59,20 +56,13 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 }
 
-type SaveValidatorParams = {
-  lcdValidator: LcdValidator
-  activePrices: CoinByDenoms
-  votingPower: lcd.VotingPower
-}
+export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: CoinByDenoms) {
+  const { lcdValidator, signingInfo } = extendedValidator
+  const operatorAddress = lcdValidator.operator_address
 
-export async function saveValidatorDetail({ lcdValidator, activePrices, votingPower }: SaveValidatorParams) {
-  if (!lcdValidator) {
-    throw new APIError(ErrorTypes.VALIDATOR_DOES_NOT_EXISTS)
-  }
+  logger.info(`Updating validator ${lcdValidator.description.moniker} ${operatorAddress}`)
 
-  const { operator_address: operatorAddress, consensus_pubkey: consensusPubkey } = lcdValidator
   const accountAddr = convertAddress('terra', operatorAddress)
-  const { totalVotingPower, votingPowerByPubKey } = votingPower
 
   const delegators = await getDelegators(operatorAddress).catch(() => [])
   const selfDelegation = getSelfDelegation(delegators, accountAddr)
@@ -82,11 +72,8 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
 
   const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
 
-  const signingInfo = await lcd.getSigningInfo(consensusPubkey).catch(() => ({} as LcdValidatorSigningInfo))
-
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
-  const upTime = getUptime(signingInfo)
   let rewardPoolTotal = '0'
   const rewardPool = lcdRewardPool
     ? lcdRewardPool.map(({ denom, amount }: Coin) => {
@@ -101,7 +88,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
     chainId: config.CHAIN_ID,
     operatorAddress,
-    consensusPubkey,
+    consensusPubkey: signingInfo?.address,
     accountAddress: accountAddr,
     details,
     identity,
@@ -115,9 +102,8 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
     missedOracleVote: +missedVote,
-    upTime,
-    votingPower: times(votingPowerByPubKey[consensusPubkey], TOKEN_MICRO_UNIT_MULTIPLICAND),
-    votingPowerWeight: div(votingPowerByPubKey[consensusPubkey], totalVotingPower),
+    votingPower: extendedValidator.votingPower,
+    votingPowerWeight: extendedValidator.votingPowerWeight,
     commissionRate: lcdValidator.commission.commission_rates.rate,
     maxCommissionRate: lcdValidator.commission.commission_rates.max_rate,
     maxCommissionChangeRate: lcdValidator.commission.commission_rates.max_change_rate,
@@ -125,6 +111,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
     selfDelegation: selfDelegation.amount,
     selfDelegationWeight: selfDelegation.weight,
+    upTime: signingInfo ? getUptime(signingInfo) : 0,
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }

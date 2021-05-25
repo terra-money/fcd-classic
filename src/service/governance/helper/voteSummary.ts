@@ -82,15 +82,15 @@ function getVoteCount(votes: LcdProposalVote[]): VoteCount {
 }
 
 export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]> {
-  const [votingPower, validators] = await Promise.all([lcd.getVotingPower(), lcd.getValidators()])
+  const extendedValidators = await lcd.getExtendedValidators()
 
-  return validators.map((item) => {
-    const accAddr = convertAddress('terra', item.operator_address)
+  return extendedValidators.map((extVal) => {
+    const accAddr = convertAddress('terra', extVal.lcdValidator.operator_address)
 
     return {
       accountAddress: accAddr,
-      operatorAddress: item.operator_address,
-      votingPower: times(votingPower.votingPowerByPubKey[item.consensus_pubkey], '1000000')
+      operatorAddress: extVal.lcdValidator.operator_address,
+      votingPower: extVal.votingPower
     }
   })
 }

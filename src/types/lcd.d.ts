@@ -54,7 +54,10 @@ interface LcdBlockHeader {
 
 interface LcdValidator {
   commission: LcdValidatorCommission
-  consensus_pubkey: string
+  consensus_pubkey: {
+    type: string
+    value: string
+  }
   delegator_shares: string
   description: LcdValidatorDescription
   jailed: boolean
@@ -91,7 +94,10 @@ interface LcdValidatorSets {
 interface LcdValidatorConsensus {
   address: string
   proposer_priority: string
-  pub_key: string
+  pub_key: {
+    type: string
+    value: string
+  }
   voting_power: string
 }
 

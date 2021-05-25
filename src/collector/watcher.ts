@@ -36,14 +36,16 @@ async function collectValidators() {
   const addrs = Array.from(validatorUpdateSet.values())
   validatorUpdateSet.clear()
 
-  const votingPower = await lcd.getVotingPower()
+  const extValidators = await lcd.getExtendedValidators()
   const activePrices = await lcd.getActiveOraclePrices()
 
-  await Bluebird.mapSeries(addrs, (addr) =>
-    lcd
-      .getValidator(addr)
-      .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
-  )
+  await Bluebird.mapSeries(addrs, (addr) => {
+    const extVal = extValidators.find((i) => i.lcdValidator.operator_address === addr)
+
+    if (extVal) {
+      return saveValidatorDetail(extVal, activePrices).catch(() => null)
+    }
+  })
 
   setTimeout(collectValidators, 5000)
 }

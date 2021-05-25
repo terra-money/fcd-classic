@@ -189,14 +189,8 @@ export async function getAvgVotingPowerUncached(
   validator: LcdValidator,
   fromTs: number,
   toTs: number,
-  votingPower: lcd.VotingPower
+  votingPowerNow: string
 ): Promise<string | undefined> {
-  const votingPowerNow = votingPower.votingPowerByPubKey[validator.consensus_pubkey]
-
-  if (!votingPowerNow) {
-    return
-  }
-
   const { events } = await getDelegationTxs({ operatorAddr: validator.operator_address })
 
   const fromStr = new Date(fromTs).toISOString()
@@ -215,7 +209,7 @@ export async function getAvgVotingPowerUncached(
       }
 
       return minus(acc, eventAmount)
-    }, times(votingPowerNow, 1000000))
+    }, votingPowerNow)
 
     const tsRange = toTs - fromTs
 
