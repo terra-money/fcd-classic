@@ -431,6 +431,10 @@ export async function getTaxCaps(height?: string): Promise<{ denom: string; tax_
   return taxCaps
 }
 
+export async function getContract(contractAddress: string): Promise<Record<string, unknown>> {
+  return get(`/wasm/contracts/${contractAddress}`)
+}
+
 export async function getContractStore(
   contractAddress: string,
   query: any,

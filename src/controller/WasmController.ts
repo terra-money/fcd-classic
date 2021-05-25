@@ -3,8 +3,9 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
+import * as lcd from 'lib/lcd'
 
-import { getWasmCodes, getWasmContracts, getContractTxs, getWasmCode, getWasmContract } from 'service/wasm'
+import { getWasmContracts, getWasmCode, getWasmContract } from 'service/wasm'
 
 const Joi = Validator.Joi
 
@@ -128,6 +129,7 @@ export default class WasmController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getIndividualContract(ctx) {
-    success(ctx, await getWasmContract(ctx.params.contractAddress))
+    // success(ctx, await getWasmContract(ctx.params.contractAddress))
+    success(ctx, await lcd.getContract(ctx.params.contractAddress))
   }
 }
