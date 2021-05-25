@@ -8,13 +8,11 @@ import { TxEntity, ValidatorInfoEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
-import { sortDenoms } from 'lib/common'
-import getAvatar from 'lib/keybase'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
 import getDelegationTxs from './getDelegationTxs'
-import { ValidatorAnnualReturn, getValidatorAnnualAvgReturn } from './getValidatorReturn'
+import { ValidatorAnnualReturn } from './getValidatorReturn'
 
 enum ValidatorStatusType {
   INACTIVE = 'inactive',
@@ -22,35 +20,6 @@ enum ValidatorStatusType {
   JAILED = 'jailed',
   UNBONDING = 'unbonding',
   UNKNOWN = 'unknown'
-}
-
-interface GetValidatorParam {
-  validatorInfo: LcdValidator
-  totalVotingPower: string
-  votingPowerObj: { [key: string]: string }
-  priceObj: { [key: string]: string }
-}
-
-interface ValidatorCommission {
-  maxChangeRate: string
-  maxRate: string
-  rate: string
-  updateTime: string
-}
-
-interface GetValidatorReturn {
-  consensusPubkey: string
-  operatorAddress: string
-  tokens: string
-  delegatorShares: string
-  description: LcdValidatorDescription
-  votingPower: { [key: string]: string }
-  commissionInfo: ValidatorCommission
-  upTime: number
-  status: string
-  rewardsPool: any
-  stakingReturn?: string
-  isNewValidator?: boolean
 }
 
 interface GetRawDelegationTxsParam {
@@ -87,71 +56,6 @@ export function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus
     default: {
       return ValidatorStatusType.UNKNOWN
     }
-  }
-}
-
-function commissionMapper(item: LcdValidatorCommission): ValidatorCommission {
-  return {
-    rate: item.commission_rates.rate,
-    maxRate: item.commission_rates.max_rate,
-    maxChangeRate: item.commission_rates.max_change_rate,
-    updateTime: item.update_time
-  }
-}
-
-export async function getValidator(param: GetValidatorParam): Promise<GetValidatorReturn | undefined> {
-  const { validatorInfo, totalVotingPower, votingPowerObj, priceObj } = param
-  const { consensus_pubkey, operator_address, delegator_shares, tokens } = validatorInfo
-  const keyBaseId = get(validatorInfo, 'description.identity')
-  const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
-  const description = {
-    ...validatorInfo.description,
-    profileIcon
-  }
-
-  const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operator_address)
-
-  const signingInfo = await lcd.getSigningInfo(consensus_pubkey)
-
-  if (!signingInfo) {
-    return
-  }
-
-  const lcdRewardPool = await lcd.getValidatorRewards(operator_address)
-
-  if (!Array.isArray(lcdRewardPool)) {
-    return
-  }
-
-  const upTime = getUptime(signingInfo)
-
-  let rewardPoolTotal = '0'
-  const rewardPool = lcdRewardPool.map(({ denom, amount }: Coin) => {
-    const adjustedAmount = denom === 'uluna' ? amount : priceObj[denom] ? div(amount, priceObj[denom]) : 0
-    rewardPoolTotal = plus(rewardPoolTotal, adjustedAmount)
-    return { denom, amount, adjustedAmount }
-  })
-  const validatorStatus = getValidatorStatus(validatorInfo)
-
-  return {
-    operatorAddress: operator_address,
-    consensusPubkey: consensus_pubkey,
-    description,
-    tokens,
-    delegatorShares: delegator_shares,
-    votingPower: {
-      amount: times(votingPowerObj[consensus_pubkey], '1000000'),
-      weight: div(votingPowerObj[consensus_pubkey], totalVotingPower)
-    },
-    commissionInfo: commissionMapper(validatorInfo.commission),
-    upTime,
-    status: validatorStatus,
-    rewardsPool: {
-      total: rewardPoolTotal,
-      denoms: sortDenoms(rewardPool)
-    },
-    stakingReturn,
-    isNewValidator
   }
 }
 
