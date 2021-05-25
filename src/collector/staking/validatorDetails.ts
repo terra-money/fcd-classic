@@ -82,7 +82,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
 
   const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
 
-  const signingInfo = await lcd.getSigningInfo(operatorAddress).catch(() => ({} as LcdValidatorSigningInfo))
+  const signingInfo = await lcd.getSigningInfo(consensusPubkey).catch(() => ({} as LcdValidatorSigningInfo))
 
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
