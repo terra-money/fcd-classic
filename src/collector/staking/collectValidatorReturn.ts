@@ -3,15 +3,13 @@ import { getRepository } from 'typeorm'
 
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 
-import { getValidators } from 'lib/lcd'
+import { getValidators, getVotingPower } from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ONE_DAY_IN_MS } from 'lib/constant'
 import { getAvgVotingPower, getAvgPrice } from 'service/staking'
 import { normalizeRewardAndCommissionToLuna, getValidatorRewardAndCommissionSum } from './rewardAndCommissionSum'
 
-async function getExistingValidatorsMap(
-  timestamp: Date
-): Promise<{
+async function getExistingValidatorsMap(timestamp: Date): Promise<{
   [operatorAddress: string]: ValidatorReturnInfoEntity
 }> {
   const existingReturnInfos = await getRepository(ValidatorReturnInfoEntity).find({
@@ -39,6 +37,7 @@ export async function generateValidatorReturns(
 
   const priceObj = await getAvgPrice(fromTs, fromTs + ONE_DAY_IN_MS)
   const valMap = await getExistingValidatorsMap(timestamp)
+  const votingPower = await getVotingPower()
 
   for (const validator of validatorsList) {
     if (!updateExisting && valMap[validator.operator_address]) {
@@ -46,7 +45,7 @@ export async function generateValidatorReturns(
       continue
     }
 
-    const validatorAvgVotingPower = await getAvgVotingPower(validator.operator_address, fromTs, fromTs + ONE_DAY_IN_MS)
+    const validatorAvgVotingPower = await getAvgVotingPower(validator, fromTs, fromTs + ONE_DAY_IN_MS, votingPower)
 
     if (validatorAvgVotingPower) {
       const { reward, commission } = normalizeRewardAndCommissionToLuna(

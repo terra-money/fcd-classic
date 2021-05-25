@@ -11,7 +11,7 @@ const UNKNOWN_VALOPER_ADDRESS = 'terravaloper1uwgg244kechjgqdyr9kyxtt7yyj5zqcugv
 const VALID_VALOPER_ADDRESS = 'terravaloper1dcegyrekltswvyy0xy69ydgxn9x8x32zdy3ua5'
 const VALID_VALTERRA_ADDRESS = 'terra1dcegyrekltswvyy0xy69ydgxn9x8x32zdtapd8'
 const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepqwgwyky5375uk0llhwf0ya5lmwy4up838jevfh3pyzf5s3hd96xjslnexul'
-terravalconspub1dcegyrekltswvyy0xy69ydgxn9x8x32z8g7u0d
+
 const coinObject = {
   denom: expect.any(String),
   amount: expect.any(String)

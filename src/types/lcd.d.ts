@@ -54,10 +54,7 @@ interface LcdBlockHeader {
 
 interface LcdValidator {
   commission: LcdValidatorCommission
-  consensus_pubkey: {
-    type: string
-    value: string
-  }
+  consensus_pubkey: string
   delegator_shares: string
   description: LcdValidatorDescription
   jailed: boolean
@@ -86,18 +83,15 @@ interface LcdValidatorCommission {
   update_time: string
 }
 
-interface LcdLatestValidatorSet {
+interface LcdValidatorSets {
   block_height: string
-  validators: LcdLatestValidator[]
+  validators: LcdValidatorConsensus[]
 }
 
-interface LcdLatestValidator {
+interface LcdValidatorConsensus {
   address: string
   proposer_priority: string
-  pub_key: {
-    type: string
-    value: string
-  }
+  pub_key: string
   voting_power: string
 }
 
@@ -120,30 +114,4 @@ interface LcdValidatorDelegationItem {
   delegator_address: string
   shares: string
   validator_address: string
-}
-
-interface ValidatorCommission {
-  maxChangeRate: string
-  maxRate: string
-  rate: string
-  updateTime: string
-}
-
-interface Validator {
-  commision: number
-  moniker: stinrg
-  rewardPool: number
-  uptime: number
-  votingPower: number
-}
-
-interface Delegator {
-  address: string
-  amount: string
-  weight: string
-}
-
-interface ValidatorAnnualReturn {
-  isNewValidator: boolean
-  stakingReturn: string
 }

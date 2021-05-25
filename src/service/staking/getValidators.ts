@@ -5,6 +5,7 @@ import { ValidatorInfoEntity } from 'orm'
 import config from 'config'
 import { getAirdropAnnualAvgReturn } from 'service/dashboard'
 import { generateValidatorResponse } from './helper'
+import { ValidatorAnnualReturn } from './getValidatorReturn'
 
 export async function getValidatorsReturn(): Promise<{ [operatorAddress: string]: ValidatorAnnualReturn }> {
   const rawQuery = `

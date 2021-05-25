@@ -5,7 +5,6 @@ import { startOfDay } from 'date-fns'
 import config from 'config'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 
-import { APIError, ErrorTypes } from 'lib/error'
 import * as lcd from 'lib/lcd'
 import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
@@ -15,7 +14,7 @@ import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
 import getDelegationTxs from './getDelegationTxs'
-import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
+import { ValidatorAnnualReturn, getValidatorAnnualAvgReturn } from './getValidatorReturn'
 
 enum ValidatorStatusType {
   INACTIVE = 'inactive',
@@ -30,6 +29,13 @@ interface GetValidatorParam {
   totalVotingPower: string
   votingPowerObj: { [key: string]: string }
   priceObj: { [key: string]: string }
+}
+
+interface ValidatorCommission {
+  maxChangeRate: string
+  maxRate: string
+  rate: string
+  updateTime: string
 }
 
 interface GetValidatorReturn {
@@ -276,24 +282,18 @@ export function getUndelegateSchedule(
 }
 
 export async function getAvgVotingPowerUncached(
-  operatorAddr: string,
+  validator: LcdValidator,
   fromTs: number,
-  toTs: number
+  toTs: number,
+  votingPower: lcd.VotingPower
 ): Promise<string | undefined> {
-  const validator = await lcd.getValidator(operatorAddr)
+  const votingPowerNow = votingPower.votingPowerByPubKey[validator.consensus_pubkey]
 
-  if (!validator) {
-    throw new APIError(ErrorTypes.VALIDATOR_DOES_NOT_EXISTS)
-  }
-
-  const votingPowerInfo = await lcd.getValidatorVotingPower(validator.consensus_pubkey)
-
-  if (!votingPowerInfo) {
+  if (!votingPowerNow) {
     return
   }
 
-  const { voting_power: votingPowerNow } = votingPowerInfo
-  const { events } = await getDelegationTxs({ operatorAddr })
+  const { events } = await getDelegationTxs({ operatorAddr: validator.operator_address })
 
   const fromStr = new Date(fromTs).toISOString()
   const delegationBetweenRange = events.filter((ev) => {

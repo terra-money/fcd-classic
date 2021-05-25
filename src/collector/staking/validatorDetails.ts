@@ -11,7 +11,7 @@ import { APIError, ErrorTypes } from 'lib/error'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
-import { getDelegators } from 'service/staking'
+import { Delegator, getDelegators } from 'service/staking'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
@@ -62,7 +62,7 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
 type SaveValidatorParams = {
   lcdValidator: LcdValidator
   activePrices: CoinByDenoms
-  votingPower: lcd.LcdVotingPower
+  votingPower: lcd.VotingPower
 }
 
 export async function saveValidatorDetail({ lcdValidator, activePrices, votingPower }: SaveValidatorParams) {

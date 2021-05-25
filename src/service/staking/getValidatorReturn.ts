@@ -1,5 +1,10 @@
 import { getConnection } from 'typeorm'
 
+export interface ValidatorAnnualReturn {
+  isNewValidator: boolean
+  stakingReturn: string
+}
+
 export async function getValidatorAnnualAvgReturn(operatorAddress: string): Promise<ValidatorAnnualReturn> {
   const rawQuery = `
 SELECT operator_address,

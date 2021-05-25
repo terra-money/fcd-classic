@@ -74,7 +74,7 @@ const config = {
         ukrw: '178.05'
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
-  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false')
+  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'true')
 }
 
 export default config

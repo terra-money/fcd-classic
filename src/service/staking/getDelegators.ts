@@ -2,6 +2,12 @@ import { orderBy, drop, take } from 'lodash'
 import { div, plus } from 'lib/math'
 import * as lcd from 'lib/lcd'
 
+export interface Delegator {
+  address: string
+  amount: string
+  weight: string
+}
+
 interface GetDelegatorPaginatedResult {
   totalCnt: number // total delegator
   page: number //  page number
