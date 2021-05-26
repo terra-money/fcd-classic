@@ -6,7 +6,6 @@ interface ValidatorResponse {
     maxChangeRate: string
     updateTime: string
   }
-  consensusPubkey: string
   delegatorShares: string
   description: {
     identity: string
