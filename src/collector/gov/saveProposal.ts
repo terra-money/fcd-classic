@@ -3,7 +3,7 @@ import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ProposalEntity } from 'orm'
 import config from 'config'
-import { getVoteSummary } from 'service/governance/helper'
+import { STATUS_MAPPING, getVoteSummary } from 'service/governance/helper'
 
 function shouldUpdateProposal(status: string): boolean {
   if (status === 'VotingPeriod' || status === 'DepositPeriod') {
@@ -47,7 +47,7 @@ export async function saveProposalDetails(
     chainId: config.CHAIN_ID,
     title: proposal.content.value.title,
     type: proposal.content.type,
-    status: proposal.proposal_status,
+    status: STATUS_MAPPING[proposal.status],
     submitTime: proposal.submit_time,
     depositEndTime: proposal.deposit_end_time,
     votingStartTime: proposal.voting_start_time,

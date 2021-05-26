@@ -55,7 +55,7 @@ const basicProposalObject = {
     }
   },
   id: expect.any(String),
-  proposal_status: expect.any(String),
+  status: expect.any(Number),
   final_tally_result: {
     yes: expect.any(String),
     abstain: expect.any(String),

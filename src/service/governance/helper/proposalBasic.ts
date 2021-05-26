@@ -12,10 +12,13 @@ export enum ProposalStatus {
   FAILED = 'Failed'
 }
 
+export const STATUS_MAPPING = ['Nil', 'DepositPeriod', 'VotingPeriod', 'Passed', 'Rejected', 'Failed']
+
 function transformStatus(status: string): string {
   if (status === 'VotingPeriod') {
     return 'Voting'
   }
+
   if (status === 'DepositPeriod') {
     return 'Deposit'
   }

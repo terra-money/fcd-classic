@@ -27,7 +27,7 @@ interface Content {
 interface LcdProposal {
   content: Content
   id: string
-  proposal_status: string
+  status: number
   final_tally_result: LcdProposalTallyingParams
   submit_time: string
   deposit_end_time: string
