@@ -97,11 +97,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     }
   }
 
-  if (
-    account.type === AccountType.BASE_COL1 ||
-    account.type === AccountType.BASE_COL3 ||
-    account.type === AccountType.BASE_COL5
-  ) {
+  if (account.type === AccountType.BASE_COL1 || account.type === AccountType.BASE_COL3) {
     return {
       value: (account as StandardAccount).value
     }
