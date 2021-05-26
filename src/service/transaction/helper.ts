@@ -1,5 +1,5 @@
 import { get, filter } from 'lodash'
-import nlp from 'compromise'
+const nlp = require('compromise')
 
 export const getSwapCoinAndFee = (log): { swapCoin: string; swapFee: string } => {
   let swapCoin = ''
