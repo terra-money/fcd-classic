@@ -75,7 +75,7 @@ const config = {
         ukrw: '178.05'
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
-  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'true'),
+  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false'),
   INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '0')
 }
 
