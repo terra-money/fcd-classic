@@ -83,7 +83,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     : []
 
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
-    chainId: config.CHAIN_ID,
     operatorAddress,
     consensusPubkey: signingInfo?.address,
     accountAddress: accountAddr,
@@ -115,7 +114,7 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
   }
 
   const repo = getRepository(ValidatorInfoEntity)
-  const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
+  const validator = await repo.findOne({ operatorAddress })
 
   if (!validator) {
     logger.info(`New validator found (operator address: ${operatorAddress}`)

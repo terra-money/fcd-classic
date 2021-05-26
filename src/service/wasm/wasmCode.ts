@@ -32,19 +32,12 @@ export function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
   }
 }
 
-export async function getWasmCodes({
-  offset,
-  limit,
-  sender,
-  search
-}: WasmCodeParams): Promise<{
+export async function getWasmCodes({ offset, limit, sender, search }: WasmCodeParams): Promise<{
   codes: WasmCodeDetails[]
   limit: number
   next?: number
 }> {
   const qb = getRepository(WasmCodeEntity).createQueryBuilder()
-
-  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
 
   if (offset) {
     qb.andWhere('offset = :offset', { offset: LessThan(offset) })
@@ -78,8 +71,7 @@ export async function getWasmCodes({
 
 export async function getWasmCode(codeId: string): Promise<WasmCodeDetails> {
   const code = await getRepository(WasmCodeEntity).findOne({
-    codeId,
-    chainId: config.CHAIN_ID
+    codeId
   })
 
   if (!code) {

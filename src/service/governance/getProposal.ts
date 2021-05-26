@@ -53,7 +53,6 @@ async function getDelegatedValidatorWhoDidNotVoted(
   const qb = getRepository(ValidatorInfoEntity)
     .createQueryBuilder('validator')
     .where('validator.operatorAddress IN (:...ids)', { ids: delegatedOperatorList })
-    .andWhere('validator.chainId = (:chainId)', { chainId: config.CHAIN_ID })
     .andWhere('validator.status = (:status)', { status: 'active' })
 
   const delegatedValidator = await qb.getMany()

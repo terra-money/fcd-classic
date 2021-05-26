@@ -9,17 +9,12 @@ export enum ValidatorStatus {
 }
 
 @Entity('validator_info')
-@Index('vi_index_chainId_accountAddress', ['chainId', 'accountAddress'], { unique: true })
 export default class ValidatorInfoEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Index('vi_chain_id')
-  @Column()
-  chainId: string
-
   @Index('vi_operator_address')
-  @Column()
+  @Column({ unique: true })
   operatorAddress: string
 
   @Index('vi_cons_pub_key')

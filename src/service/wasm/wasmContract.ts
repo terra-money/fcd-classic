@@ -14,9 +14,7 @@ function buildContractFindConditions(
   search?: string,
   codeId?: string
 ): FindConditions<WasmContractEntity>[] {
-  const commonCondition: FindConditions<WasmContractEntity> = {
-    // chainId: config.CHAIN_ID
-  }
+  const commonCondition: FindConditions<WasmContractEntity> = {}
 
   if (offset) {
     commonCondition['id'] = LessThan(offset)
@@ -86,13 +84,7 @@ type WasmContractParams = {
   codeId?: string
 }
 
-export async function getWasmContracts({
-  offset,
-  limit,
-  owner,
-  search,
-  codeId
-}: WasmContractParams): Promise<{
+export async function getWasmContracts({ offset, limit, owner, search, codeId }: WasmContractParams): Promise<{
   contracts: WasmContractDetails[]
   limit: number
   next?: number
@@ -120,8 +112,7 @@ export async function getWasmContracts({
 
 export async function getWasmContract(contractAddress: string): Promise<WasmContractDetails> {
   const contract = await getRepository(WasmContractEntity).findOne({
-    contractAddress,
-    chainId: config.CHAIN_ID
+    contractAddress
   })
 
   if (!contract) {
