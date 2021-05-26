@@ -1,7 +1,6 @@
 enum AccountType {
   BASE_COL1 = 'auth/Account', // columbus-1
   BASE_COL3 = 'core/Account', // columbus-3
-  BASE_COL5 = 'core/BaseAccount', // columbus-5
   VESTING = 'core/GradedVestingAccount', // columbus-1
   LAZY_VESTING = 'core/LazyGradedVestingAccount', // columbus-2
   MODULE = 'supply/ModuleAccount' // columbus -3
