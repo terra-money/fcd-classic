@@ -117,7 +117,10 @@ interface LcdRewardPool {
 }
 
 interface LcdValidatorDelegationItem {
-  delegator_address: string
-  shares: string
-  validator_address: string
+  delegation: {
+    delegator_address: string
+    shares: string
+    validator_address: string
+  }
+  balance: Coin
 }

@@ -17,10 +17,10 @@ interface GetDelegatorPaginatedResult {
 
 export async function getDelegators(operatorAddr: string): Promise<Delegator[]> {
   const delegations = await lcd.getValidatorDelegations(operatorAddr)
-  const delegateTotal = delegations.reduce((acc, curr) => plus(acc, curr.shares), '0')
+  const delegateTotal = delegations.reduce((acc, curr) => plus(acc, curr.delegation.shares), '0')
 
   return orderBy(
-    delegations.map((d) => ({
+    delegations.map(({ delegation: d }) => ({
       address: d.delegator_address,
       amount: d.shares,
       weight: div(d.shares, delegateTotal)
