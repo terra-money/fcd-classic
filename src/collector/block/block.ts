@@ -14,7 +14,6 @@ import { saveTxs, generateTxEntities } from './tx'
 import { saveWasmCodeAndContract } from './wasm'
 
 import { collectReward } from 'collector/reward'
-import { collectSwap } from 'collector/swap'
 import { collectNetwork } from 'collector/network'
 import { detectAndUpdateProposal } from 'collector/gov'
 
@@ -176,7 +175,7 @@ export async function saveBlockInformation(
 
 export async function collectBlock(): Promise<void> {
   let latestIndexedBlock = await getLatestIndexedBlock()
-  const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : 0
+  const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : config.INITIAL_HEIGHT
   let nextSyncHeight = latestIndexedHeight + 1
   const latestBlock = await lcd.getLatestBlock()
   const latestHeight = Number(latestBlock.block.header.height)
