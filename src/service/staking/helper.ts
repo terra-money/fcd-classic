@@ -155,7 +155,10 @@ export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
 
 export async function getMyDelegation(delegator: string, validator: ValidatorResponse): Promise<string | undefined> {
   const delegation = await lcd.getDelegationForValidator(delegator, validator.operatorAddress)
-  return delegation?.shares && div(times(delegation.shares, validator.tokens), validator.delegatorShares)
+  return (
+    delegation?.delegation.shares &&
+    div(times(delegation.delegation.shares, validator.tokens), validator.delegatorShares)
+  )
 }
 
 export function getUndelegateSchedule(
