@@ -175,8 +175,7 @@ export async function saveBlockInformation(
 
 export async function collectBlock(): Promise<void> {
   let latestIndexedBlock = await getLatestIndexedBlock()
-  const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : config.INITIAL_HEIGHT
-  let nextSyncHeight = latestIndexedHeight + 1
+  let nextSyncHeight = latestIndexedBlock ? latestIndexedBlock.height + 1 : config.INITIAL_HEIGHT
   const latestBlock = await lcd.getLatestBlock()
   const latestHeight = Number(latestBlock.block.header.height)
 
