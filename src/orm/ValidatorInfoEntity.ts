@@ -98,9 +98,9 @@ export default class ValidatorInfoEntity {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @Column({ type: 'jsonb' })
+  @Column({ nullable: true, type: 'jsonb' })
   public signingInfo: object
 
-  @Column({ type: 'jsonb' })
+  @Column({ nullable: true, type: 'jsonb' })
   public rewardPool: object
 }
