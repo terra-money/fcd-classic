@@ -142,13 +142,15 @@ describe('LCD', () => {
 
     expect(delegations).toBeArray()
 
-    const delegation = delegations.find((d) => d.delegator_address === VALID_TERRA_ADDRESS)
+    const delegation = delegations.find((d) => d.delegation.delegator_address === VALID_TERRA_ADDRESS)
 
     expect(delegation).toMatchObject({
       balance: coinObject,
-      delegator_address: expect.any(String),
-      shares: expect.any(String),
-      validator_address: expect.any(String)
+      delegation: {
+        delegator_address: expect.any(String),
+        shares: expect.any(String),
+        validator_address: expect.any(String)
+      }
     })
   })
 

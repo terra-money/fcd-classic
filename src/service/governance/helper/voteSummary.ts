@@ -38,7 +38,7 @@ function getVotersVotingPowerArr(
   validatorsVotingPower: ValidatorVotingPower[],
   delegations: LcdDelegation[]
 ): ValidatorVotingPower[] {
-  delegations.forEach((delegation) => {
+  delegations.forEach(({ delegation }) => {
     const { delegator_address: delegatorAddress, validator_address: validatorAddress, shares } = delegation
     const validator = validatorsVotingPower.find((v) => v.operatorAddress === validatorAddress)
     const delegator = validatorsVotingPower.find((v) => v.accountAddress === delegatorAddress)
