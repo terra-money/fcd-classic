@@ -41,13 +41,13 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 
   switch (status) {
-    case 0: {
+    case 1: {
       return ValidatorStatus.INACTIVE
     }
-    case 1: {
+    case 2: {
       return ValidatorStatus.UNBONDING
     }
-    case 2: {
+    case 3: {
       return ValidatorStatus.ACTIVE
     }
     default: {
@@ -67,11 +67,9 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
   const delegators = await getDelegators(operatorAddress).catch(() => [])
   const selfDelegation = getSelfDelegation(delegators, accountAddr)
 
-  const keyBaseId = lcdValidator.description?.identity
-  const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
-
+  const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
+  const profileIcon = identity && (await getAvatar(identity))
   const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
-
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
   let rewardPoolTotal = '0'
@@ -84,7 +82,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
       })
     : []
 
-  const { details, identity, moniker, website } = lcdValidator.description
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
     chainId: config.CHAIN_ID,
     operatorAddress,
@@ -94,14 +91,15 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     identity,
     moniker,
     website,
+    securityContact,
     tokens: lcdValidator.tokens,
     delegatorShares: lcdValidator.delegator_shares,
-    unbondingHeight: +lcdValidator.unbonding_height,
+    unbondingHeight: +lcdValidator.unbonding_height || 0,
     unbondingTime: new Date(lcdValidator.unbonding_time),
     profileIcon: profileIcon ? profileIcon : '',
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
-    missedOracleVote: +missedVote,
+    missedOracleVote: +missedVote || 0,
     votingPower: extendedValidator.votingPower,
     votingPowerWeight: extendedValidator.votingPowerWeight,
     commissionRate: lcdValidator.commission.commission_rates.rate,
@@ -115,8 +113,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
-
-  console.log(JSON.stringify(validatorDetails, null, 2))
 
   const repo = getRepository(ValidatorInfoEntity)
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })

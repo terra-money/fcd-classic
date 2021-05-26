@@ -14,6 +14,7 @@ interface ValidatorResponse {
     website: string
     details: string
     profileIcon: string
+    securityContact: string
   }
   isNewValidator: boolean
   operatorAddress: string

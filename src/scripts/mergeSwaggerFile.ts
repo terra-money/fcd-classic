@@ -7,7 +7,7 @@ import * as yargs from 'yargs'
 
 import config from 'config'
 
-const LCD_SWAGGER_URL = `${config.LCD_URI}/swagger-ui/swagger.yaml`
+const LCD_SWAGGER_URL = `${config.LCD_URI}/swagger/swagger.yaml`
 
 interface Info {
   title: string

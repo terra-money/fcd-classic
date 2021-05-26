@@ -337,6 +337,7 @@ export function generateValidatorResponse(
     identity,
     moniker,
     website,
+    securityContact,
     details,
     profileIcon,
     votingPower,
@@ -363,6 +364,7 @@ export function generateValidatorResponse(
       identity,
       moniker,
       website,
+      securityContact,
       details,
       profileIcon
     },

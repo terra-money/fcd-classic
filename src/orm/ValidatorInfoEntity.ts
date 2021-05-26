@@ -33,13 +33,16 @@ export default class ValidatorInfoEntity {
   @Column()
   moniker: string
 
-  @Column()
+  @Column({ nullable: true })
   identity: string
 
-  @Column()
+  @Column({ nullable: true })
   website: string
 
-  @Column()
+  @Column({ nullable: true })
+  securityContact: string
+
+  @Column({ nullable: true })
   details: string
 
   @Column()
@@ -50,7 +53,7 @@ export default class ValidatorInfoEntity {
   status: ValidatorStatus
 
   @Index('vi_jailed')
-  @Column()
+  @Column({ nullable: true })
   jailed: boolean
 
   @Column()
