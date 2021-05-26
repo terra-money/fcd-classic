@@ -392,7 +392,9 @@ describe('LCD', () => {
     await expect(lcd.getCommissions(VALID_VALOPER_ADDRESS)).resolves.toMatchObject({
       operator_address: VALID_VALTERRA_ADDRESS,
       self_bond_rewards: expect.arrayContaining([coinObject]),
-      val_commission: expect.arrayContaining([coinObject])
+      val_commission: {
+        commision: expect.arrayContaining([coinObject])
+      }
     })
   })
 

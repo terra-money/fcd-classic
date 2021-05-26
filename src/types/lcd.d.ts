@@ -113,7 +113,9 @@ interface LcdValidatorSigningInfo {
 interface LcdRewardPool {
   operator_address: string
   self_bond_rewards: Coin[]
-  val_commission: Coin[]
+  val_commission: {
+    commission: Coin[]
+  }
 }
 
 interface LcdValidatorDelegationItem {

@@ -147,7 +147,7 @@ export async function getRawDelegationTxs(param: GetRawDelegationTxsParam): Prom
 export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
   try {
     const totalRewards = await lcd.getCommissions(operatorAddr)
-    return totalRewards ? totalRewards.val_commission : []
+    return totalRewards ? totalRewards.val_commission.commission : []
   } catch (e) {
     return []
   }

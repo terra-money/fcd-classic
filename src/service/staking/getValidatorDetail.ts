@@ -53,7 +53,7 @@ export async function getValidatorDetailUncached(
     return
   }
 
-  const commissions: Coin[] = sortDenoms(await getCommissions(operatorAddr))
+  const commissions = sortDenoms(await getCommissions(operatorAddr))
 
   let result: ValidatorDetailsReturn = {
     ...validator,
