@@ -84,7 +84,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
 
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
     operatorAddress,
-    consensusPubkey: signingInfo?.address,
     accountAddress: accountAddr,
     details,
     identity,

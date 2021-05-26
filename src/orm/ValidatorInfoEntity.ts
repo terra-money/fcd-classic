@@ -17,10 +17,6 @@ export default class ValidatorInfoEntity {
   @Column({ unique: true })
   operatorAddress: string
 
-  @Index('vi_cons_pub_key')
-  @Column()
-  consensusPubkey: string
-
   @Index('vi_account_address')
   @Column()
   accountAddress: string
@@ -28,16 +24,16 @@ export default class ValidatorInfoEntity {
   @Column()
   moniker: string
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   identity: string
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   website: string
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   securityContact: string
 
-  @Column({ default: '' })
+  @Column({ nullable: true, default: '' })
   details: string
 
   @Column()
@@ -48,7 +44,7 @@ export default class ValidatorInfoEntity {
   status: ValidatorStatus
 
   @Index('vi_jailed')
-  @Column({ default: false })
+  @Column({ nullable: true, default: false })
   jailed: boolean
 
   @Column()

@@ -331,7 +331,6 @@ export function generateValidatorResponse(
 ): ValidatorResponse {
   const {
     operatorAddress,
-    consensusPubkey,
     tokens,
     delegatorShares,
     upTime,
@@ -357,7 +356,6 @@ export function generateValidatorResponse(
 
   return {
     operatorAddress,
-    consensusPubkey,
     tokens,
     delegatorShares,
     upTime,

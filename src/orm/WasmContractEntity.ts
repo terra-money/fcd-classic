@@ -39,6 +39,6 @@ export default class WasmContractEntity {
   @ManyToOne(() => WasmCodeEntity, (code) => code, {
     eager: true
   })
-  @JoinColumn([{ name: 'code_id', referencedColumnName: 'codeId' }])
+  @JoinColumn([{ name: 'code_id' }])
   code: WasmCodeEntity
 }
