@@ -86,14 +86,19 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 // Tendermint RPC
 ///////////////////////////////////////////////
 export function getValidatorConsensus(): Promise<LcdValidatorConsensus[]> {
-  return Promise.all([get(`/validatorsets/latest`), get(`/validatorsets/latest?page=2`)]).then(
-    (results: LcdValidatorSets[]) =>
-      results
-        .reduce((p, c) => {
-          p.push(...c.validators)
-          return p
-        }, [] as LcdValidatorConsensus[])
-        .flat()
+  return Promise.all([
+    get(`/validatorsets/latest`),
+    // hotfix: if page 2 fails, ignore it
+    get(`/validatorsets/latest?page=2`).catch(() => ({
+      validators: []
+    }))
+  ]).then((results: LcdValidatorSets[]) =>
+    results
+      .reduce((p, c) => {
+        p.push(...c.validators)
+        return p
+      }, [] as LcdValidatorConsensus[])
+      .flat()
   )
 }
 
