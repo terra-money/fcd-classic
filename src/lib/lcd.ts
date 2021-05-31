@@ -85,8 +85,16 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 ///////////////////////////////////////////////
 // Tendermint RPC
 ///////////////////////////////////////////////
-export function getLatestValidatorSet(): Promise<LcdValidatorSets> {
-  return get(`/validatorsets/latest`)
+export function getValidatorConsensus(): Promise<LcdValidatorConsensus[]> {
+  return Promise.all([get(`/validatorsets/latest`), get(`/validatorsets/latest?page=2`)]).then(
+    (results: LcdValidatorSets[]) =>
+      results
+        .reduce((p, c) => {
+          p.push(...c.validators)
+          return p
+        }, [] as LcdValidatorConsensus[])
+        .flat()
+  )
 }
 
 export interface VotingPower {
@@ -99,7 +107,7 @@ export interface VotingPower {
 type VotingPowerByPubKey = { [pubKey: string]: string }
 
 export async function getVotingPower(): Promise<VotingPower> {
-  const latestValidatorSet = await getLatestValidatorSet()
+  const validatorConsensus = await getValidatorConsensus()
   let totalVotingPower = '0'
 
   const reducer = (acc: VotingPowerByPubKey, { pub_key, voting_power }: LcdValidatorConsensus): VotingPowerByPubKey => {
@@ -107,10 +115,7 @@ export async function getVotingPower(): Promise<VotingPower> {
     return { ...acc, [pub_key]: voting_power }
   }
 
-  const votingPowerByPubKey = Array.isArray(latestValidatorSet.validators)
-    ? latestValidatorSet.validators.reduce(reducer, {})
-    : {}
-
+  const votingPowerByPubKey = validatorConsensus.reduce(reducer, {})
   return { totalVotingPower, votingPowerByPubKey }
 }
 
