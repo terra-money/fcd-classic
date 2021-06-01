@@ -91,6 +91,9 @@ export function getValidatorConsensus(): Promise<LcdValidatorConsensus[]> {
     // hotfix: if page 2 fails, ignore it
     get(`/validatorsets/latest?page=2`).catch(() => ({
       validators: []
+    })),
+    get(`/validatorsets/latest?page=3`).catch(() => ({
+      validators: []
     }))
   ]).then((results: LcdValidatorSets[]) =>
     results
