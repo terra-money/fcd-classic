@@ -84,10 +84,12 @@ describe('LCD', () => {
     })
   })
 
-  test('getLatestValidatorSet', async () => {
-    await expect(lcd.getLatestValidatorSet()).resolves.toMatchObject({
-      block_height: expect.any(String),
-      validators: expect.any(Array)
+  test('getValidatorConsensus', async () => {
+    await expect(lcd.getValidatorConsensus()).resolves.toContainEqual({
+      address: expect.any(String),
+      pub_key: expect.any(String),
+      proposer_priority: expect.any(String),
+      voting_power: expect.any(String)
     })
   })
 

@@ -89,11 +89,27 @@ async function getSigningInfos(): Promise<LcdValidatorSigningInfo[]> {
   return (await get('/cosmos/slashing/v1beta1/signing_infos')).info
 }
 
-export function getLatestValidatorSet(): Promise<LcdValidatorSets> {
-  return get(`/validatorsets/latest`)
+export function getValidatorConsensus(): Promise<LcdValidatorConsensus[]> {
+  return Promise.all([
+    get(`/validatorsets/latest`),
+    // hotfix: if page 2 fails, ignore it
+    get(`/validatorsets/latest?page=2`).catch(() => ({
+      validators: []
+    })),
+    get(`/validatorsets/latest?page=3`).catch(() => ({
+      validators: []
+    }))
+  ]).then((results: LcdValidatorSets[]) =>
+    results
+      .reduce((p, c) => {
+        p.push(...c.validators)
+        return p
+      }, [] as LcdValidatorConsensus[])
+      .flat()
+  )
 }
 
-// Validator Database includes all LcdValidator, VotingPower and Uptime
+// ExtendedValidator includes all LcdValidator, VotingPower and Uptime
 export interface ExtendedValidator {
   lcdValidator: LcdValidator
   votingPower: string
@@ -102,17 +118,15 @@ export interface ExtendedValidator {
 }
 
 export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
-  const [validators, validatorSet, signingInfos] = await Promise.all([
+  const [validators, validatorConsensus, signingInfos] = await Promise.all([
     getValidators(),
-    getLatestValidatorSet(),
+    getValidatorConsensus(),
     getSigningInfos()
   ])
-  const totalVotingPower = validatorSet.validators.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
+  const totalVotingPower = validatorConsensus.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
 
   return validators.reduce((prev, lcdValidator) => {
-    const consVal = validatorSet.validators.find(
-      (consVal) => consVal.pub_key.value === lcdValidator.consensus_pubkey.value
-    )
+    const consVal = validatorConsensus.find((consVal) => consVal.pub_key.value === lcdValidator.consensus_pubkey.value)
 
     if (!consVal) {
       return prev
@@ -131,20 +145,8 @@ export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
   }, [] as ExtendedValidator[])
 }
 
-export function getBlock(height: string): Promise<LcdBlock> {
-  return get(`/blocks/${height}`)
-}
-
 export function getLatestBlock(): Promise<LcdBlock> {
-  return get(`/blocks/latest`)
-}
-
-///////////////////////////////////////////////
-// Auth
-///////////////////////////////////////////////
-export async function getAccount(
-  address: string
-): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
+  // Auth
   const empty = {
     type: 'auth/Account',
     value: {
