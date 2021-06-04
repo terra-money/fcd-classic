@@ -21,7 +21,7 @@ function getFilteredEventByType(tx: TxEntity, eventType: string): Transaction.Ev
 
 function getContractInfo(tx: TxEntity): ContractInfo {
   const { value, txMemo } = getTxMsgTypeAndValueMemo(tx)
-  const { admin: owner, code_id, init_msg } = value
+  const { admin: owner = '', code_id, init_msg } = value
 
   const info = {
     owner,
