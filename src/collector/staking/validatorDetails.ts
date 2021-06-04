@@ -129,8 +129,6 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     rewardPool: sortDenoms(rewardPool)
   }
 
-  console.log(JSON.stringify(validatorDetails, null, 2))
-
   const repo = getRepository(ValidatorInfoEntity)
   const validator = await repo.findOne({ operatorAddress, chainId: config.CHAIN_ID })
 
