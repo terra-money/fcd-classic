@@ -26,7 +26,8 @@ export default class TxEntity {
 
   @Index('tx_block_id')
   @ManyToOne(() => BlockEntity, (block) => block.txs, {
-    cascade: ['insert']
+    cascade: ['insert'],
+    onDelete: 'CASCADE'
   })
   @JoinColumn({ name: 'block_id' })
   block: BlockEntity

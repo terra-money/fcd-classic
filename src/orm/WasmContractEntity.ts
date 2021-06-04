@@ -37,8 +37,9 @@ export default class WasmContractEntity {
   migrateMsg: string
 
   @ManyToOne(() => WasmCodeEntity, (code) => code, {
-    eager: true
+    eager: true,
+    onDelete: 'CASCADE'
   })
-  @JoinColumn([{ name: 'code_id' }])
+  @JoinColumn({ name: 'code_id', referencedColumnName: 'codeId' })
   code: WasmCodeEntity
 }

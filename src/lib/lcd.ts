@@ -145,7 +145,20 @@ export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
   }, [] as ExtendedValidator[])
 }
 
+export function getBlock(height: string): Promise<LcdBlock> {
+  return get(`/blocks/${height}`)
+}
+
 export function getLatestBlock(): Promise<LcdBlock> {
+  return get(`/blocks/latest`)
+}
+
+///////////////////////////////////////////////
+// Auth
+///////////////////////////////////////////////
+export async function getAccount(
+  address: string
+): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
   // Auth
   const empty = {
     type: 'auth/Account',
