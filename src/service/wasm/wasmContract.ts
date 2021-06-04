@@ -54,7 +54,6 @@ type WasmContractDetails = {
   txhash: string
   timestamp: string
   contract_address: string
-  migratable: boolean
   migrate_msg: string
   info: ParsedMemo
   code: WasmCodeDetails
@@ -69,7 +68,6 @@ function transformToContractDetails(contract: WasmContractEntity): WasmContractD
     txhash: contract.txHash,
     timestamp: contract.timestamp.toISOString(),
     contract_address: contract.contractAddress,
-    migratable: contract.migratable,
     migrate_msg: contract.migrateMsg,
     info: parseWasmTxMemo(contract.txMemo),
     code: getWasmCodeDetails(contract.code)

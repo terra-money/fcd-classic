@@ -96,7 +96,6 @@ function generateWasmContractEntity(tx: TxEntity): WasmContractEntity {
   contract.timestamp = tx.timestamp
   contract.txHash = info.txhash
   contract.txMemo = info.txMemo
-  contract.migratable = info.migratable
   return contract
 }
 
@@ -130,7 +129,7 @@ function getMsgTypeAndStatus(tx: TxEntity): {
   return ret
 }
 
-async function updateContract(transactionEntityManager: EntityManager, wasmMigrationTxs: TxEntity[]) {
+async function updateContract(mgr: EntityManager, wasmMigrationTxs: TxEntity[]) {
   for (const tx of wasmMigrationTxs) {
     const { type, value } = getTxMsgTypeAndValueMemo(tx)
     const wasmContract: DeepPartial<WasmContractEntity> = {}
@@ -147,7 +146,7 @@ async function updateContract(transactionEntityManager: EntityManager, wasmMigra
       throw new Error('Unknown type')
     }
 
-    const existingContract = await transactionEntityManager.findOne(WasmContractEntity, {
+    const existingContract = await mgr.findOne(WasmContractEntity, {
       contractAddress: value.contract
     })
 
@@ -155,25 +154,36 @@ async function updateContract(transactionEntityManager: EntityManager, wasmMigra
       throw new Error('Failed to update contract')
     }
 
-    transactionEntityManager.update(WasmContractEntity, existingContract.id, wasmContract)
+    mgr.update(WasmContractEntity, existingContract.id, wasmContract)
   }
 }
 
-export async function saveWasmCodeAndContract(transactionEntityManager: EntityManager, txEntities: TxEntity[]) {
+export async function saveWasmCodeAndContract(mgr: EntityManager, txEntities: TxEntity[]) {
   const wasmCodes: WasmCodeEntity[] = []
   const wasmContracts: WasmContractEntity[] = []
   const wasmTxToUpdate: TxEntity[] = []
 
-  txEntities.forEach((tx: TxEntity) => {
+  for (let i = 0; i < txEntities.length; ++i) {
+    const tx = txEntities[i]
     const { msgType, failed } = getMsgTypeAndStatus(tx)
+
     if (failed) {
-      return
+      continue
     }
 
     switch (msgType) {
-      case `wasm/MsgStoreCode`:
-        wasmCodes.push(generateWasmCodeEntity(tx))
+      case `wasm/MsgStoreCode`: {
+        const codeEntity = generateWasmCodeEntity(tx)
+
+        const existingEntity = await mgr.findOne(WasmCodeEntity, { codeId: codeEntity.codeId })
+
+        if (existingEntity) {
+          await mgr.update(WasmCodeEntity, existingEntity.id, codeEntity)
+        } else {
+          wasmCodes.push(codeEntity)
+        }
         break
+      }
       case 'wasm/MsgInstantiateContract':
         wasmContracts.push(generateWasmContractEntity(tx))
         break
@@ -186,14 +196,13 @@ export async function saveWasmCodeAndContract(transactionEntityManager: EntityMa
       default:
         break
     }
-  })
+  }
 
-  logger.info(`Storing ${wasmCodes.length} codes and ${wasmContracts.length} contracts.`)
-  await transactionEntityManager.save(wasmCodes)
-  await transactionEntityManager.save(wasmContracts)
-  logger.info(`Stored ${wasmCodes.length} codes and ${wasmContracts.length} contracts.`)
+  logger.info(`Wasm: ${wasmCodes.length} new codes`)
+  await mgr.save(wasmCodes)
+  logger.info(`Wasm: ${wasmContracts.length} new contracts`)
+  await mgr.save(wasmContracts)
 
-  logger.info(`Migrating ${wasmTxToUpdate.length} contract`)
-  await updateContract(transactionEntityManager, wasmTxToUpdate)
-  logger.info(`Migrated ${wasmTxToUpdate.length} contract`)
+  logger.info(`Wasm: ${wasmTxToUpdate.length} contract updates`)
+  await updateContract(mgr, wasmTxToUpdate)
 }
