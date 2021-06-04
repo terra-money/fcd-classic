@@ -30,9 +30,6 @@ export default class WasmContractEntity {
   @Column()
   timestamp: Date
 
-  @Column({ default: false })
-  migratable: boolean
-
   @Column({ nullable: true })
   migrateMsg: string
 

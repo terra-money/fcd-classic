@@ -2,8 +2,6 @@ import { DeepPartial, EntityManager } from 'typeorm'
 import { get, filter } from 'lodash'
 
 import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
-import config from 'config'
-
 import { collectorLogger as logger } from 'lib/logger'
 
 function getTxMsgTypeAndValueMemo(tx: TxEntity): Transaction.Message & { txMemo: string } {
@@ -23,7 +21,7 @@ function getFilteredEventByType(tx: TxEntity, eventType: string): Transaction.Ev
 
 function getContractInfo(tx: TxEntity): ContractInfo {
   const { value, txMemo } = getTxMsgTypeAndValueMemo(tx)
-  const { owner, code_id, init_msg, migratable } = value
+  const { admin: owner, code_id, init_msg } = value
 
   const info = {
     owner,
@@ -31,8 +29,7 @@ function getContractInfo(tx: TxEntity): ContractInfo {
     init_msg: JSON.stringify(init_msg),
     txhash: tx.hash,
     timestamp: tx.timestamp.toISOString(),
-    txMemo,
-    migratable: migratable ? migratable : false
+    txMemo
   }
 
   const event = getFilteredEventByType(tx, 'instantiate_contract')
