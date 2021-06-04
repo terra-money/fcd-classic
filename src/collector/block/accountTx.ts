@@ -40,7 +40,7 @@ export async function getTargetTx(tx?: TxEntity): Promise<TxEntity | undefined> 
 
 export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
   try {
-    const executeMsg = JSON.parse(Buffer.from(value.execute_msg, 'base64').toString())
+    const executeMsg = value.execute_msg
 
     if (findAssetByToken(value.contract)) {
       // Sell to TerraSwap

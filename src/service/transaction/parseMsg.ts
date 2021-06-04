@@ -199,7 +199,7 @@ const contract: Parser = ({ type, value: v, log }) => {
     },
     MsgInstantiateContract: () => {
       const contract = get(log, 'events[0].attributes[2].value')
-      // const msg = Buffer.from(v.init_msg, 'base64').toString()
+      // const msg = v.init_msg
 
       return {
         tag,
@@ -207,15 +207,7 @@ const contract: Parser = ({ type, value: v, log }) => {
       }
     },
     MsgExecuteContract: () => {
-      let method
-
-      try {
-        const msg = JSON.parse(Buffer.from(v.execute_msg, 'base64').toString())
-        method = Object.keys(msg)[0]
-      } catch (e) {
-        method = '?'
-      }
-
+      const method = Object.keys(v.execute_msg)[0] || '?'
       let text = `Executed ${method} on ${v.contract}`
 
       if (Array.isArray(v.coins) && v.coins.length) {
@@ -228,7 +220,7 @@ const contract: Parser = ({ type, value: v, log }) => {
       }
     },
     MsgMigrateContract: () => {
-      // const msg = Buffer.from(v.migrate_msg, 'base64').toString()
+      // const msg = v.migrate_msg
       return {
         tag,
         text: `Migrated ${v.contract} to code ${v.new_code_id}`

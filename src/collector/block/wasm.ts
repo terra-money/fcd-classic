@@ -28,7 +28,7 @@ function getContractInfo(tx: TxEntity): ContractInfo {
   const info = {
     owner,
     code_id,
-    init_msg: Buffer.from(init_msg, 'base64').toString(),
+    init_msg: JSON.stringify(init_msg),
     txhash: tx.hash,
     timestamp: tx.timestamp.toISOString(),
     txMemo,
@@ -142,7 +142,7 @@ async function updateContract(transactionEntityManager: EntityManager, wasmMigra
       // const { contract, owner, new_code_id, migrate_msg } = value
       wasmContract.owner = value.owner
       wasmContract.codeId = value.new_code_id
-      wasmContract.migrateMsg = Buffer.from(value.migrate_msg, 'base64').toString()
+      wasmContract.migrateMsg = JSON.stringify(value.migrate_msg)
     } else if (type === 'wasm/MsgUpdateContractOwner') {
       // const { contract, new_owner, owner } = value
       wasmContract.owner = value.new_owner
