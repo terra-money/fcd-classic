@@ -198,11 +198,18 @@ export async function saveWasmCodeAndContract(mgr: EntityManager, txEntities: Tx
     }
   }
 
-  logger.info(`Wasm: ${wasmCodes.length} new codes`)
-  await mgr.save(wasmCodes)
-  logger.info(`Wasm: ${wasmContracts.length} new contracts`)
-  await mgr.save(wasmContracts)
+  if (wasmCodes.length) {
+    logger.info(`Wasm: ${wasmCodes.length} new codes`)
+    await mgr.save(wasmCodes)
+  }
 
-  logger.info(`Wasm: ${wasmTxToUpdate.length} contract updates`)
-  await updateContract(mgr, wasmTxToUpdate)
+  if (wasmContracts.length) {
+    logger.info(`Wasm: ${wasmContracts.length} new contracts`)
+    await mgr.save(wasmContracts)
+  }
+
+  if (wasmTxToUpdate.length) {
+    logger.info(`Wasm: ${wasmTxToUpdate.length} contract updates`)
+    await updateContract(mgr, wasmTxToUpdate)
+  }
 }
