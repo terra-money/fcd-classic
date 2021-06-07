@@ -1,4 +1,4 @@
-import { getRepository, getConnection } from 'typeorm'
+import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
 import parseTx from './parseTx'
@@ -78,21 +78,28 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
 
   const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
 
-  const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
-  const txs = await getConnection().query(query, params)
+  return getManager().transaction(async (mgr) => {
+    // Disable indexscan to force use bitmap scan for query speed
+    await mgr.query('SET enable_indexscan=false')
 
-  let next
+    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
+    const txs = await mgr.query(query, params)
 
-  if (param.limit + 1 === txs.length) {
-    next = txs[param.limit - 1].id
-    txs.length -= 1
-  }
+    await mgr.query('SET enable_indexscan=true')
 
-  return {
-    next,
-    limit: param.limit,
-    txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
-  }
+    let next
+
+    if (param.limit + 1 === txs.length) {
+      next = txs[param.limit - 1].id
+      txs.length -= 1
+    }
+
+    return {
+      next,
+      limit: param.limit,
+      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
+    }
+  })
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {

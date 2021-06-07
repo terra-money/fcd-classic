@@ -24,6 +24,9 @@ async function detectValidators(txs: Tx[]) {
   // extract validator addresses from string
   const addresses = uniq(
     txs
+      .filter((tx: any) =>
+        (tx?.value?.msg ?? []).some((msg) => typeof msg.type === 'string' && !msg.type.includes('oracle/'))
+      )
       .map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX))
       .flat()
       .filter(Boolean) as string[]
