@@ -1,4 +1,3 @@
-import { filter } from 'lodash'
 import { DeepPartial, getRepository } from 'typeorm'
 
 import config from 'config'
@@ -11,25 +10,8 @@ import { APIError, ErrorTypes } from 'lib/error'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
-import { Delegator, getDelegators } from 'service/staking'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
-
-function getSelfDelegation(
-  delegators: Delegator[],
-  accountAddr: string
-): {
-  amount: string
-  weight: string
-} {
-  const selfDelegations = filter(delegators, ['address', accountAddr])
-  return selfDelegations.length > 0
-    ? {
-        amount: selfDelegations[0].amount,
-        weight: selfDelegations[0].weight
-      }
-    : { amount: '0', weight: '0' }
-}
 
 function getUptime(signingInfo: LcdValidatorSigningInfo): number {
   const missedBlocksCounter = +signingInfo.missed_blocks_counter || 0
@@ -74,9 +56,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   const accountAddr = convertAddress('terra', operatorAddress)
   const { totalVotingPower, votingPowerByPubKey } = votingPower
 
-  const delegators = await getDelegators(operatorAddress).catch(() => [])
-  const selfDelegation = getSelfDelegation(delegators, accountAddr)
-
+  const selfDelegation = await lcd.getDelegationForValidator(accountAddr, operatorAddress)
   const keyBaseId = lcdValidator.description?.identity
   const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
 
@@ -123,8 +103,8 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     maxCommissionChangeRate: lcdValidator.commission.commission_rates.max_change_rate,
     rewardPoolTotal,
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
-    selfDelegation: selfDelegation.amount,
-    selfDelegationWeight: selfDelegation.weight,
+    selfDelegation: selfDelegation?.balance.amount ?? '0.0',
+    selfDelegationWeight: div(selfDelegation?.shares ?? '0.0', lcdValidator.delegator_shares),
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
