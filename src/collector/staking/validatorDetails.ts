@@ -1,4 +1,3 @@
-import { extend, filter } from 'lodash'
 import { DeepPartial, getRepository } from 'typeorm'
 
 import config from 'config'
@@ -10,23 +9,6 @@ import { div, plus } from 'lib/math'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
-import { Delegator, getDelegators } from 'service/staking'
-
-function getSelfDelegation(
-  delegators: Delegator[],
-  accountAddr: string
-): {
-  amount: string
-  weight: string
-} {
-  const selfDelegations = filter(delegators, ['address', accountAddr])
-  return selfDelegations.length > 0
-    ? {
-        amount: selfDelegations[0].amount,
-        weight: selfDelegations[0].weight
-      }
-    : { amount: '0', weight: '0' }
-}
 
 function getUptime(signingInfo: LcdValidatorSigningInfo): number {
   const missedBlocksCounter = +signingInfo.missed_blocks_counter || 0
@@ -64,9 +46,7 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
 
   const accountAddr = convertAddress('terra', operatorAddress)
 
-  const delegators = await getDelegators(operatorAddress).catch(() => [])
-  const selfDelegation = getSelfDelegation(delegators, accountAddr)
-
+  const selfDelegation = await lcd.getDelegationForValidator(accountAddr, operatorAddress)
   const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const profileIcon = identity && (await getAvatar(identity))
   const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
@@ -105,8 +85,8 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     maxCommissionChangeRate: lcdValidator.commission.commission_rates.max_change_rate,
     rewardPoolTotal,
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
-    selfDelegation: selfDelegation.amount,
-    selfDelegationWeight: selfDelegation.weight,
+    selfDelegation: selfDelegation?.balance.amount ?? '0.0',
+    selfDelegationWeight: div(selfDelegation?.delegation.shares ?? '0.0', lcdValidator.delegator_shares),
     upTime: signingInfo ? getUptime(signingInfo) : 0,
     signingInfo,
     rewardPool: sortDenoms(rewardPool)

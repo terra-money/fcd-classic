@@ -35,7 +35,7 @@ export async function collectDashboard(updateExisting = false) {
 
     if (dashboard) {
       if (!updateExisting) {
-        logger.info(`Dashboard data of date ${dayIt} already exists`)
+        logger.info(`Dashboard exists: ${dayIt.toISOString()}`)
         continue
       }
     } else {
@@ -47,21 +47,21 @@ export async function collectDashboard(updateExisting = false) {
     dashboard.timestamp = dayIt
     dashboard.chainId = config.CHAIN_ID
     dashboard.txVolume = transactionVol[dateKey]
-    dashboard.reward = stakingReturn[dateKey].reward
-    dashboard.avgStaking = stakingReturn[dateKey].avgStaking
+    dashboard.reward = stakingReturn[dateKey]?.reward
+    dashboard.avgStaking = stakingReturn[dateKey]?.avgStaking
     dashboard.taxReward = taxRewards[dateKey]
-    dashboard.activeAccount = accountGrowth[dateKey].activeAccount
-    dashboard.totalAccount = accountGrowth[dateKey].totalAccount
+    dashboard.activeAccount = accountGrowth[dateKey]?.activeAccount
+    dashboard.totalAccount = accountGrowth[dateKey]?.totalAccount
 
     await getRepository(DashboardEntity)
       .save(dashboard)
       .then(() => {
-        logger.info(`Saved dashboard of ${dayIt.toISOString()}`)
+        logger.info(`Dashboard saved: ${dayIt.toISOString()}`)
       })
       .catch((error) => {
-        logger.error(`${error.message} failed to save dashboard of ${dayIt}`)
+        logger.error(`Dashboard save failed: ${dayIt.toISOString()} ${error.message}`)
       })
   }
 
-  logger.info('dashboard collector finished')
+  logger.info('Dashboard collector finished')
 }

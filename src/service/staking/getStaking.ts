@@ -53,13 +53,9 @@ async function getMyDelegations(
   prices: CoinByDenoms
 ): Promise<MyDelegation[]> {
   const myDelegations = await Promise.all(
-    delegations.map(
-      (item: DelegationInfo): Promise<MyDelegation> => {
-        return (
-          validatorObj[item.validator_address] && getMyDelegation(item, validatorObj[item.validator_address], prices)
-        )
-      }
-    )
+    delegations.map((item: DelegationInfo): Promise<MyDelegation> => {
+      return validatorObj[item.validator_address] && getMyDelegation(item, validatorObj[item.validator_address], prices)
+    })
   )
 
   return myDelegations
@@ -68,15 +64,6 @@ async function getMyDelegations(
         .orderBy([(d) => Number(d.amountDelegated)], ['desc'])
         .value()
     : []
-}
-
-function getDelegationTotal(delegations: DelegationInfo[]): string {
-  return (
-    delegations &&
-    delegations.reduce((acc, curr) => {
-      return curr.amount ? plus(acc, curr.amount) : acc
-    }, '0')
-  )
 }
 
 interface UserValidatorWithDelegationInfo extends ValidatorResponse {
@@ -116,24 +103,24 @@ interface GetStakingReturn {
 
 export async function getStakingUncached(address: string): Promise<GetStakingReturn> {
   // Fetch data
-  const [delegations, validators, prices, allRewards, balance] = await Promise.all([
+  const [delegations, validators, prices, totalRewards, balance] = await Promise.all([
     getDelegations(address),
     getValidators(),
     lcd.getActiveOraclePrices(),
-    lcd.getAllRewards(address),
+    lcd.getTotalRewards(address),
     getBalance(address)
   ])
   const validatorObj = keyBy(validators, 'operatorAddress')
 
   // balance
-  const delegationTotal = delegations ? getDelegationTotal(delegations) : '0'
+  const delegationTotal = delegations.reduce((acc, curr) => plus(acc, curr.amount), '0')
   const myUndelegations = balance.unbondings ? getUndelegateSchedule(balance.unbondings, validatorObj) : []
 
   const lunaBalance = find(balance.balance, { denom: 'uluna' })
   const delegatable = lunaBalance ? lunaBalance.delegatable : '0'
 
   // rewards
-  const totalReward = allRewards ? getTotalRewardsAdjustedToLuna(allRewards, prices) : '0'
+  const totalReward = getTotalRewardsAdjustedToLuna(totalRewards, prices)
 
   // my delegations
   const myDelegations = await getMyDelegations(delegations, validatorObj, prices)
@@ -143,7 +130,7 @@ export async function getStakingUncached(address: string): Promise<GetStakingRet
     undelegations: myUndelegations,
     rewards: {
       total: totalReward,
-      denoms: allRewards ? sortDenoms(allRewards) : []
+      denoms: sortDenoms(totalRewards)
     },
     validators: joinValidatorsWithMyDelegation(validators, myDelegations, myUndelegations),
     myDelegations,

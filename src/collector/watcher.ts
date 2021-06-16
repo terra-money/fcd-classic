@@ -24,6 +24,9 @@ async function detectValidators(txs: Tx[]) {
   // extract validator addresses from string
   const addresses = uniq(
     txs
+      .filter((tx: any) =>
+        (tx?.value?.msg ?? []).some((msg) => typeof msg.type === 'string' && !msg.type.includes('oracle/'))
+      )
       .map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX))
       .flat()
       .filter(Boolean) as string[]
@@ -83,7 +86,8 @@ export async function startWatcher() {
   let eventCounter = 0
   const watcher = new RPCWatcher({
     url: SOCKET_URL,
-    logger
+    logger,
+    maxRetryAttempt: Number.MAX_SAFE_INTEGER
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (resp: RpcResponse) => {
@@ -97,15 +101,15 @@ export async function startWatcher() {
   const checkRestart = async () => {
     if (eventCounter === 0) {
       logger.info('watcher: event counter is zero. restarting..')
-      await startWatcher()
+      watcher.restart()
       return
     }
 
     eventCounter = 0
-    setTimeout(checkRestart, 30000)
+    setTimeout(checkRestart, 20000)
   }
 
-  setTimeout(checkRestart, 30000)
+  setTimeout(checkRestart, 20000)
 }
 
 export async function startPolling() {

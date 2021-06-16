@@ -15,8 +15,8 @@ interface GetDelegatorPaginatedResult {
   delegators: Delegator[]
 }
 
-export async function getDelegators(operatorAddr: string): Promise<Delegator[]> {
-  const delegations = await lcd.getValidatorDelegations(operatorAddr)
+export async function getDelegators(operatorAddr: string, page = 1, limit = 10000): Promise<Delegator[]> {
+  const delegations = await lcd.getValidatorDelegations(operatorAddr, page, limit)
   const delegateTotal = delegations.reduce((acc, curr) => plus(acc, curr.delegation.shares), '0')
 
   return orderBy(
@@ -35,7 +35,7 @@ export async function getPaginatedDelegators(
   page: number,
   limit: number
 ): Promise<GetDelegatorPaginatedResult> {
-  const delegations = await getDelegators(operatorAddr)
+  const delegations = await getDelegators(operatorAddr, page, limit)
 
   return {
     totalCnt: delegations.length,

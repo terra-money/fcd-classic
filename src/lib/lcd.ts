@@ -222,8 +222,12 @@ export async function getValidator(operatorAddr: string): Promise<LcdValidator |
   return get(`/staking/validators/${operatorAddr}`)
 }
 
-export async function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
-  return (await get(`/staking/validators/${validatorOperKey}/delegations`)) || []
+export async function getValidatorDelegations(
+  validatorOperKey: string,
+  page = 1,
+  limit = 10000
+): Promise<LcdValidatorDelegationItem[]> {
+  return (await get(`/staking/validators/${validatorOperKey}/delegations?page=${page}&limit=${limit}`)) || []
 }
 
 export function getStakingPool(height?: string): Promise<LcdStakingPool> {
@@ -283,9 +287,9 @@ function rewardFilter(reward) {
   return reward.amount > 0
 }
 
-export async function getAllRewards(delegatorAddress: string): Promise<Coin[]> {
+export async function getTotalRewards(delegatorAddress: string): Promise<Coin[]> {
   const rewards = await get(`/distribution/delegators/${delegatorAddress}/rewards`)
-  return rewards?.total && rewards.total.map(rewardMapper).filter(rewardFilter)
+  return (rewards.total || []).map(rewardMapper).filter(rewardFilter)
 }
 
 export async function getRewards(delegatorAddress: string, validatorOperAddress: string): Promise<Coin[]> {
