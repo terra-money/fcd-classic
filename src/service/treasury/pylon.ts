@@ -25,7 +25,13 @@ async function _getOverview(): Promise<PylonOverview | undefined> {
   if (typeof res.data.tokenAddress !== 'string') {
     return undefined
   }
-  return res.data as PylonOverview
+
+  return {
+    tokenAddress: res.data.tokenAddress || '',
+    priceInUst: res.data.priceInUst || 0.0,
+    totalStaked: res.data.totalStaked || '',
+    circulatingSupply: res.data.circulatingSupply || ''
+  } as PylonOverview
 }
 
 export const getOverview = memoizeCache(_getOverview, {
@@ -35,7 +41,7 @@ export const getOverview = memoizeCache(_getOverview, {
 
 export async function getBalance(address: string): Promise<string> {
   const overview = await getOverview()
-  if (!overview) {
+  if (!overview || overview.tokenAddress === '') {
     return ''
   }
   const res = await lcd.getContractStore(overview.tokenAddress, { balance: { address } })
