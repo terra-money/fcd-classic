@@ -21,6 +21,7 @@ const {
   BANK_WALLETS,
   ANCHOR_BANK_WALLETS,
   ANCHOR_TOKEN_ADDRESS,
+  PYLON_API_ENDPOINT,
   LEGACY_NETWORK
 } = process.env
 
@@ -33,6 +34,7 @@ const config = {
   RPC_URI: RPC_URI || 'http://localhost:26657',
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
+  PYLON_API_ENDPOINT: PYLON_API_ENDPOINT || 'https://api.dev.pylon.rocks/api',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
   ANCHOR_BANK_WALLETS: ANCHOR_BANK_WALLETS
