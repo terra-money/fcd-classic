@@ -29,8 +29,8 @@ async function _getOverview(): Promise<PylonOverview | undefined> {
   return {
     tokenAddress: res.data.tokenAddress || '',
     priceInUst: res.data.priceInUst || 0.0,
-    totalStaked: res.data.totalStaked || '',
-    circulatingSupply: res.data.circulatingSupply || ''
+    totalStaked: res.data.totalStaked ? res.data.totalStaked.toString() : '',
+    circulatingSupply: res.data.circulatingSupply ? res.data.circulatingSupply.toString() : ''
   } as PylonOverview
 }
 
