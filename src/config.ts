@@ -8,13 +8,10 @@ const {
   MIRROR_GRAPH_URI,
   STATION_STATUS_JSON,
   SENTRY_DSN,
-  SC_AUTH_KEY,
   USE_LOG_FILE,
-  HEIGHT_REPORT_INTERVAL,
   ACTIVE_DENOMS,
   ACTIVE_CURRENCY,
   DISABLE_API,
-  DISABLE_SOCKET,
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
   PRUNING_KEEP_EVERY,
@@ -49,14 +46,10 @@ const config = {
       ],
   ANCHOR_TOKEN_ADDRESS: ANCHOR_TOKEN_ADDRESS || 'terra1747mad58h0w4y589y3sk84r5efqdev9q4r02pc',
   SENTRY_DSN,
-  SC_AUTH_KEY,
   USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'false'),
   DISABLE_API: !!JSON.parse(DISABLE_API || 'false'),
-  DISABLE_SOCKET: !!JSON.parse(DISABLE_SOCKET || 'false'),
   // Keybase for fetching validator avatar image
   KEYBASE_URL_PREFIX: `https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=`,
-  // Reporter module
-  HEIGHT_REPORT_INTERVAL: HEIGHT_REPORT_INTERVAL ? +HEIGHT_REPORT_INTERVAL : 5000,
   // Chain parameters
   ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'ueur'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY

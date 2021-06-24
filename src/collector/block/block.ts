@@ -14,7 +14,7 @@ import { saveTxs, generateTxEntities } from './tx'
 import { saveWasmCodeAndContract } from './wasm'
 
 import { collectReward } from 'collector/reward'
-import { collectSwap } from 'collector/swap'
+// import { collectSwap } from 'collector/swap'
 import { collectNetwork } from 'collector/network'
 import { detectAndUpdateProposal } from 'collector/gov'
 

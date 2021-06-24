@@ -84,11 +84,9 @@ module.exports = {
 | PYLON_API_ENDPOINT     | Pylon API endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
 | STATION_STATUS_JSON    | URL for Station version control                        | https://terra.money/station/version-web.json                                           | API                                |
 | USE_LOG_FILE           | Creates logs/\* when enabled                           | false                                                                                  | All                                |
-| HEIGHT_REPORT_INTERVAL | Interval for SC height notification                    | 5000                                                                                   | API                                |
 | ACTIVE_DENOMS          | Active Denominations                                   | ["uluna","usdr","ukrw","uusd","umnt"]                                                  | API                                |
 | ACTIVE_CURRENCY        | Active Currencies                                      | ["luna","sdt","krt","ust","mnt"]                                                       | API                                |
 | DISABLE_API            | Disable REST APIs                                      | false                                                                                  | API                                |
-| DISABLE_SOCKET         | Dsiable Web Socket                                     | false                                                                                  | API                                |
 | EXCLUDED_ROUTES        | List of regular expression string for excluding routes | []                                                                                     | API                                |
 | MIN_GAS_PRICES         | Minimum gas price by denom object                      | {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"} | API                                |
 
