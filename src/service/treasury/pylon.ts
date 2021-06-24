@@ -38,17 +38,3 @@ export const getOverview = memoizeCache(_getOverview, {
   promise: true,
   maxAge: 5 * 60 * 1000 /* 5 minutes */
 })
-
-export async function getBalance(address: string): Promise<string> {
-  const overview = await getOverview()
-  if (!overview || overview.tokenAddress === '') {
-    return ''
-  }
-  const res = await lcd.getContractStore(overview.tokenAddress, { balance: { address } })
-
-  if (!res || typeof res.balance !== 'string') {
-    return ''
-  }
-
-  return res.balance as string
-}
