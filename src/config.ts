@@ -76,7 +76,7 @@ const config = {
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
   LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false'),
-  INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '0')
+  INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '1')
 }
 
 export default config
