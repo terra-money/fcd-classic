@@ -1,10 +1,6 @@
-import * as Bluebird from 'bluebird'
-import BigNumber from 'bignumber.js'
 import * as rp from 'request-promise'
-import * as lcd from 'lib/lcd'
 import config from 'config'
 import memoizeCache from 'lib/memoizeCache'
-import { getTotalSupply } from './token'
 
 interface PylonOverview {
   tokenAddress: string
