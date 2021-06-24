@@ -1,36 +1,27 @@
-import * as Bluebird from 'bluebird'
-import BigNumber from 'bignumber.js'
 import * as rp from 'request-promise'
-import * as lcd from 'lib/lcd'
 import config from 'config'
 import memoizeCache from 'lib/memoizeCache'
-import { getTotalSupply } from './token'
 
 interface PylonOverview {
   tokenAddress: string
   priceInUst: number
-  totalStaked: string
-  circulatingSupply: string
+  totalStaked: number
+  circulatingSupply: number
 }
 
-async function _getOverview(): Promise<PylonOverview | undefined> {
+async function _getOverview(): Promise<PylonOverview> {
   const res = await rp(`${config.PYLON_API_ENDPOINT}/mine/v1/overview`, {
     method: 'GET',
     json: true
   })
 
-  if (!res?.data?.tokenAddress) {
-    return undefined
-  }
-  if (typeof res.data.tokenAddress !== 'string') {
-    return undefined
-  }
+  const { tokenAddress = '', priceInUst = 0.0, totalStaked = 0, circulatingSupply = 0 } = res
 
   return {
-    tokenAddress: res.data.tokenAddress || '',
-    priceInUst: res.data.priceInUst || 0.0,
-    totalStaked: res.data.totalStaked ? res.data.totalStaked.toString() : '',
-    circulatingSupply: res.data.circulatingSupply ? res.data.circulatingSupply.toString() : ''
+    tokenAddress,
+    priceInUst,
+    totalStaked,
+    circulatingSupply
   } as PylonOverview
 }
 

@@ -130,7 +130,7 @@ export async function getCirculatingSupply(symbol: string): Promise<string> {
   }
 
   if (symbol.toLowerCase() === 'mine') {
-    return (await pylon.getOverview())?.circulatingSupply || ''
+    return (await pylon.getOverview()).circulatingSupply.toString()
   }
 
   return getTotalSupply(symbol)
