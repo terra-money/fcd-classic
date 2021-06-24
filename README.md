@@ -81,7 +81,7 @@ module.exports = {
 | RPC_URI                | RPC URI for Terra network                              | <required>                                                                             | API, Collector                     |
 | BYPASS_URI             | Terra LCD address                                      | https://tequila-lcd.terra.dev                                                          | API                                |
 | MIRROR_GRAPH_URI       | Mirror GraphQL endpoint                                | https://tequila-graph.mirror.finance/graphql                                           | API                                |
-| PYLON_API_ENDPOINT     | Pylon api endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
+| PYLON_API_ENDPOINT     | Pylon API endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
 | STATION_STATUS_JSON    | URL for Station version control                        | https://terra.money/station/version-web.json                                           | API                                |
 | USE_LOG_FILE           | Creates logs/\* when enabled                           | false                                                                                  | All                                |
 | HEIGHT_REPORT_INTERVAL | Interval for SC height notification                    | 5000                                                                                   | API                                |
