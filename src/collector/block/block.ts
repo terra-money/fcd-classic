@@ -131,6 +131,7 @@ export async function saveBlockInformation(
       const newBlockEntity = await mgr
         .getRepository(BlockEntity)
         .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
+
       // get block tx hashes
       const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 
