@@ -158,32 +158,36 @@ function syncMsgType(tx: object): object {
   return JSON.parse(replaced)
 }
 
-export async function getLcdTx(
-  chainId: string,
+export async function generateLcdTransactionToTxEntity(
   txhash: string,
+  block: BlockEntity,
   taxInfo: TaxCapAndRate
-): Promise<Transaction.LcdTransaction | undefined> {
+): Promise<TxEntity> {
+  // Get the tx from LCD server
   const tx = await lcd.getTx(txhash)
 
+  // TODO: We need a better way to handle when tx could not found on the node we are querying
   if (!tx) {
-    return
+    throw new Error('transaction not found on node')
   }
 
-  let modifiedDoc
+  let modifiedDoc: Transaction.LcdTransaction
+
   try {
     // JSONB에서 \u0000을 넣으려 할때 에러가 나서 처리해줌
     const txStr = JSON.stringify(tx)
     modifiedDoc = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
 
-    if (chainId === 'columbus-1') {
-      modifiedDoc = syncMsgType(modifiedDoc)
+    if (block.chainId === 'columbus-1') {
+      modifiedDoc = syncMsgType(modifiedDoc) as Transaction.LcdTransaction
     }
 
     if (modifiedDoc.logs && Array.isArray(modifiedDoc.logs)) {
       modifiedDoc.logs = modifiedDoc.logs.map((item) => {
-        if (item.log && item.log instanceof String) {
+        if (item.log && typeof item.log === 'string') {
           item.log = JSON.parse(item.log)
         }
+
         return item
       })
     }
@@ -194,33 +198,19 @@ export async function getLcdTx(
     throw err
   }
 
-  return modifiedDoc
+  const txEntity = new TxEntity()
+  txEntity.chainId = block.chainId
+  txEntity.hash = modifiedDoc.txhash.toLowerCase()
+  txEntity.data = modifiedDoc
+  txEntity.timestamp = new Date(modifiedDoc.timestamp)
+  txEntity.block = block
+  return txEntity
 }
 
 export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
-  // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
-  const lcdTxs = await Bluebird.map(txHashes, (txHash) => getLcdTx(config.CHAIN_ID, txHash, taxInfo))
-
-  // If we use node cluster, this can be occured.
-  if (lcdTxs.length !== lcdTxs.filter(Boolean).length) {
-    throw new Error('transaction not found on node')
-  }
-
-  return lcdTxs.map((txDoc) => {
-    const txEntity = new TxEntity()
-    txEntity.chainId = config.CHAIN_ID
-
-    if (txDoc) {
-      txEntity.hash = txDoc.txhash.toLowerCase()
-      txEntity.data = txDoc
-      txEntity.timestamp = new Date(txDoc.timestamp)
-      txEntity.block = block
-    }
-
-    return txEntity
-  })
+  return Bluebird.map(txHashes, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
 }
 
 async function getUpdatedTxCountAccountEntity(
@@ -283,7 +273,16 @@ function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
 
 export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
   // Save TxEntity
-  await mgr.save(txEntities)
+  // NOTE: Do not use printSql, getSql, or getQuery function.
+  // It breaks parameter number ordering caused by a bug from TypeORM
+  const qb = mgr
+    .createQueryBuilder()
+    .insert()
+    .into(TxEntity)
+    .values(txEntities)
+    .orUpdate({ conflict_target: ['chain_id', 'hash'], overwrite: ['timestamp', 'data', 'block_id'] })
+
+  await qb.execute()
 
   // generate AccountTxEntities
   const accountTxs: AccountTxEntity[][] = compact(txEntities).map((txEntity) => generateAccountTxs(txEntity))
