@@ -3,6 +3,7 @@ import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
 import config from 'config'
 import * as anchor from 'service/treasury/anchor'
+import * as pylon from 'service/treasury/pylon'
 
 interface Asset {
   symbol: string
@@ -126,6 +127,10 @@ export async function getCirculatingSupply(symbol: string): Promise<string> {
 
   if (symbol.toLowerCase() === 'anc') {
     return anchor.getCirculatingSupply()
+  }
+
+  if (symbol.toLowerCase() === 'mine') {
+    return (await pylon.getOverview()).circulatingSupply.toString()
   }
 
   return getTotalSupply(symbol)

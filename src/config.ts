@@ -8,19 +8,17 @@ const {
   MIRROR_GRAPH_URI,
   STATION_STATUS_JSON,
   SENTRY_DSN,
-  SC_AUTH_KEY,
   USE_LOG_FILE,
-  HEIGHT_REPORT_INTERVAL,
   ACTIVE_DENOMS,
   ACTIVE_CURRENCY,
   DISABLE_API,
-  DISABLE_SOCKET,
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
   PRUNING_KEEP_EVERY,
   BANK_WALLETS,
   ANCHOR_BANK_WALLETS,
   ANCHOR_TOKEN_ADDRESS,
+  PYLON_API_ENDPOINT,
   LEGACY_NETWORK,
   INITIAL_HEIGHT
 } = process.env
@@ -34,6 +32,7 @@ const config = {
   RPC_URI: RPC_URI || 'http://localhost:26657',
   BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
   MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
+  PYLON_API_ENDPOINT: PYLON_API_ENDPOINT || 'https://api.dev.pylon.rocks/api',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
   ANCHOR_BANK_WALLETS: ANCHOR_BANK_WALLETS
@@ -48,14 +47,10 @@ const config = {
       ],
   ANCHOR_TOKEN_ADDRESS: ANCHOR_TOKEN_ADDRESS || 'terra1747mad58h0w4y589y3sk84r5efqdev9q4r02pc',
   SENTRY_DSN,
-  SC_AUTH_KEY,
   USE_LOG_FILE: !!JSON.parse(USE_LOG_FILE || 'false'),
   DISABLE_API: !!JSON.parse(DISABLE_API || 'false'),
-  DISABLE_SOCKET: !!JSON.parse(DISABLE_SOCKET || 'false'),
   // Keybase for fetching validator avatar image
   KEYBASE_URL_PREFIX: `https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=`,
-  // Reporter module
-  HEIGHT_REPORT_INTERVAL: HEIGHT_REPORT_INTERVAL ? +HEIGHT_REPORT_INTERVAL : 5000,
   // Chain parameters
   ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'ueur'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
