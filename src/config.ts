@@ -19,7 +19,8 @@ const {
   ANCHOR_BANK_WALLETS,
   ANCHOR_TOKEN_ADDRESS,
   PYLON_API_ENDPOINT,
-  LEGACY_NETWORK
+  LEGACY_NETWORK,
+  ORACLE_SLASH_WINDOW
 } = process.env
 
 const config = {
@@ -69,7 +70,9 @@ const config = {
         ukrw: '178.05'
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
-  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'true')
+  LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'true'),
+  // We can ORACLE_SLASH_WINDOW from {lcd}/oracle/parameters, but do this way because it's rare to be changed
+  ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800
 }
 
 export default config

@@ -13,9 +13,14 @@ import { collectorLogger as logger } from 'lib/logger'
 
 const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
-function getUptime(signingInfo: LcdValidatorSigningInfo): number {
+// eslint-disable-next-line
+function getBlockUptime(signingInfo: LcdValidatorSigningInfo): number {
   const missedBlocksCounter = +signingInfo.missed_blocks_counter || 0
-  return 1 - missedBlocksCounter / SLASHING_PERIOD || 0
+  return 1 - Math.min(SLASHING_PERIOD, missedBlocksCounter) / SLASHING_PERIOD
+}
+
+function getOracleUptime(missedOracleVote): number {
+  return 1 - Math.min(config.ORACLE_SLASH_WINDOW, missedOracleVote) / config.ORACLE_SLASH_WINDOW
 }
 
 function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
@@ -60,13 +65,12 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   const keyBaseId = lcdValidator.description?.identity
   const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
 
-  const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
+  const missedOracleVote = +(await lcd.getMissedOracleVotes(operatorAddress))
 
   const signingInfo = await lcd.getSigningInfo(consensusPubkey).catch(() => ({} as LcdValidatorSigningInfo))
 
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
-  const upTime = getUptime(signingInfo)
   let rewardPoolTotal = '0'
   const rewardPool = lcdRewardPool
     ? lcdRewardPool.map(({ denom, amount }: Coin) => {
@@ -94,8 +98,8 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     profileIcon: profileIcon ? profileIcon : '',
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
-    missedOracleVote: +missedVote,
-    upTime,
+    missedOracleVote,
+    upTime: getOracleUptime(missedOracleVote),
     votingPower: times(votingPowerByPubKey[consensusPubkey], TOKEN_MICRO_UNIT_MULTIPLICAND),
     votingPowerWeight: div(votingPowerByPubKey[consensusPubkey], totalVotingPower),
     commissionRate: lcdValidator.commission.commission_rates.rate,
