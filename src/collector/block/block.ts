@@ -1,6 +1,7 @@
 import * as sentry from '@sentry/node'
 import { getMinutes } from 'date-fns'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
+import * as Bluebird from 'bluebird'
 
 import config from 'config'
 import { BlockEntity, BlockRewardEntity } from 'orm'
@@ -175,10 +176,23 @@ export async function saveBlockInformation(
 }
 
 export async function collectBlock(): Promise<void> {
+  let latestHeight
+
+  // Wait until it gets proper block
+  while (!latestHeight) {
+    const latestBlock = await lcd.getLatestBlock()
+
+    if (latestBlock?.block) {
+      latestHeight = Number(latestBlock.block.header.height)
+      break
+    }
+
+    logger.info('collectBlock: waiting for the first block')
+    await Bluebird.delay(1000)
+  }
+
   let latestIndexedBlock = await getLatestIndexedBlock()
   let nextSyncHeight = latestIndexedBlock ? latestIndexedBlock.height + 1 : config.INITIAL_HEIGHT
-  const latestBlock = await lcd.getLatestBlock()
-  const latestHeight = Number(latestBlock.block.header.height)
 
   while (nextSyncHeight <= latestHeight) {
     const lcdBlock = await lcd.getBlock(nextSyncHeight.toString())

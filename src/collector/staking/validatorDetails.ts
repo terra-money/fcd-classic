@@ -10,9 +10,14 @@ import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
 
-function getUptime(signingInfo: LcdValidatorSigningInfo): number {
+// eslint-disable-next-line
+function getBlockUptime(signingInfo: LcdValidatorSigningInfo): number {
   const missedBlocksCounter = +signingInfo.missed_blocks_counter || 0
-  return 1 - missedBlocksCounter / SLASHING_PERIOD || 0
+  return 1 - Math.min(SLASHING_PERIOD, missedBlocksCounter) / SLASHING_PERIOD
+}
+
+function getOracleUptime(missedOracleVote): number {
+  return 1 - Math.min(config.ORACLE_SLASH_WINDOW, missedOracleVote) / config.ORACLE_SLASH_WINDOW
 }
 
 function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
@@ -49,7 +54,7 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
   const selfDelegation = await lcd.getDelegationForValidator(accountAddr, operatorAddress)
   const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const profileIcon = identity && (await getAvatar(identity))
-  const missedVote = await lcd.getMissedOracleVotes(operatorAddress)
+  const missedOracleVote = +(await lcd.getMissedOracleVotes(operatorAddress))
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
   let rewardPoolTotal = '0'
@@ -77,7 +82,8 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     profileIcon: profileIcon ? profileIcon : '',
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
-    missedOracleVote: +missedVote || 0,
+    missedOracleVote,
+    upTime: getOracleUptime(missedOracleVote),
     votingPower: extendedValidator.votingPower,
     votingPowerWeight: extendedValidator.votingPowerWeight,
     commissionRate: lcdValidator.commission.commission_rates.rate,
@@ -87,7 +93,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
     selfDelegation: selfDelegation?.balance.amount ?? '0.0',
     selfDelegationWeight: div(selfDelegation?.delegation.shares ?? '0.0', lcdValidator.delegator_shares),
-    upTime: signingInfo ? getUptime(signingInfo) : 0,
     signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }

@@ -20,7 +20,8 @@ const {
   ANCHOR_TOKEN_ADDRESS,
   PYLON_API_ENDPOINT,
   LEGACY_NETWORK,
-  INITIAL_HEIGHT
+  INITIAL_HEIGHT,
+  ORACLE_SLASH_WINDOW
 } = process.env
 
 const config = {
@@ -71,7 +72,9 @@ const config = {
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
   LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false'),
-  INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '1')
+  INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '1'),
+  // We can ORACLE_SLASH_WINDOW from {lcd}/oracle/parameters, but do this way because it's rare to be changed
+  ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800
 }
 
 export default config
