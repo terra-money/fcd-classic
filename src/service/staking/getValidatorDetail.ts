@@ -29,12 +29,9 @@ interface ValidatorDetailsReturn extends ValidatorResponse {
   myRewards?: RewardsByDenom[]
 }
 
-async function getValidatorInfo(operatorAddr: string): Promise<ValidatorResponse | undefined> {
-  const validator = await getRepository(ValidatorInfoEntity).findOne({
-    operatorAddress: operatorAddr,
-    chainId: config.CHAIN_ID
-  })
-  const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operatorAddr)
+async function getValidatorInfo(operatorAddress: string): Promise<ValidatorResponse | undefined> {
+  const validator = await getRepository(ValidatorInfoEntity).findOne({ operatorAddress })
+  const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operatorAddress)
   const airdropReturn = await getAirdropAnnualAvgReturn()
 
   if (validator) {

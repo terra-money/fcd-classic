@@ -39,7 +39,7 @@ GROUP BY operator_address;`
 }
 
 export default async function getValidators(): Promise<ValidatorResponse[]> {
-  const validatorsList = await getRepository(ValidatorInfoEntity).find({ chainId: config.CHAIN_ID })
+  const validatorsList = await getRepository(ValidatorInfoEntity).find()
   const validatorsReturns = await getValidatorsReturn()
 
   const validators = validatorsList.map((validator) => {
