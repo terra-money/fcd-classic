@@ -30,9 +30,6 @@ export default class WasmContractEntity {
   @Column()
   timestamp: Date
 
-  @Column()
-  chainId: string
-
   @Column({ default: false })
   migratable: boolean
 

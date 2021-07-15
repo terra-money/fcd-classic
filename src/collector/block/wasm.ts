@@ -78,7 +78,6 @@ function generateWasmCodeEntity(tx: TxEntity): WasmCodeEntity {
 
   const code = new WasmCodeEntity()
 
-  code.chainId = config.CHAIN_ID
   code.sender = info.sender
   code.codeId = info.code_id
   code.txHash = info.txhash
@@ -93,7 +92,6 @@ function generateWasmContractEntity(tx: TxEntity): WasmContractEntity {
 
   const contract = new WasmContractEntity()
 
-  contract.chainId = config.CHAIN_ID
   contract.codeId = info.code_id
   contract.contractAddress = info.contract_address
   contract.initMsg = info.init_msg
@@ -105,9 +103,7 @@ function generateWasmContractEntity(tx: TxEntity): WasmContractEntity {
   return contract
 }
 
-function getMsgTypeAndStatus(
-  tx: TxEntity
-): {
+function getMsgTypeAndStatus(tx: TxEntity): {
   msgType: string
   failed: boolean
 } {

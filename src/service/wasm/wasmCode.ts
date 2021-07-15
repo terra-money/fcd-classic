@@ -32,12 +32,7 @@ export function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
   }
 }
 
-export async function getWasmCodes({
-  offset,
-  limit,
-  sender,
-  search
-}: WasmCodeParams): Promise<{
+export async function getWasmCodes({ offset, limit, sender, search }: WasmCodeParams): Promise<{
   codes: WasmCodeDetails[]
   limit: number
   next?: number
@@ -77,10 +72,7 @@ export async function getWasmCodes({
 }
 
 export async function getWasmCode(codeId: string): Promise<WasmCodeDetails> {
-  const code = await getRepository(WasmCodeEntity).findOne({
-    codeId,
-    chainId: config.CHAIN_ID
-  })
+  const code = await getRepository(WasmCodeEntity).findOne({ codeId })
 
   if (!code) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Code not found')

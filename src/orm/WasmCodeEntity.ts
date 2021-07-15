@@ -19,9 +19,6 @@ export default class WasmCodeEntity {
   @Column()
   txMemo: string
 
-  @Column()
-  chainId: string
-
   @Index('wcode_index_timestamp')
   @Column()
   timestamp: Date
