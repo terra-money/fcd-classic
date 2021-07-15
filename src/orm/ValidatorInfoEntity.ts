@@ -13,10 +13,6 @@ export default class ValidatorInfoEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Index('vi_chain_id')
-  @Column()
-  chainId: string
-
   @Index('vi_operator_address')
   @Column({ unique: true })
   operatorAddress: string
