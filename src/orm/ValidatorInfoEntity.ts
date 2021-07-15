@@ -9,7 +9,6 @@ export enum ValidatorStatus {
 }
 
 @Entity('validator_info')
-@Index('vi_index_chainId_accountAddress', ['chainId', 'accountAddress'], { unique: true })
 export default class ValidatorInfoEntity {
   @PrimaryGeneratedColumn()
   id: number
@@ -19,7 +18,7 @@ export default class ValidatorInfoEntity {
   chainId: string
 
   @Index('vi_operator_address')
-  @Column()
+  @Column({ unique: true })
   operatorAddress: string
 
   @Index('vi_cons_pub_key')
@@ -33,16 +32,16 @@ export default class ValidatorInfoEntity {
   @Column()
   moniker: string
 
-  @Column()
+  @Column({ default: '' })
   identity: string
 
-  @Column()
+  @Column({ default: '' })
   website: string
 
-  @Column()
+  @Column({ default: '' })
   details: string
 
-  @Column()
+  @Column({ default: '' })
   profileIcon: string
 
   @Index('vi_status')
@@ -104,9 +103,9 @@ export default class ValidatorInfoEntity {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', default: {} })
   public signingInfo: object
 
-  @Column({ type: 'jsonb' })
+  @Column({ type: 'jsonb', default: {} })
   public rewardPool: object
 }

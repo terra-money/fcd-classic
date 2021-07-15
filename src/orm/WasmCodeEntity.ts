@@ -1,7 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm'
 
 @Entity('wasm_code')
-@Index('index_wasm_code_chain_id_code_id', ['chainId', 'codeId'], { unique: true })
 export default class WasmCodeEntity {
   @PrimaryGeneratedColumn()
   id: number
@@ -10,7 +9,7 @@ export default class WasmCodeEntity {
   @Column()
   sender: string
 
-  @Column()
+  @Column({ unique: true })
   codeId: string
 
   @Column()

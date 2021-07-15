@@ -28,7 +28,8 @@ export default class AccountTxEntity {
 
   @Index('account_tx_tx_id')
   @ManyToOne(() => TxEntity, (tx) => tx.accounts, {
-    cascade: ['insert']
+    cascade: ['insert'],
+    onDelete: 'CASCADE'
   })
   @JoinColumn({ name: 'tx_id' })
   tx: TxEntity
