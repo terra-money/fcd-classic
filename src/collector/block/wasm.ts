@@ -9,44 +9,56 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
       (msg, index) =>
         ((tx.data.logs && tx.data.logs[index].events) || [])
           .map((ev) => {
-            const attributeObj = ev.attributes.reduce((acc, attr) => {
-              acc[attr.key] = attr.value
-              return acc
-            }, {} as { [key: string]: string })
+            const contracts: DeepPartial<WasmContractEntity>[] = []
 
             if (ev.type === 'instantiate_contract') {
-              return {
-                contractAddress: attributeObj.contract_address,
-                codeId: attributeObj.code_id,
-                initMsg: Buffer.from(msg.value.init_msg, 'base64').toString(),
-                owner: attributeObj.owner || attributeObj.admin,
-                timestamp: tx.timestamp,
-                txHash: tx.hash,
-                txMemo: msg.value.txMemo || '',
-                migratable: msg.value.migratable
+              for (let i = 0; i < ev.attributes.length; i += 3) {
+                contracts.push({
+                  contractAddress: ev.attributes[i + 2].value,
+                  codeId: ev.attributes[i + 1].value,
+                  initMsg: Buffer.from(msg.value.init_msg, 'base64').toString(),
+                  owner: ev.attributes[i].value,
+                  timestamp: tx.timestamp,
+                  txHash: tx.hash,
+                  txMemo: msg.value.txMemo || '',
+                  migratable: msg.value.migratable
+                })
               }
+              return contracts
             } else if (ev.type === 'migrate_contract') {
-              return {
-                contractAddress: attributeObj.contract_address,
-                codeId: attributeObj.code_id,
-                migrateMsg: Buffer.from(msg.value.migrate_msg, 'base64').toString()
+              for (let i = 0; i < ev.attributes.length; i += 2) {
+                contracts.push({
+                  contractAddress: ev.attributes[i + 1].value,
+                  codeId: ev.attributes[i].value,
+                  migrateMsg: Buffer.from(msg.value.migrate_msg, 'base64').toString()
+                })
               }
             } else if (ev.type === 'update_contract_admin') {
-              return {
-                contractAddress: attributeObj.contract_address,
-                owner: attributeObj.admin
+              for (let i = 0; i < ev.attributes.length; i += 2) {
+                contracts.push({
+                  contractAddress: ev.attributes[i + 1].value,
+                  owner: ev.attributes[i].value
+                })
               }
             } else if (ev.type === 'clear_contract_admin') {
-              return {
-                contractAddress: attributeObj.contract_address,
-                owner: ''
+              for (let i = 0; i < ev.attributes.length; i += 1) {
+                contracts.push({
+                  contractAddress: ev.attributes[i].value,
+                  owner: ''
+                })
               }
             } else if (ev.type === 'update_contract_owner') {
               // Columbus-4
-              return {
-                contractAddress: attributeObj.contract_address,
-                owner: attributeObj.owner
+              for (let i = 0; i < ev.attributes.length; i += 2) {
+                contracts.push({
+                  contractAddress: ev.attributes[i + 1].value,
+                  owner: ev.attributes[i].value
+                })
               }
+            }
+
+            if (contracts.length) {
+              return contracts
             }
           })
           .flat()
@@ -61,19 +73,22 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
       (msg, index) =>
         ((tx.data.logs && tx.data.logs[index].events) || [])
           .map((ev) => {
-            const attributeObj = ev.attributes.reduce((acc, attr) => {
-              acc[attr.key] = attr.value
-              return acc
-            }, {} as { [key: string]: string })
+            const codes: DeepPartial<WasmCodeEntity>[] = []
 
             if (ev.type === 'store_code') {
-              return {
-                codeId: attributeObj.code_id,
-                sender: attributeObj.sender,
-                txHash: tx.hash,
-                txMemo: msg.value.txMemo || '',
-                timestamp: tx.timestamp
+              for (let i = 0; i < ev.attributes.length; i += 2) {
+                codes.push({
+                  codeId: ev.attributes[i + 1].value,
+                  sender: ev.attributes[i].value,
+                  txHash: tx.hash,
+                  txMemo: msg.value.txMemo || '',
+                  timestamp: tx.timestamp
+                })
               }
+            }
+
+            if (codes.length) {
+              return codes
             }
           })
           .flat()
