@@ -264,16 +264,16 @@ export function getProposalTally(proposalId: string): Promise<LcdProposalTally |
   return get(`/gov/proposals/${proposalId}/tally`)
 }
 
-export function getProposalDepositParams(): Promise<LcdProposalDepositParams> {
-  return get(`/gov/parameters/deposit`)
+export function getProposalDepositParams(strHeight?: string): Promise<LcdProposalDepositParams> {
+  return get(`/gov/parameters/deposit`, { height: calculateHeightParam(strHeight) })
 }
 
-export function getProposalVotingParams(): Promise<LcdProposalVotingParams> {
-  return get(`/gov/parameters/voting`)
+export function getProposalVotingParams(strHeight?: string): Promise<LcdProposalVotingParams> {
+  return get(`/gov/parameters/voting`, { height: calculateHeightParam(strHeight) })
 }
 
-export function getProposalTallyingParams(): Promise<LcdProposalTallyingParams> {
-  return get(`/gov/parameters/tallying`)
+export function getProposalTallyingParams(strHeight?: string): Promise<LcdProposalTallyingParams> {
+  return get(`/gov/parameters/tallying`, { height: calculateHeightParam(strHeight) })
 }
 
 ///////////////////////////////////////////////

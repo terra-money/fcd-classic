@@ -1,5 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { getRepository } from 'typeorm'
+import { getConnection, getRepository } from 'typeorm'
 import { orderBy, reverse, chunk } from 'lodash'
 import * as globby from 'globby'
 import * as fs from 'fs'
@@ -11,7 +11,6 @@ import { div } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 
 import { getTotalSupply } from 'service/treasury'
-import { bulkSave } from './helper'
 
 async function getRichList(denom: string): Promise<RichListEntity[]> {
   logger.info(`Parsing rich list entity from tracking file.`)
@@ -50,8 +49,9 @@ async function saveRichListByDenom(denom: string) {
     return
   }
 
-  await getRepository(RichListEntity).delete({ denom })
-  await Bluebird.mapSeries(chunk(docs, 10000), bulkSave)
+  const mgr = getConnection().manager
+  await mgr.delete(RichListEntity, { denom })
+  await Bluebird.mapSeries(chunk(docs, 10000), (docs) => mgr.save(docs))
   logger.info(`Saved ${docs.length} richlist for ${denom}`)
 }
 

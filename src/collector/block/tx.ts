@@ -281,7 +281,7 @@ function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
   return newTxInfo
 }
 
-export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
+export async function collectTxs(mgr: EntityManager, txEntities: TxEntity[], block: BlockEntity): Promise<void> {
   // Save TxEntity
   await mgr.save(txEntities)
 

@@ -11,14 +11,13 @@ import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 
-import { saveTxs, generateTxEntities } from './tx'
-import { saveWasmCodeAndContract } from './wasm'
-
-import { collectReward } from 'collector/reward'
-// import { collectSwap } from 'collector/swap'
-import { collectNetwork } from 'collector/network'
-import { collectPrice } from 'collector/price'
-import { collectGeneral } from 'collector/general'
+import { collectTxs, generateTxEntities } from './tx'
+import { collectWasm } from './wasm'
+import { collectReward } from './reward'
+// import { collectSwap } from './swap'
+import { collectNetwork } from './network'
+import { collectPrice } from './price'
+import { collectGeneral } from './general'
 import { detectAndUpdateProposal } from 'collector/gov'
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
@@ -134,11 +133,11 @@ export async function saveBlockInformation(
       if (txHashes) {
         const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
         // save transactions
-        await saveTxs(mgr, newBlockEntity, txEntities)
+        await collectTxs(mgr, txEntities, newBlockEntity)
         // save wasm
-        await saveWasmCodeAndContract(mgr, txEntities)
+        await collectWasm(mgr, txEntities)
         // save proposals
-        await detectAndUpdateProposal(mgr, txEntities)
+        await detectAndUpdateProposal(mgr, txEntities, height)
       }
 
       // new block timestamp
