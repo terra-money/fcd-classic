@@ -85,20 +85,16 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
 }
 
 export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
-  const newWasmCodes: DeepPartial<WasmCodeEntity>[] = []
-  const newWasmContracts: DeepPartial<WasmContractEntity>[] = []
-
-  for (let i = 0; i < txEntities.length; ++i) {
-    const tx = txEntities[i]
-
+  await Bluebird.mapSeries(txEntities, async (tx) => {
     await Bluebird.map(generateWasmCodes(tx), async (code) => {
       const existingEntity = await mgr.findOne(WasmCodeEntity, { codeId: code.codeId })
 
       if (existingEntity) {
         logger.info(`collectWasm: update code ${code.codeId}`)
-        await mgr.update(WasmCodeEntity, existingEntity.id, code)
+        return mgr.update(WasmCodeEntity, existingEntity.id, code)
       } else {
-        newWasmCodes.push(code)
+        logger.info(`collectWasm: new code ${code.codeId}`)
+        return mgr.create(WasmCodeEntity, code)
       }
     })
 
@@ -107,20 +103,11 @@ export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
 
       if (existingEntity) {
         logger.info(`collectWasm: update contract ${contract.contractAddress}`)
-        await mgr.update(WasmContractEntity, existingEntity.id, contract)
+        return mgr.update(WasmContractEntity, existingEntity.id, contract)
       } else {
-        newWasmContracts.push(contract)
+        logger.info(`collectWasm: new contract ${contract.contractAddress}`)
+        return mgr.create(WasmContractEntity, contract)
       }
     })
-  }
-
-  if (newWasmCodes.length) {
-    logger.info(`collectWasm: new code x ${newWasmCodes.length}`)
-    await mgr.save(newWasmCodes)
-  }
-
-  if (newWasmContracts.length) {
-    logger.info(`collectWasm: new contract x ${newWasmContracts.length}`)
-    await mgr.save(newWasmContracts)
-  }
+  })
 }
