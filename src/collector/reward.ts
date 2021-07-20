@@ -56,9 +56,7 @@ function getFee(tx): TxFee {
     : {}
 }
 
-async function getFees(
-  timestamp: number
-): Promise<{
+async function getFees(timestamp: number): Promise<{
   swapfee: DenomMap
   tax: DenomMap
   gas: DenomMap
@@ -122,41 +120,38 @@ export async function getRewards(timestamp: number): Promise<Rewards> {
   }, result)
 }
 
-export async function getRewardDocs(timestamp: number): Promise<RewardEntity[]> {
+export async function collectReward(mgr: EntityManager, timestamp: number, strHeight: string) {
   const { reward: rewardSum, commission } = await getRewards(timestamp)
+  const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
   const [issuances, rewards, activePrices] = await Promise.all([
-    lcd.getAllActiveIssuance(),
+    lcd.getAllActiveIssuance(strHeight),
     getFees(timestamp),
-    getAllActivePrices(getStartOfPreviousMinuteTs(timestamp))
+    getAllActivePrices(datetime.getTime())
   ])
 
-  return Bluebird.map(Object.keys(issuances), async (denom) => {
-    const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-    const ent = await getRepository(RewardEntity).findOne({ denom, datetime })
-    if (ent) return
-    return denom
+  await Bluebird.map(Object.keys(issuances), async (denom) => {
+    const reward = new RewardEntity()
+    reward.denom = denom
+    reward.datetime = datetime
+    reward.tax = get(rewards, `tax.${denom}`, '0.0')
+    reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
+    reward.gas = get(rewards, `gas.${denom}`, '0.0')
+    reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
+    reward.sum = rewardSum[denom]
+    reward.commission = commission[denom]
+
+    const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
+    reward.oracle = Number(oracle) < 0 ? '0' : oracle
+    reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
+
+    const existing = await mgr.findOne(RewardEntity, { denom, datetime })
+
+    if (existing) {
+      mgr.update(RewardEntity, existing.id, reward)
+    } else {
+      mgr.insert(RewardEntity, reward)
+    }
   })
-    .filter(Boolean)
-    .map((denom: string) => {
-      const reward = new RewardEntity()
-      reward.denom = denom
-      reward.datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-      reward.tax = get(rewards, `tax.${denom}`, '0.0')
-      reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
-      reward.gas = get(rewards, `gas.${denom}`, '0.0')
-      reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
-      reward.sum = rewardSum[denom]
-      reward.commission = commission[denom]
 
-      const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
-      reward.oracle = Number(oracle) < 0 ? '0' : oracle
-      reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
-      return reward
-    })
-}
-
-export async function collectReward(transactionEntityManager: EntityManager, timestamp: number) {
-  const rewardEntity = await getRewardDocs(timestamp)
-  await transactionEntityManager.save(rewardEntity)
-  logger.info(`Save reward ${getDateRangeOfLastMinute(timestamp).from} success.`)
+  logger.info(`collectReward: ${datetime}`)
 }

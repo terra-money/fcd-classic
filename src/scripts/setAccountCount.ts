@@ -2,8 +2,8 @@ import { init as initORM, AccountEntity } from 'orm'
 import { getRepository, getManager, EntityManager } from 'typeorm'
 
 async function updateCount(address: string) {
-  await getManager().transaction(async (transactionalEntityManager: EntityManager) => {
-    const accountRepo = transactionalEntityManager.getRepository(AccountEntity)
+  await getManager().transaction(async (mgr: EntityManager) => {
+    const accountRepo = mgr.getRepository(AccountEntity)
     const account = await accountRepo.findOneOrFail({ address }, { lock: { mode: 'pessimistic_write' } })
 
     const query = `
@@ -12,7 +12,7 @@ SELECT COUNT(*) FROM
     FROM account_tx
     WHERE account='${address}') t`
 
-    const totalCntResult = await transactionalEntityManager.query(query)
+    const totalCntResult = await mgr.query(query)
     const txcount = totalCntResult[0].count
 
     account.txcount = +txcount
