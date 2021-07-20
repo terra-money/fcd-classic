@@ -1,4 +1,4 @@
-import { WhereExpression, getRepository, getConnection } from 'typeorm'
+import { WhereExpression, getRepository } from 'typeorm'
 
 import { PriceEntity } from 'orm'
 
@@ -27,10 +27,6 @@ export function addDatetimeFilterToQuery(timestamp: number, qb: WhereExpression)
 
   qb.andWhere(`timestamp >= '${getQueryDateTime(from)}'`)
   qb.andWhere(`timestamp < '${getQueryDateTime(to)}'`)
-}
-
-export function bulkSave(docs) {
-  return getConnection().manager.save(docs)
 }
 
 export async function getAllActivePrices(timestamp: number): Promise<{ [denom: string]: string }> {

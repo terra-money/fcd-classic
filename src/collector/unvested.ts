@@ -1,11 +1,9 @@
 import { orderBy, reverse, chain } from 'lodash'
 import * as globby from 'globby'
 import * as fs from 'fs'
-
+import { getConnection } from 'typeorm'
 import { UnvestedEntity } from 'orm'
-
 import { collectorLogger as logger } from 'lib/logger'
-import { bulkSave } from './helper'
 
 function unvestedMapper(unvested: Coin): UnvestedEntity {
   const item = new UnvestedEntity()
@@ -16,12 +14,12 @@ function unvestedMapper(unvested: Coin): UnvestedEntity {
   return item
 }
 
-async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
+async function getUnvested(): Promise<UnvestedEntity[]> {
   const paths = await globby([`/tmp/vesting-*`])
   const recentFile = reverse(orderBy(paths))[0]
 
   if (!recentFile) {
-    return
+    return []
   }
 
   const unvestedString = fs.readFileSync(recentFile, 'utf8')
@@ -32,10 +30,6 @@ async function getUnvested(): Promise<UnvestedEntity[] | undefined> {
 export async function collectUnvested() {
   const docs = await getUnvested()
 
-  if (!docs || docs.length === 0) {
-    return
-  }
-
-  await bulkSave(docs)
+  await getConnection().manager.save(docs)
   logger.info(`Save Unvested - success.`)
 }

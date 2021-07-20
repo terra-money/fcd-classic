@@ -271,7 +271,7 @@ function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
   return newTxInfo
 }
 
-export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
+export async function collectTxs(mgr: EntityManager, txEntities: TxEntity[], block: BlockEntity): Promise<void> {
   // Save TxEntity
   // NOTE: Do not use printSql, getSql, or getQuery function.
   // It breaks parameter number ordering caused by a bug from TypeORM

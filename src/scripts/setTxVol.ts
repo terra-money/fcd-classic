@@ -5,8 +5,8 @@ import { init as initORM, NetworkEntity } from 'orm'
 import * as lcd from 'lib/lcd'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
 
-import { getTxVol, getMarketCap } from 'collector/network'
-import { getAllActivePrices } from 'collector/helper'
+import { getTxVol, getMarketCap } from 'collector/block/network'
+import { getAllActivePrices } from 'collector/block/helper'
 
 async function upsert(doc: NetworkEntity) {
   const isExists = await getRepository(NetworkEntity).findOne({
