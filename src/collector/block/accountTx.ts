@@ -229,6 +229,7 @@ export default function getAddressFromMsg(
       if (
         [
           'store_code',
+          'migrate_code',
           'instantiate_contract',
           'execute_contract',
           'migrate_contract',

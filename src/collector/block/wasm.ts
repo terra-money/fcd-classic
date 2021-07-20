@@ -81,7 +81,7 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
           .map((ev) => {
             const codes: DeepPartial<WasmCodeEntity>[] = []
 
-            if (ev.type === 'store_code') {
+            if (ev.type === 'store_code' || ev.type === 'migrate_code') {
               const txHash = tx.hash
               const txMemo = msg.value.txMemo || ''
               const timestamp = tx.timestamp
