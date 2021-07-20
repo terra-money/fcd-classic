@@ -1,12 +1,11 @@
-import { getRepository, DeepPartial } from 'typeorm'
+import { getRepository, DeepPartial, EntityManager } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
 import { div } from 'lib/math'
-import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
-import { errorReport } from 'lib/errorReporting'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
+import { collectorLogger as logger } from 'lib/logger'
 
-export async function saveGeneral() {
+export async function collectGeneral(mgr: EntityManager, timestamp: number, strHeight: string) {
   const [
     taxRate,
     taxProceeds,
@@ -15,24 +14,25 @@ export async function saveGeneral() {
     taxCaps,
     { bondedTokens, notBondedTokens, issuances, stakingRatio }
   ] = await Promise.all([
-    lcd.getTaxRate(),
-    lcd.getTaxProceeds(),
-    lcd.getSeigniorageProceeds(),
-    lcd.getCommunityPool().then(
+    lcd.getTaxRate(strHeight),
+    lcd.getTaxProceeds(strHeight),
+    lcd.getSeigniorageProceeds(strHeight),
+    lcd.getCommunityPool(strHeight).then(
       (pool): DenomMap =>
         pool.reduce((acc, { denom, amount }) => {
           acc[denom] = amount
           return acc
         }, {})
     ),
-    lcd.getTaxCaps().then((taxCaps) => taxCaps.map((taxCap) => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
-    Promise.all([lcd.getStakingPool(), lcd.getAllActiveIssuance()]).then((results) => {
+    lcd
+      .getTaxCaps(strHeight)
+      .then((taxCaps) => taxCaps.map((taxCap) => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
+    Promise.all([lcd.getStakingPool(strHeight), lcd.getAllActiveIssuance(strHeight)]).then((results) => {
       const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
     })
   ])
-  const now = Date.now()
-  const datetime = new Date(getStartOfPreviousMinuteTs(now))
+  const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
 
   const genInfo: DeepPartial<GeneralInfoEntity> = {
     datetime,
@@ -52,19 +52,10 @@ export async function saveGeneral() {
   })
 
   if (prevGenInfo) {
-    await getRepository(GeneralInfoEntity).update(prevGenInfo.id, genInfo)
+    await mgr.update(GeneralInfoEntity, prevGenInfo.id, genInfo)
   } else {
-    await getRepository(GeneralInfoEntity).save(genInfo)
+    await mgr.insert(GeneralInfoEntity, genInfo)
   }
-}
 
-export async function collectGeneral() {
-  await saveGeneral()
-    .then(() => {
-      logger.info(`Save general - success.`)
-    })
-    .catch((e) => {
-      logger.error(e)
-      errorReport(e)
-    })
+  logger.info(`collectGeneral: ${genInfo.datetime}`)
 }

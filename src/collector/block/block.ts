@@ -16,6 +16,8 @@ import { saveWasmCodeAndContract } from './wasm'
 
 import { collectReward } from 'collector/reward'
 import { collectNetwork } from 'collector/network'
+import { collectPrice } from 'collector/price'
+import { collectGeneral } from 'collector/general'
 import { detectAndUpdateProposal } from 'collector/gov'
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
@@ -143,9 +145,11 @@ export async function saveBlockInformation(
       if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
         const newBlockTimeStamp = new Date(newBlockEntity.timestamp).getTime()
 
-        await collectReward(mgr, newBlockTimeStamp)
+        await collectReward(mgr, newBlockTimeStamp, height)
         // await collectSwap(mgr, newBlockTimeStamp)
-        await collectNetwork(mgr, newBlockTimeStamp)
+        await collectNetwork(mgr, newBlockTimeStamp, height)
+        await collectPrice(mgr, newBlockTimeStamp, height)
+        await collectGeneral(mgr, newBlockTimeStamp, height)
       }
 
       return newBlockEntity

@@ -1,4 +1,4 @@
-import { startOfToday, subDays, startOfMinute, subMinutes, format, getTime } from 'date-fns'
+import { startOfToday, subDays, startOfMinute, subMinutes, format } from 'date-fns'
 
 export function daysBeforeTs(daysBefore = 1): { fromTs: number; toTs: number } {
   const to = startOfToday()
@@ -40,5 +40,5 @@ export function getDateFromDateTime(date: Date): string {
 }
 
 export function getStartOfPreviousMinuteTs(timestamp: number): number {
-  return getTime(subMinutes(startOfMinute(timestamp), 1))
+  return subMinutes(startOfMinute(timestamp), 1).getTime()
 }

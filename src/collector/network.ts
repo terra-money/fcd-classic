@@ -9,7 +9,7 @@ import { plus } from 'lib/math'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
 import { isSuccessfulTx } from 'lib/tx'
 
-import { getUSDValue, addDatetimeFilterToQuery, bulkSave, getAllActivePrices } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery, getAllActivePrices } from './helper'
 
 async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: string }> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx')
@@ -97,53 +97,43 @@ export function getMarketCap(issuances, prices): { [denom: string]: string } {
   }, {})
 }
 
-export async function getTxVol(timestamp?: number) {
-  const now = timestamp || Date.now()
-  const volumeFromSendReq = getVolumeFromSend(now)
-  const volumeFromMultiSendReq = getVolumeFromMultiSend(now)
+export async function getTxVol(timestamp: number) {
+  const volumeFromSendReq = getVolumeFromSend(timestamp)
+  const volumeFromMultiSendReq = getVolumeFromMultiSend(timestamp)
 
   const [volumeFromSend, volumeFromMultiSend] = await Promise.all([volumeFromSendReq, volumeFromMultiSendReq])
 
   return mergeWith(volumeFromSend, volumeFromMultiSend, plus)
 }
 
-export async function getNetworkDocs(timestamp?: number): Promise<NetworkEntity[]> {
-  const now = timestamp || Date.now()
-
+export async function collectNetwork(mgr: EntityManager, timestamp: number, strHeight: string) {
+  const ts = getStartOfPreviousMinuteTs(timestamp)
   const [activeIssuances, activePrices, volumeObj] = await Promise.all([
-    lcd.getAllActiveIssuance(),
-    getAllActivePrices(getStartOfPreviousMinuteTs(now)),
+    lcd.getAllActiveIssuance(strHeight),
+    getAllActivePrices(ts),
     getTxVol(timestamp)
   ])
 
   const marketCapObj = getMarketCap(activeIssuances, activePrices)
+  const datetime = new Date(ts)
 
-  return Bluebird.map(Object.keys(activeIssuances), async (denom) => {
-    const datetime = new Date(getStartOfPreviousMinuteTs(now))
-    const ent = await getRepository(NetworkEntity).findOne({ denom, datetime })
-    if (ent) return
-    return denom
+  await Bluebird.map(Object.keys(activeIssuances), async (denom) => {
+    const network = new NetworkEntity()
+
+    network.denom = denom
+    network.datetime = datetime
+    network.supply = activeIssuances[denom]
+    network.marketCap = marketCapObj[denom]
+    network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
+
+    const existing = await mgr.findOne(NetworkEntity, { denom, datetime })
+
+    if (existing) {
+      return mgr.update(NetworkEntity, existing.id, network)
+    } else {
+      return mgr.insert(NetworkEntity, network)
+    }
   })
-    .filter(Boolean)
-    .map((denom: string) => {
-      const datetime = new Date(getStartOfPreviousMinuteTs(now))
-      const network = new NetworkEntity()
-      network.denom = denom
-      network.datetime = datetime
-      network.supply = activeIssuances[denom]
-      network.marketCap = marketCapObj[denom]
-      network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
-      return network
-    })
-}
 
-export async function setNetworkFromTx(now: number) {
-  const docs = await getNetworkDocs(now)
-  await bulkSave(docs)
-}
-
-export async function collectNetwork(transactionalEntityManager: EntityManager, timestamp: number) {
-  const docs = await getNetworkDocs(timestamp)
-  await transactionalEntityManager.save(docs)
-  logger.info(`Save network - success.`)
+  logger.info(`collectNetwork: ${datetime}`)
 }

@@ -149,8 +149,34 @@ export function getBlock(height: string): Promise<LcdBlock> {
   return get(`/blocks/${height}`)
 }
 
+// Store latestHeight for later use
+let latestHeight = 0
+
 export function getLatestBlock(): Promise<LcdBlock> {
-  return get(`/blocks/latest`)
+  return get(`/blocks/latest`).then((latestBlock) => {
+    if (latestBlock?.block) {
+      latestHeight = Number(latestBlock.block.header.height)
+    }
+
+    return latestBlock
+  })
+}
+
+// NOTE: height parameter depends on node's configuration
+// The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
+// in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+function calculateHeightParam(strHeight?: string): string | undefined {
+  const numHeight = Number(strHeight)
+
+  if (!numHeight) {
+    return undefined
+  }
+
+  if (latestHeight && latestHeight - numHeight < config.PRUNING_KEEP_EVERY) {
+    return strHeight
+  }
+
+  return (numHeight - (numHeight % config.PRUNING_KEEP_EVERY)).toString()
 }
 
 ///////////////////////////////////////////////
@@ -230,8 +256,8 @@ export async function getValidatorDelegations(
   return (await get(`/staking/validators/${validatorOperKey}/delegations?page=${page}&limit=${limit}`)) || []
 }
 
-export function getStakingPool(height?: string): Promise<LcdStakingPool> {
-  return get(`/staking/pool`, { height })
+export function getStakingPool(strHeight?: string): Promise<LcdStakingPool> {
+  return get(`/staking/pool`, { height: calculateHeightParam(strHeight) })
 }
 
 ///////////////////////////////////////////////
@@ -309,8 +335,8 @@ export async function getValidatorRewards(validatorOperAddress: string): Promise
   return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)).rewards || []
 }
 
-export function getCommunityPool(): Promise<Coin[]> {
-  return get(`/distribution/community_pool `)
+export function getCommunityPool(strHeight?: string): Promise<Coin[]> {
+  return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
 }
 
 ///////////////////////////////////////////////
@@ -323,13 +349,8 @@ export async function getSwapResult(params: { offer_coin: string; ask_denom: str
 ///////////////////////////////////////////////
 // Oracle
 ///////////////////////////////////////////////
-export async function getOraclePrices(height?: string): Promise<Coin[]> {
-  return (
-    (await get(
-      `/oracle/denoms/exchange_rates`,
-      height ? { height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString() } : undefined
-    )) || []
-  )
+export async function getOraclePrices(strHeight?: string): Promise<Coin[]> {
+  return (await get(`/oracle/denoms/exchange_rates`, { height: calculateHeightParam(strHeight) })) || []
 }
 
 export async function getOracleActives(): Promise<string[]> {
@@ -344,8 +365,8 @@ export async function getOracleActives(): Promise<string[]> {
   return res.actives || []
 }
 
-export async function getActiveOraclePrices(): Promise<CoinByDenoms> {
-  return (await getOraclePrices()).filter(Boolean).reduce((prev, item) => {
+export async function getActiveOraclePrices(strHeight?: string): Promise<CoinByDenoms> {
+  return (await getOraclePrices(strHeight)).filter(Boolean).reduce((prev, item) => {
     if (item) {
       prev[item.denom] = item.amount
     }
@@ -383,68 +404,44 @@ export async function getDenomIssuanceAfterGenesis(denom: string, day: number): 
   }
 }
 
-export async function getTotalSupply(): Promise<Coin[]> {
+export async function getTotalSupply(strHeight?: string): Promise<Coin[]> {
   if (config.LEGACY_NETWORK) {
-    return (await get(`/supply/total`)) || []
+    return (await get(`/supply/total`, { height: calculateHeightParam(strHeight) })) || []
   }
 
-  return (await get('/cosmos/bank/v1beta1/supply')).supply || []
+  return (await get('/cosmos/bank/v1beta1/supply', { height: calculateHeightParam(strHeight) })).supply || []
 }
 
-export async function getAllActiveIssuance(): Promise<{ [denom: string]: string }> {
-  return (await getTotalSupply()).reduce((acc, item) => {
+export async function getAllActiveIssuance(strHeight?: string): Promise<{ [denom: string]: string }> {
+  return (await getTotalSupply(strHeight)).reduce((acc, item) => {
     acc[item.denom] = item.amount
     return acc
   }, {})
 }
 
-export function getTaxProceeds(): Promise<Coin[]> {
-  return get(`/treasury/tax_proceeds`)
+export function getTaxProceeds(strHeight?: string): Promise<Coin[]> {
+  return get(`/treasury/tax_proceeds`, { height: calculateHeightParam(strHeight) })
 }
 
-export function getSeigniorageProceeds(): Promise<string> {
-  return get(`/treasury/seigniorage_proceeds`)
+export function getSeigniorageProceeds(strHeight?: string): Promise<string> {
+  return get(`/treasury/seigniorage_proceeds`, { height: calculateHeightParam(strHeight) })
 }
 
-export async function getTaxRate(height?: string): Promise<string> {
-  // NOTE: tax rate with specific height must be queried by node's configuration
-  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
-  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
-  const taxRate = await get(
-    `/treasury/tax_rate`,
-    height ? { height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString() } : undefined
-  )
+export async function getTaxRate(strHeight?: string): Promise<string> {
+  const taxRate = await get(`/treasury/tax_rate`, { height: calculateHeightParam(strHeight) })
   return taxRate ? taxRate : get(`/treasury/tax_rate`) // fallback for col-3 to col-4 upgrade
 }
 
-export async function getTaxCap(denom: string, height?: string): Promise<string> {
-  // NOTE: tax cap with specific height must be queried by node's configuration
-  // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
-  // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
-  const taxCaps = await get(
-    `/treasury/tax_cap/${denom}`,
-    height
-      ? {
-          height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString()
-        }
-      : undefined
-  )
+export async function getTaxCap(denom: string, strHeight?: string): Promise<string> {
+  const taxCaps = await get(`/treasury/tax_cap/${denom}`, { height: calculateHeightParam(strHeight) })
   return taxCaps ? taxCaps : get(`/treasury/tax_cap/${denom}`) // fallback for col-3 to col-4 upgrade
 }
 
-export async function getTaxCaps(height?: string): Promise<{ denom: string; tax_cap: string }[]> {
+export async function getTaxCaps(strHeight?: string): Promise<{ denom: string; tax_cap: string }[]> {
   // NOTE: tax cap with specific height must be queried by node's configuration
   // The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
   // in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
-  const taxCaps =
-    (await get(
-      '/treasury/tax_caps',
-      height
-        ? {
-            height: (+height - (+height % config.PRUNING_KEEP_EVERY)).toString()
-          }
-        : undefined
-    )) || []
+  const taxCaps = (await get('/treasury/tax_caps', { height: calculateHeightParam(strHeight) })) || []
 
   taxCaps.push({
     denom: 'uluna',
@@ -461,10 +458,10 @@ export async function getContract(contractAddress: string): Promise<Record<strin
 export async function getContractStore(
   contractAddress: string,
   query: any,
-  height?: string
+  strHeight?: string
 ): Promise<Record<string, unknown>> {
   return get(`/wasm/contracts/${contractAddress}/store`, {
     query_msg: JSON.stringify(query),
-    height
+    height: calculateHeightParam(strHeight)
   })
 }

@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('general_info')
 export default class GeneralInfoEntity {
