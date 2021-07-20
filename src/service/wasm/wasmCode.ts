@@ -70,9 +70,7 @@ export async function getWasmCodes({ offset, limit, sender, search }: WasmCodePa
 }
 
 export async function getWasmCode(codeId: string): Promise<WasmCodeDetails> {
-  const code = await getRepository(WasmCodeEntity).findOne({
-    codeId
-  })
+  const code = await getRepository(WasmCodeEntity).findOne({ codeId })
 
   if (!code) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Code not found')

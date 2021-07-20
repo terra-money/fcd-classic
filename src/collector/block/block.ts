@@ -69,9 +69,6 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
 
 export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
   const height = +lcdBlock.block.header.height
-  const chainId = lcdBlock.block.header.chain_id
-  const timestamp = lcdBlock.block.header.time
-
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
   const totalReward = {}
@@ -103,9 +100,6 @@ export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<Bl
     })
 
   const blockReward: DeepPartial<BlockRewardEntity> = {
-    chainId,
-    height,
-    timestamp,
     reward: totalReward,
     commission: totalCommission,
     rewardPerVal,

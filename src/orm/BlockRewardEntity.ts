@@ -7,17 +7,6 @@ export default class BlockRewardEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ nullable: true })
-  height: number
-
-  @Index('blockreward_timestamp')
-  @Column({ nullable: true })
-  timestamp: Date
-
-  @Index('blockreward_chain_id')
-  @Column({ nullable: true })
-  chainId: string
-
   @Column({ type: 'jsonb' })
   reward: object
 

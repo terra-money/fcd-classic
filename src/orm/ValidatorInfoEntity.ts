@@ -24,19 +24,19 @@ export default class ValidatorInfoEntity {
   @Column()
   moniker: string
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   identity: string
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   website: string
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   securityContact: string
 
-  @Column({ nullable: true, default: '' })
+  @Column({ default: '' })
   details: string
 
-  @Column()
+  @Column({ default: '' })
   profileIcon: string
 
   @Index('vi_status')

@@ -30,9 +30,7 @@ interface ValidatorDetailsReturn extends ValidatorResponse {
 }
 
 async function getValidatorInfo(operatorAddress: string): Promise<ValidatorResponse | undefined> {
-  const validator = await getRepository(ValidatorInfoEntity).findOne({
-    operatorAddress
-  })
+  const validator = await getRepository(ValidatorInfoEntity).findOne({ operatorAddress })
   const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operatorAddress)
   const airdropReturn = await getAirdropAnnualAvgReturn()
 

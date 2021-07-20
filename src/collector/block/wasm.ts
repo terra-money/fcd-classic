@@ -173,20 +173,27 @@ export async function saveWasmCodeAndContract(mgr: EntityManager, txEntities: Tx
 
     switch (msgType) {
       case `wasm/MsgStoreCode`: {
-        const codeEntity = generateWasmCodeEntity(tx)
-
-        const existingEntity = await mgr.findOne(WasmCodeEntity, { codeId: codeEntity.codeId })
+        const entity = generateWasmCodeEntity(tx)
+        const existingEntity = await mgr.findOne(WasmCodeEntity, { codeId: entity.codeId })
 
         if (existingEntity) {
-          await mgr.update(WasmCodeEntity, existingEntity.id, codeEntity)
+          await mgr.update(WasmCodeEntity, existingEntity.id, entity)
         } else {
-          wasmCodes.push(codeEntity)
+          wasmCodes.push(entity)
         }
         break
       }
-      case 'wasm/MsgInstantiateContract':
-        wasmContracts.push(generateWasmContractEntity(tx))
+      case 'wasm/MsgInstantiateContract': {
+        const entity = generateWasmContractEntity(tx)
+        const existingEntity = await mgr.findOne(WasmContractEntity, { codeId: entity.codeId })
+
+        if (existingEntity) {
+          await mgr.update(WasmContractEntity, existingEntity.id, entity)
+        } else {
+          wasmContracts.push(entity)
+        }
         break
+      }
       case 'wasm/MsgMigrateContract':
         wasmTxToUpdate.push(tx)
         break
