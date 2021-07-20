@@ -5,81 +5,79 @@ import { collectorLogger as logger } from 'lib/logger'
 
 function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] {
   return tx.data.tx.value.msg
-    .map((msg, index) =>
-      (tx.data.logs[index].events || [])
-        .map((ev) => {
-          const attributeObj = ev.attributes.reduce((acc, attr) => {
-            acc[attr.key] = attr.value
-            return acc
-          }, {} as { [key: string]: string })
+    .map(
+      (msg, index) =>
+        ((tx.data.logs && tx.data.logs[index].events) || [])
+          .map((ev) => {
+            const attributeObj = ev.attributes.reduce((acc, attr) => {
+              acc[attr.key] = attr.value
+              return acc
+            }, {} as { [key: string]: string })
 
-          if (ev.type === 'instantiate_contract') {
-            return {
-              contractAddress: attributeObj.contract_address,
-              codeId: attributeObj.code_id,
-              initMsg: Buffer.from(msg.value.init_msg, 'base64').toString(),
-              owner: attributeObj.owner || attributeObj.admin,
-              timestamp: tx.timestamp,
-              txHash: tx.hash,
-              txMemo: msg.value.txMemo,
-              migratable: msg.value.migratable
+            if (ev.type === 'instantiate_contract') {
+              return {
+                contractAddress: attributeObj.contract_address,
+                codeId: attributeObj.code_id,
+                initMsg: Buffer.from(msg.value.init_msg, 'base64').toString(),
+                owner: attributeObj.owner || attributeObj.admin,
+                timestamp: tx.timestamp,
+                txHash: tx.hash,
+                txMemo: msg.value.txMemo,
+                migratable: msg.value.migratable
+              }
+            } else if (ev.type === 'migrate_contract') {
+              return {
+                contractAddress: attributeObj.contract_address,
+                codeId: attributeObj.code_id,
+                migrateMsg: Buffer.from(msg.value.migrate_msg, 'base64').toString()
+              }
+            } else if (ev.type === 'update_contract_admin') {
+              return {
+                contractAddress: attributeObj.contract_address,
+                owner: attributeObj.admin
+              }
+            } else if (ev.type === 'clear_contract_admin') {
+              return {
+                contractAddress: attributeObj.contract_address,
+                owner: ''
+              }
+            } else if (ev.type === 'update_contract_owner') {
+              // Columbus-4
+              return {
+                contractAddress: attributeObj.contract_address,
+                owner: attributeObj.owner
+              }
             }
-          } else if (ev.type === 'migrate_contract') {
-            return {
-              contractAddress: attributeObj.contract_address,
-              codeId: attributeObj.code_id,
-              migrateMsg: Buffer.from(msg.value.migrate_msg, 'base64').toString()
-            }
-          } else if (ev.type === 'update_contract_admin') {
-            return {
-              contractAddress: attributeObj.contract_address,
-              owner: attributeObj.admin
-            }
-          } else if (ev.type === 'clear_contract_admin') {
-            return {
-              contractAddress: attributeObj.contract_address,
-              owner: ''
-            }
-          } else if (ev.type === 'update_contract_owner') {
-            // Columbus-4
-            return {
-              contractAddress: attributeObj.contract_address,
-              owner: attributeObj.owner
-            }
-          }
-
-          return {}
-        })
-        .filter(Boolean)
-        .flat()
+          })
+          .flat()
+          .filter(Boolean) as DeepPartial<WasmContractEntity>[]
     )
     .flat()
 }
 
 function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
   return tx.data.tx.value.msg
-    .map((msg, index) =>
-      (tx.data.logs[index].events || [])
-        .map((ev) => {
-          const attributeObj = ev.attributes.reduce((acc, attr) => {
-            acc[attr.key] = attr.value
-            return acc
-          }, {} as { [key: string]: string })
+    .map(
+      (msg, index) =>
+        ((tx.data.logs && tx.data.logs[index].events) || [])
+          .map((ev) => {
+            const attributeObj = ev.attributes.reduce((acc, attr) => {
+              acc[attr.key] = attr.value
+              return acc
+            }, {} as { [key: string]: string })
 
-          if (ev.type === 'store_code') {
-            return {
-              codeId: attributeObj.code_id,
-              sender: attributeObj.sender,
-              txHash: tx.hash,
-              txMemo: msg.value.txMemo,
-              timestamp: tx.timestamp
+            if (ev.type === 'store_code') {
+              return {
+                codeId: attributeObj.code_id,
+                sender: attributeObj.sender,
+                txHash: tx.hash,
+                txMemo: msg.value.txMemo,
+                timestamp: tx.timestamp
+              }
             }
-          }
-
-          return {}
-        })
-        .filter(Boolean)
-        .flat()
+          })
+          .flat()
+          .filter(Boolean) as DeepPartial<WasmCodeEntity>[]
     )
     .flat()
 }
