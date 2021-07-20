@@ -12,25 +12,33 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
             const contracts: DeepPartial<WasmContractEntity>[] = []
 
             if (ev.type === 'instantiate_contract') {
+              const txHash = tx.hash
+              const txMemo = msg.value.txMemo || ''
+              const timestamp = tx.timestamp
+              const migratable = msg.value.migratable
+              const initMsg = Buffer.from(msg.value.init_msg, 'base64').toString()
+
               for (let i = 0; i < ev.attributes.length; i += 3) {
                 contracts.push({
                   contractAddress: ev.attributes[i + 2].value,
                   codeId: ev.attributes[i + 1].value,
-                  initMsg: Buffer.from(msg.value.init_msg, 'base64').toString(),
                   owner: ev.attributes[i].value,
-                  timestamp: tx.timestamp,
-                  txHash: tx.hash,
-                  txMemo: msg.value.txMemo || '',
-                  migratable: msg.value.migratable
+                  txHash,
+                  txMemo,
+                  timestamp,
+                  migratable,
+                  initMsg
                 })
               }
               return contracts
             } else if (ev.type === 'migrate_contract') {
+              const migrateMsg = Buffer.from(msg.value.migrate_msg, 'base64').toString()
+
               for (let i = 0; i < ev.attributes.length; i += 2) {
                 contracts.push({
                   contractAddress: ev.attributes[i + 1].value,
                   codeId: ev.attributes[i].value,
-                  migrateMsg: Buffer.from(msg.value.migrate_msg, 'base64').toString()
+                  migrateMsg
                 })
               }
             } else if (ev.type === 'update_contract_admin') {
@@ -76,13 +84,17 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
             const codes: DeepPartial<WasmCodeEntity>[] = []
 
             if (ev.type === 'store_code') {
+              const txHash = tx.hash
+              const txMemo = msg.value.txMemo || ''
+              const timestamp = tx.timestamp
+
               for (let i = 0; i < ev.attributes.length; i += 2) {
                 codes.push({
                   codeId: ev.attributes[i + 1].value,
                   sender: ev.attributes[i].value,
-                  txHash: tx.hash,
-                  txMemo: msg.value.txMemo || '',
-                  timestamp: tx.timestamp
+                  txHash,
+                  txMemo,
+                  timestamp
                 })
               }
             }
