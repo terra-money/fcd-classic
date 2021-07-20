@@ -22,7 +22,7 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
                 owner: attributeObj.owner || attributeObj.admin,
                 timestamp: tx.timestamp,
                 txHash: tx.hash,
-                txMemo: msg.value.txMemo,
+                txMemo: msg.value.txMemo || '',
                 migratable: msg.value.migratable
               }
             } else if (ev.type === 'migrate_contract') {
@@ -71,7 +71,7 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
                 codeId: attributeObj.code_id,
                 sender: attributeObj.sender,
                 txHash: tx.hash,
-                txMemo: msg.value.txMemo,
+                txMemo: msg.value.txMemo || '',
                 timestamp: tx.timestamp
               }
             }
@@ -92,7 +92,7 @@ export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
         return mgr.update(WasmCodeEntity, existingEntity.id, code)
       } else {
         logger.info(`collectWasm: new code ${code.codeId}`)
-        return mgr.create(WasmCodeEntity, code)
+        return mgr.save(WasmCodeEntity, code)
       }
     })
 
@@ -104,7 +104,7 @@ export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
         return mgr.update(WasmContractEntity, existingEntity.id, contract)
       } else {
         logger.info(`collectWasm: new contract ${contract.contractAddress}`)
-        return mgr.create(WasmContractEntity, contract)
+        return mgr.save(WasmContractEntity, contract)
       }
     })
   })
