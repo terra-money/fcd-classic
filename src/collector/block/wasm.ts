@@ -16,7 +16,7 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
               const txMemo = msg.value.txMemo || ''
               const timestamp = tx.timestamp
               const migratable = msg.value.migratable
-              const initMsg = Buffer.from(msg.value.init_msg, 'base64').toString()
+              const initMsg = Buffer.from(msg.value.init_msg || '', 'base64').toString()
 
               for (let i = 0; i < ev.attributes.length; i += 3) {
                 contracts.push({
@@ -32,7 +32,7 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
               }
               return contracts
             } else if (ev.type === 'migrate_contract') {
-              const migrateMsg = Buffer.from(msg.value.migrate_msg, 'base64').toString()
+              const migrateMsg = Buffer.from(msg.value.migrate_msg || '', 'base64').toString()
 
               for (let i = 0; i < ev.attributes.length; i += 2) {
                 contracts.push({

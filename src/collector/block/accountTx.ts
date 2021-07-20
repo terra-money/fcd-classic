@@ -1,7 +1,8 @@
 import { getRepository, MoreThan } from 'typeorm'
 import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
-import { get, uniq } from 'lodash'
+import { uniq } from 'lodash'
+import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import { findAssetByPair, findAssetByToken } from 'service/treasury/token'
 
 async function getRecentlySyncedTx(): Promise<number> {
@@ -96,7 +97,7 @@ export default function getAddressFromMsg(
 
   let result: {
     [action: string]: string[]
-  }
+  } = {}
 
   const value = msg.value
 
@@ -188,35 +189,8 @@ export default function getAddressFromMsg(
       }
       break
 
-    case 'wasm/MsgStoreCode':
-      result = {
-        contract: [value.sender]
-      }
-      break
-
-    case 'wasm/MsgInstantiateContract': {
-      const contract = get(log, 'events[0].attributes[2].value')
-      result = {
-        contract: [value.owner, contract]
-      }
-      break
-    }
-
-    case 'wasm/MsgExecuteContract': {
-      result = mergeWith({ contract: [value.sender, value.contract] }, extractAddressFromContractMsg(value), union)
-      break
-    }
-
-    case 'wasm/MsgMigrateContract':
-      result = {
-        contract: [value.owner, value.contract]
-      }
-      break
-
-    case 'wasm/MsgUpdateContractOwner':
-      result = {
-        contract: [value.owner, value.new_owner, value.contract]
-      }
+    case 'wasm/MsgExecuteContract':
+      result = extractAddressFromContractMsg(value)
       break
 
     case 'msgauth/MsgGrantAuthorization':
@@ -248,11 +222,26 @@ export default function getAddressFromMsg(
         }
       )
       break
-
-    default:
-      result = {}
-      break
   }
+
+  result.contract = ((log && log.events) || [])
+    .map((ev) => {
+      if (
+        [
+          'store_code',
+          'instantiate_contract',
+          'execute_contract',
+          'migrate_contract',
+          'update_contract_admin',
+          'clear_contract_admin',
+          'update_contract_owner'
+        ].includes(ev.type)
+      ) {
+        return ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
+      }
+    })
+    .flat()
+    .filter(Boolean) as string[]
 
   Object.keys(result).forEach((action) => {
     result[action] = uniq(result[action].filter(Boolean))
