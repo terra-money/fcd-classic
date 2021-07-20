@@ -2,8 +2,6 @@ import { DeepPartial, EntityManager } from 'typeorm'
 import { get, filter } from 'lodash'
 
 import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
-import config from 'config'
-
 import { collectorLogger as logger } from 'lib/logger'
 
 function getTxMsgTypeAndValueMemo(tx: TxEntity): Transaction.Message & { txMemo: string } {
@@ -162,24 +160,42 @@ async function updateContract(transactionEntityManager: EntityManager, wasmMigra
   }
 }
 
-export async function saveWasmCodeAndContract(transactionEntityManager: EntityManager, txEntities: TxEntity[]) {
+export async function saveWasmCodeAndContract(mgr: EntityManager, txEntities: TxEntity[]) {
   const wasmCodes: WasmCodeEntity[] = []
   const wasmContracts: WasmContractEntity[] = []
   const wasmTxToUpdate: TxEntity[] = []
 
-  txEntities.forEach((tx: TxEntity) => {
+  for (let i = 0; i < txEntities.length; ++i) {
+    const tx = txEntities[i]
     const { msgType, failed } = getMsgTypeAndStatus(tx)
+
     if (failed) {
-      return
+      continue
     }
 
     switch (msgType) {
-      case `wasm/MsgStoreCode`:
-        wasmCodes.push(generateWasmCodeEntity(tx))
+      case `wasm/MsgStoreCode`: {
+        const entity = generateWasmCodeEntity(tx)
+        const existingEntity = await mgr.findOne(WasmCodeEntity, { codeId: entity.codeId })
+
+        if (existingEntity) {
+          await mgr.update(WasmCodeEntity, existingEntity.id, entity)
+        } else {
+          wasmCodes.push(entity)
+        }
         break
-      case 'wasm/MsgInstantiateContract':
-        wasmContracts.push(generateWasmContractEntity(tx))
+      }
+      case 'wasm/MsgInstantiateContract': {
+        const entity = generateWasmContractEntity(tx)
+        const existingEntity = await mgr.findOne(WasmContractEntity, { codeId: entity.codeId })
+
+        if (existingEntity) {
+          await mgr.update(WasmContractEntity, existingEntity.id, entity)
+        } else {
+          wasmContracts.push(entity)
+        }
         break
+      }
       case 'wasm/MsgMigrateContract':
         wasmTxToUpdate.push(tx)
         break
@@ -189,14 +205,20 @@ export async function saveWasmCodeAndContract(transactionEntityManager: EntityMa
       default:
         break
     }
-  })
+  }
 
-  logger.info(`Storing ${wasmCodes.length} codes and ${wasmContracts.length} contracts.`)
-  await transactionEntityManager.save(wasmCodes)
-  await transactionEntityManager.save(wasmContracts)
-  logger.info(`Stored ${wasmCodes.length} codes and ${wasmContracts.length} contracts.`)
+  if (wasmCodes.length) {
+    logger.info(`Wasm: ${wasmCodes.length} new codes`)
+    await mgr.save(wasmCodes)
+  }
 
-  logger.info(`Migrating ${wasmTxToUpdate.length} contract`)
-  await updateContract(transactionEntityManager, wasmTxToUpdate)
-  logger.info(`Migrated ${wasmTxToUpdate.length} contract`)
+  if (wasmContracts.length) {
+    logger.info(`Wasm: ${wasmContracts.length} new contracts`)
+    await mgr.save(wasmContracts)
+  }
+
+  if (wasmTxToUpdate.length) {
+    logger.info(`Wasm: ${wasmTxToUpdate.length} contract updates`)
+    await updateContract(mgr, wasmTxToUpdate)
+  }
 }
