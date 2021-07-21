@@ -128,16 +128,16 @@ export default function getAddressFromMsg(
     case 'staking/MsgCreateValidator':
     case 'staking/MsgBeginRedelegate':
     case 'staking/MsgUndelegate':
-    case 'distribution/MsgSetWithdrawAddress':
     case 'distribution/MsgWithdrawDelegationReward':
       result = {
         staking: [value.delegator_address]
       }
       break
 
-    case 'distribution/MsgWithdrawValidatorCommission':
+    case 'distribution/MsgModifyWithdrawAddress':
+    case 'distribution/MsgSetWithdrawAddress':
       result = {
-        staking: [value.validator_address]
+        staking: [value.delegator_address, value.withdraw_address]
       }
       break
 
@@ -158,19 +158,6 @@ export default function getAddressFromMsg(
       }
       break
 
-    case 'budget/MsgSubmitProgram':
-    case 'budget/MsgWithdrawProgram':
-      result = {
-        budget: [value.submitter]
-      }
-      break
-
-    case 'budget/MsgVoteProgram':
-      result = {
-        budget: [value.voter]
-      }
-      break
-
     case 'gov/MsgDeposit':
       result = {
         governance: [value.depositor]
@@ -178,6 +165,7 @@ export default function getAddressFromMsg(
       break
 
     case 'gov/MsgVote':
+    case 'gov/MsgVoteWeighted': // since columbus-5
       result = {
         governance: [value.voter]
       }
