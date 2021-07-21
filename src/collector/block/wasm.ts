@@ -21,7 +21,8 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
                 contracts.push({
                   contractAddress: ev.attributes[i + 3].value,
                   codeId: ev.attributes[i + 2].value,
-                  owner: ev.attributes[i + 1].value,
+                  owner: ev.attributes[i + 1].value || '',
+                  creator: ev.attributes[i].value,
                   txHash,
                   txMemo,
                   timestamp,

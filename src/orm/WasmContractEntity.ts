@@ -9,9 +9,14 @@ export default class WasmContractEntity {
   @Column()
   codeId: string
 
+  // `admin` from columbus-5
   @Index('wcontract_index_owner')
   @Column()
   owner: string
+
+  // New from columbus-5
+  @Column()
+  creator: string
 
   @Column({ unique: true })
   contractAddress: string
