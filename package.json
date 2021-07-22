@@ -18,14 +18,12 @@
     "start": "better-npm-run api-prod",
     "coldev": "better-npm-run collector-dev",
     "collector": "better-npm-run collector-prod",
-    "vscoldev": "better-npm-run val-col-dev",
-    "vscolprod": "better-npm-run val-col-prod",
-    "stability": "better-npm-run stability",
-    "typeorm": "ts-node -T --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateSwagger.ts",
-    "mergeswagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
-    "testurls": "ts-node -T --files -r tsconfig-paths/register src/scripts/testUrls.ts",
-    "apidoc": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateApidoc.ts",
+    "do": "ts-node -T --files -r tsconfig-paths/register",
+    "typeorm": "npm run do ./node_modules/.bin/typeorm",
+    "swagger": "npm run do src/scripts/generateSwagger.ts",
+    "mergeswagger": "npm run do src/scripts/mergeSwaggerFile.ts",
+    "testurls": "npm run do src/scripts/testUrls.ts",
+    "apidoc": "npm run do src/scripts/generateApidoc.ts",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable"
   },
@@ -44,21 +42,6 @@
     },
     "collector-prod": {
       "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/collector.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "val-col-dev": {
-      "command": "nodemon --signal SIGINT --exec ts-node --files -r tsconfig-paths/register src/collector/validatorCollector.ts"
-    },
-    "val-col-prod": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/validatorCollector.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "stability": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/stability/stabilityChecker.ts",
       "env": {
         "NODE_ENV": "production"
       }
