@@ -38,20 +38,16 @@ async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   return latestBlock[0]
 }
 
-function getBlockEntity(
-  blockHeight: number,
-  lcdBlock: LcdBlock,
-  blockReward: BlockRewardEntity
-): DeepPartial<BlockEntity> {
-  const chainId = lcdBlock.block.header.chain_id
-  const timestamp = lcdBlock.block.header.time
+function generateBlockEntity(lcdBlock: LcdBlock, blockReward: BlockRewardEntity): DeepPartial<BlockEntity> {
+  const { chain_id: chainId, height, time: timestamp } = lcdBlock.block.header
 
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
-    height: blockHeight,
+    height: +height,
     timestamp,
     reward: blockReward
   }
+
   return blockEntity
 }
 
@@ -69,8 +65,7 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
   return acc
 }
 
-export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
-  const height = +lcdBlock.block.header.height
+export async function getBlockReward(height: string): Promise<DeepPartial<BlockRewardEntity>> {
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
   const totalReward = {}
@@ -120,20 +115,16 @@ export async function saveBlockInformation(
   const result: BlockEntity | undefined = await getManager()
     .transaction(async (mgr: EntityManager) => {
       // Save block rewards
-      const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(lcdBlock))
-      // new block height
-      const newBlockHeight = +height
+      const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(height))
       // Save block entity
-      const newBlockEntity = await mgr
-        .getRepository(BlockEntity)
-        .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
+      const newBlockEntity = await mgr.getRepository(BlockEntity).save(generateBlockEntity(lcdBlock, newBlockReward))
       // get block tx hashes
       const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 
       if (txHashes) {
         const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
         // save transactions
-        await collectTxs(mgr, txEntities, newBlockEntity)
+        await collectTxs(mgr, txEntities)
         // save wasm
         await collectWasm(mgr, txEntities)
         // save proposals

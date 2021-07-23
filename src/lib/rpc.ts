@@ -41,7 +41,7 @@ interface Reward {
   type: 'proposer_reward' | 'rewards' | 'commission'
 }
 
-export async function getRewards(height: number): Promise<Reward[]> {
+export async function getRewards(height: string): Promise<Reward[]> {
   const blockResult = await getRequest(`/block_results`, { height })
 
   if (!blockResult) {
