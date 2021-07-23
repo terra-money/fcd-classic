@@ -283,7 +283,16 @@ function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
 
 export async function collectTxs(mgr: EntityManager, txEntities: TxEntity[], block: BlockEntity): Promise<void> {
   // Save TxEntity
-  await mgr.save(txEntities)
+  // NOTE: Do not use printSql, getSql, or getQuery function.
+  // It breaks parameter number ordering caused by a bug from TypeORM
+  const qb = mgr
+    .createQueryBuilder()
+    .insert()
+    .into(TxEntity)
+    .values(txEntities)
+    .orUpdate({ conflict_target: ['chain_id', 'hash'], overwrite: ['timestamp', 'data', 'block_id'] })
+
+  await qb.execute()
 
   // generate AccountTxEntities
   const accountTxs: AccountTxEntity[][] = compact(txEntities).map((txEntity) => generateAccountTxs(txEntity))
