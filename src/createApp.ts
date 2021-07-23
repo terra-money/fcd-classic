@@ -9,11 +9,11 @@ import * as serve from 'koa-static'
 import * as mount from 'koa-mount'
 import { configureRoutes } from 'koa-joi-controllers'
 import { koaSwagger } from 'koa2-swagger-ui'
+import * as proxy from 'koa-proxies'
 
 import config from 'config'
 import { errorHandler, APIError, ErrorTypes } from 'lib/error'
 import { error } from 'lib/response'
-import proxy from 'lib/bypass'
 import { apiLogger as logger } from 'lib/logger'
 
 const API_VERSION_PREFIX = '/v1'
@@ -146,13 +146,10 @@ export default async (disableAPI = false): Promise<Koa> => {
 
   // proxy to lcd
   app.use(
-    proxy({
-      host: config.BYPASS_URI,
+    proxy(/./, {
+      target: config.BYPASS_URI,
       changeOrigin: true,
-      requestOptions: {
-        strictSSL: false,
-        timeout: 20000
-      }
+      logs: true
     })
   )
 
