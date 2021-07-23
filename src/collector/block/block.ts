@@ -11,7 +11,7 @@ import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 
-import { collectTxs, generateTxEntities } from './tx'
+import { collectTxs } from './tx'
 import { collectWasm } from './wasm'
 import { collectReward } from './reward'
 // import { collectSwap } from './swap'
@@ -121,10 +121,9 @@ export async function saveBlockInformation(
       // get block tx hashes
       const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 
-      if (txHashes) {
-        const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
+      if (txHashes.length) {
         // save transactions
-        await collectTxs(mgr, txEntities)
+        const txEntities = await collectTxs(mgr, txHashes, height, newBlockEntity)
         // save wasm
         await collectWasm(mgr, txEntities)
         // save proposals

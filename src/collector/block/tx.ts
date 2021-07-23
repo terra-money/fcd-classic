@@ -197,7 +197,7 @@ export async function getLcdTx(
   return modifiedDoc
 }
 
-export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
+async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
   // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
@@ -281,7 +281,14 @@ function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
   return newTxInfo
 }
 
-export async function collectTxs(mgr: EntityManager, txEntities: TxEntity[]): Promise<void> {
+export async function collectTxs(
+  mgr: EntityManager,
+  txHashes: string[],
+  height: string,
+  block: BlockEntity
+): Promise<TxEntity[]> {
+  const txEntities = await generateTxEntities(txHashes, height, block)
+
   // Save TxEntity
   // NOTE: Do not use printSql, getSql, or getQuery function.
   // It breaks parameter number ordering caused by a bug from TypeORM
@@ -317,4 +324,6 @@ export async function collectTxs(mgr: EntityManager, txEntities: TxEntity[]): Pr
     `SaveTxs - txs: ${txEntities.length}, ` +
       `account: ${updatedAccountEntity.length}, accountTxs: ${accountTxEntities.length}`
   )
+
+  return txEntities
 }
