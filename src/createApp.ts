@@ -146,10 +146,10 @@ export default async (disableAPI = false): Promise<Koa> => {
 
   // proxy to lcd
   app.use(
-    proxy(/./, {
+    proxy('', {
       target: config.BYPASS_URI,
       changeOrigin: true,
-      logs: true
+      logs: process.env.NODE_ENV !== 'production'
     })
   )
 
