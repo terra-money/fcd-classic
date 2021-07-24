@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "1.0.0-alpha.8",
+  "version": "1.0.0-alpha.9",
   "description": "Terra FCD Suite",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
@@ -8,6 +8,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/terra-project/fcd.git"
+  },
+  "engines": {
+    "node": ">=14"
   },
   "scripts": {
     "postinstall": "husky install",
@@ -18,14 +21,12 @@
     "start": "better-npm-run api-prod",
     "coldev": "better-npm-run collector-dev",
     "collector": "better-npm-run collector-prod",
-    "vscoldev": "better-npm-run val-col-dev",
-    "vscolprod": "better-npm-run val-col-prod",
-    "stability": "better-npm-run stability",
-    "typeorm": "ts-node -T --files -r tsconfig-paths/register ./node_modules/.bin/typeorm",
-    "swagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateSwagger.ts",
-    "mergeswagger": "ts-node -T --files -r tsconfig-paths/register src/scripts/mergeSwaggerFile.ts",
-    "testurls": "ts-node -T --files -r tsconfig-paths/register src/scripts/testUrls.ts",
-    "apidoc": "ts-node -T --files -r tsconfig-paths/register src/scripts/generateApidoc.ts",
+    "do": "ts-node -T --files -r tsconfig-paths/register",
+    "typeorm": "npm run do ./node_modules/.bin/typeorm",
+    "swagger": "npm run do src/scripts/generateSwagger.ts",
+    "mergeswagger": "npm run do src/scripts/mergeSwaggerFile.ts",
+    "testurls": "npm run do src/scripts/testUrls.ts",
+    "apidoc": "npm run do src/scripts/generateApidoc.ts",
     "prepublishOnly": "pinst --disable",
     "postpublish": "pinst --enable"
   },
@@ -47,21 +48,6 @@
       "env": {
         "NODE_ENV": "production"
       }
-    },
-    "val-col-dev": {
-      "command": "nodemon --signal SIGINT --exec ts-node --files -r tsconfig-paths/register src/collector/validatorCollector.ts"
-    },
-    "val-col-prod": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/collector/validatorCollector.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
-    },
-    "stability": {
-      "command": "node --stack_size=4096 --max-old-space-size=4096 -r ts-node/register/transpile-only -r tsconfig-paths/register src/stability/stabilityChecker.ts",
-      "env": {
-        "NODE_ENV": "production"
-      }
     }
   },
   "dependencies": {
@@ -79,7 +65,6 @@
     "date-fns": "^1.30.1",
     "date-fns-timezone": "^0.1.4",
     "globby": "^11.0.1",
-    "got": "^11.8.1",
     "http-proxy": "^1.18.1",
     "koa": "^2.13.0",
     "koa-body": "^4.2.0",
@@ -87,7 +72,7 @@
     "koa-joi-controllers": "^1.2.3",
     "koa-morgan": "^1.0.1",
     "koa-mount": "^4.0.0",
-    "koa-proxy": "^1.0.0-alpha.3",
+    "koa-proxies": "^0.12.1",
     "koa-router": "^10.0.0",
     "koa-static": "^5.0.0",
     "koa2-swagger-ui": "^5.0.5",
@@ -109,7 +94,6 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.33",
-    "@types/got": "^9.6.11",
     "@types/jest": "^26.0.19",
     "@types/koa": "^2.11.6",
     "@types/koa-router": "^7.4.1",
