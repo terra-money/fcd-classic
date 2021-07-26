@@ -16,7 +16,7 @@ export default class ProposalEntity {
   @Column()
   chainId: string
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   proposer: string | null
 
   @Column()
