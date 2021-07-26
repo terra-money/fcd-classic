@@ -109,7 +109,7 @@ interface VoteSummary {
 interface ProposalBasic {
   id: string
   type: string
-  proposer: {
+  proposer?: {
     accountAddress: string
     operatorAddress?: string
     moniker?: string
