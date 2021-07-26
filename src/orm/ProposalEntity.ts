@@ -16,8 +16,8 @@ export default class ProposalEntity {
   @Column()
   chainId: string
 
-  @Column()
-  proposer: string
+  @Column({ nullable: true })
+  proposer: string | null
 
   @Column()
   title: string

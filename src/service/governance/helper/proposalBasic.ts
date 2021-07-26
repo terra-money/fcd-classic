@@ -61,7 +61,7 @@ async function getProposalBasicUncached(proposal: ProposalEntity): Promise<Propo
 
   return {
     id: proposalId,
-    proposer: await getAccountInfo(proposal.proposer),
+    proposer: proposal.proposer ? await getAccountInfo(proposal.proposer) : undefined,
     type: transformProposalType(proposal.type),
     status: transformStatus(proposal.status),
     submitTime: proposal.submitTime.toISOString(),

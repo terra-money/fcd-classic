@@ -12,24 +12,21 @@ interface AccountInfo {
 
 /**
  * Returns account address with optional validator info
- * @param {string} accAddress - Terra account address
+ * @param {string} accountAddress - Terra account address
  * @returns {AccountInfo} result - Account Info
  */
-async function getAccountInfoUncached(accAddress: string): Promise<AccountInfo> {
+async function getAccountInfoUncached(accountAddress: string): Promise<AccountInfo> {
   const validator = await getRepository(ValidatorInfoEntity).findOne({
-    accountAddress: accAddress
+    accountAddress
   })
-  const result = {
-    accountAddress: accAddress
-  }
-  if (validator) {
-    return {
-      ...result,
+
+  return {
+    accountAddress,
+    ...(validator && {
       operatorAddress: validator.operatorAddress,
       moniker: validator.moniker
-    }
+    })
   }
-  return result
 }
 
 const getAccountInfo = memoizeCache(getAccountInfoUncached, { promise: true, maxAge: 3600 * 1000 /* 1 hour */ })
