@@ -53,23 +53,12 @@ async function getDelegatedValidatorWhoDidNotVoted(
   const qb = getRepository(ValidatorInfoEntity)
     .createQueryBuilder('validator')
     .where('validator.operatorAddress IN (:...ids)', { ids: delegatedOperatorList })
-    .andWhere('validator.chainId = (:chainId)', { chainId: config.CHAIN_ID })
     .andWhere('validator.status = (:status)', { status: 'active' })
 
   const delegatedValidator = await qb.getMany()
   const validatorNotVoted = delegatedValidator.filter((validator) => !voters[validator.accountAddress])
-  const validatorsReturn = getValidatorsReturn()
 
-  const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {
-    acc.push(
-      generateValidatorResponse(
-        validator,
-        validatorsReturn[validator.operatorAddress] || { stakingReturn: '0', isNewValidator: false }
-      )
-    )
-    return acc
-  }, [] as ValidatorResponse[])
-  return validatorsNotVoted
+  return validatorNotVoted.map(generateValidatorResponse)
 }
 
 export default async function getProposal(proposalId: string, account?: string): Promise<GetProposalResponse> {

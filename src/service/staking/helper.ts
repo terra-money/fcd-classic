@@ -153,11 +153,6 @@ export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
   }
 }
 
-export async function getMyDelegation(delegator: string, validator: ValidatorResponse): Promise<string | undefined> {
-  const delegation = await lcd.getDelegationForValidator(delegator, validator.operatorAddress)
-  return delegation?.shares && div(times(delegation.shares, validator.tokens), validator.delegatorShares)
-}
-
 export function getUndelegateSchedule(
   unbondings: LcdUnbonding[],
   validatorObj: { [validatorAddress: string]: ValidatorResponse }
@@ -328,10 +323,7 @@ export const getTotalStakingReturn = memoizeCache(getTotalStakingReturnUncached,
   maxAge: 60 * 60 * 1000
 })
 
-export function generateValidatorResponse(
-  validator: ValidatorInfoEntity,
-  { stakingReturn, isNewValidator }: ValidatorAnnualReturn
-): ValidatorResponse {
+export function generateValidatorResponse(validator: ValidatorInfoEntity): ValidatorResponse {
   const {
     operatorAddress,
     consensusPubkey,
@@ -389,8 +381,6 @@ export function generateValidatorResponse(
     selfDelegation: {
       amount: selfDelegation,
       weight: selfDelegationWeight
-    },
-    stakingReturn,
-    isNewValidator
+    }
   }
 }

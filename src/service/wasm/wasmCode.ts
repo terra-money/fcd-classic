@@ -39,8 +39,6 @@ export async function getWasmCodes({ offset, limit, sender, search }: WasmCodePa
 }> {
   const qb = getRepository(WasmCodeEntity).createQueryBuilder()
 
-  qb.where('chain_id = :chain_id', { chain_id: config.CHAIN_ID })
-
   if (offset) {
     qb.andWhere('offset = :offset', { offset: LessThan(offset) })
   }

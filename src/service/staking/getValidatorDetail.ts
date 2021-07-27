@@ -1,24 +1,20 @@
 import { getRepository } from 'typeorm'
 import { filter } from 'lodash'
 
-import config from 'config'
 import { ValidatorInfoEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { sortDenoms } from 'lib/common'
-import { div, plus } from 'lib/math'
+import { div, plus, times } from 'lib/math'
 import memoizeCache from 'lib/memoizeCache'
 
 import { getBalance } from 'service/bank'
-import { getAirdropAnnualAvgReturn } from 'service/dashboard'
-
-import { getValidatorAnnualAvgReturn } from './getValidatorReturn'
-import { getCommissions, getMyDelegation, getUndelegateSchedule, generateValidatorResponse } from './helper'
+import { getCommissions, getUndelegateSchedule, generateValidatorResponse } from './helper'
 
 interface RewardsByDenom {
   denom: string
   amount: string
-  adjustedAmount: string
+  adjustedAmount: string // in luna value
 }
 
 interface ValidatorDetailsReturn extends ValidatorResponse {
@@ -26,74 +22,66 @@ interface ValidatorDetailsReturn extends ValidatorResponse {
   myDelegation?: string
   myDelegatable?: string
   myUndelegation?: UndeligationSchedule[]
-  myRewards?: RewardsByDenom[]
-}
-
-async function getValidatorInfo(operatorAddress: string): Promise<ValidatorResponse | undefined> {
-  const validator = await getRepository(ValidatorInfoEntity).findOne({ operatorAddress })
-  const { stakingReturn, isNewValidator } = await getValidatorAnnualAvgReturn(operatorAddress)
-  const airdropReturn = await getAirdropAnnualAvgReturn()
-
-  if (validator) {
-    return generateValidatorResponse(validator, { stakingReturn: plus(stakingReturn, airdropReturn), isNewValidator })
+  myRewards?: {
+    total: string
+    denoms: RewardsByDenom[]
   }
-
-  return undefined
 }
 
 export async function getValidatorDetailUncached(
-  operatorAddr: string,
+  operatorAddress: string,
   account?: string
 ): Promise<ValidatorDetailsReturn | undefined> {
-  const validator = await getValidatorInfo(operatorAddr)
+  const valInfo = await getRepository(ValidatorInfoEntity).findOne({ operatorAddress })
 
-  if (!validator) {
+  if (!valInfo) {
     return
   }
 
-  const commissions: Coin[] = sortDenoms(await getCommissions(operatorAddr))
+  const validator = generateValidatorResponse(valInfo)
+  const commissions: Coin[] = sortDenoms(await getCommissions(operatorAddress))
 
-  let result: ValidatorDetailsReturn = {
+  const result: ValidatorDetailsReturn = {
     ...validator,
     commissions
   }
 
   if (account) {
-    const priceObj = await lcd.getActiveOraclePrices()
-    const myDelegation = await getMyDelegation(account, validator)
-    const myBalance = await getBalance(account)
-    const ulunaBalance = filter(myBalance.balance, { denom: 'uluna' })[0]
-    const myUndelegation =
-      myBalance.unbondings &&
-      getUndelegateSchedule(filter(myBalance.unbondings, { validator_address: operatorAddr }), {
-        [operatorAddr]: validator
-      })
+    const delegation = await lcd.getDelegationForValidator(account, validator.operatorAddress)
 
-    let myRewards
+    result.myDelegation =
+      delegation?.shares && div(times(delegation.shares, validator.tokens), validator.delegatorShares)
 
-    if (myDelegation) {
-      const rewards = await lcd.getRewards(account, operatorAddr)
+    // No delegation, no remain reward
+    if (result.myDelegation) {
+      const priceObj = await lcd.getActiveOraclePrices()
+      const rewards = await lcd.getRewards(account, operatorAddress)
 
       let total = '0'
       const denoms = rewards.map(({ denom, amount }) => {
         const adjustedAmount = denom === 'uluna' ? amount : priceObj[denom] ? div(amount, priceObj[denom]) : 0
         total = plus(total, adjustedAmount)
-        return { denom, amount, adjustedAmount }
+        return { denom, amount, adjustedAmount } as RewardsByDenom
       })
 
-      myRewards = {
+      result.myRewards = {
         total,
         denoms
       }
     }
 
-    result = {
-      ...result,
-      myDelegation,
-      myUndelegation,
-      myDelegatable: ulunaBalance && ulunaBalance.delegatable,
-      myRewards
-    }
+    const myBalance = await getBalance(account)
+    const ulunaBalance = filter(myBalance.balance, { denom: 'uluna' })[0]
+
+    result.myDelegatable = ulunaBalance && ulunaBalance.delegatable
+
+    const myUndelegation =
+      myBalance.unbondings &&
+      getUndelegateSchedule(filter(myBalance.unbondings, { validator_address: operatorAddress }), {
+        [operatorAddress]: validator
+      })
+
+    result.myUndelegation = myUndelegation
   }
 
   return result
