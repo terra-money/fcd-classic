@@ -19,7 +19,7 @@ export default async (address: string): Promise<AccountDetails> => {
     getUnbondingDelegations(address),
     getLatestBlock(),
     getDelegations(address)
-  ])``
+  ])
   const account = normalizeAccount(rawAccount)
   const latestBlockTimestamp = new Date(latestBlock.block.header.time).getTime()
   const balance = sortDenoms(calculate(account, unbondings, latestBlockTimestamp))
