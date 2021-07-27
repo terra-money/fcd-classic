@@ -304,7 +304,7 @@ function rewardFilter(reward) {
   return reward.amount > 0
 }
 
-export async function getAllRewards(delegatorAddress: string): Promise<Coin[]> {
+export async function getTotalRewards(delegatorAddress: string): Promise<Coin[]> {
   const rewards = await get(`/distribution/delegators/${delegatorAddress}/rewards`)
   return rewards?.total && rewards.total.map(rewardMapper).filter(rewardFilter)
 }

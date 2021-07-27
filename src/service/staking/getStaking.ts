@@ -119,7 +119,7 @@ export async function getStakingUncached(address: string): Promise<GetStakingRet
     getBalance(address),
     lcd.getRedelegations(address),
     lcd.getActiveOraclePrices(),
-    lcd.getAllRewards(address)
+    lcd.getTotalRewards(address)
   ])
   const validatorObj = keyBy(validators, 'operatorAddress')
 
