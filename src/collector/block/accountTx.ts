@@ -42,46 +42,46 @@ export async function getTargetTx(tx?: TxEntity): Promise<TxEntity | undefined> 
 export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
   try {
     const executeMsg = value.execute_msg
+    const send: string[] = []
+    const receive: string[] = []
+    const market: string[] = []
 
     if (findAssetByToken(value.contract)) {
       // Sell to TerraSwap
       if (executeMsg.send) {
         // `to` can be assigned when selling tokens
         if (executeMsg.send.to) {
-          return {
-            send: [value.sender],
-            receive: [executeMsg.send.to]
-          }
-        }
-
-        return {
-          market: [value.sender]
+          send.push(value.sender)
+          receive.push(executeMsg.send.to)
+        } else {
+          market.push(value.sender)
         }
       } else if (executeMsg.transfer && executeMsg.transfer.recipient) {
         // Send token to another address
-        return {
-          send: [value.sender],
-          receive: [executeMsg.transfer.recipient]
-        }
+        send.push(value.sender)
+        receive.push(executeMsg.transfer.recipient)
       }
     } else if (findAssetByPair(value.contract)) {
       // Buy from TerraSwap
       if (executeMsg.swap) {
         // `to` can be assigned when buying (swap ust to cw20) tokens
         if (executeMsg.swap.to) {
-          return {
-            send: [value.sender],
-            receive: [executeMsg.swap.to]
-          }
-        }
-
-        return {
-          market: [value.sender]
+          send.push(value.sender)
+          receive.push(executeMsg.swap.to)
+        } else {
+          market.push(value.sender)
         }
       }
+    } else if (Array.isArray(value.coins) && value.coins.length) {
+      // Any contract can receive coins
+      send.push(value.sender)
     }
 
-    return {}
+    return {
+      send,
+      receive,
+      market
+    }
   } catch (e) {
     return {}
   }

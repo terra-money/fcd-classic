@@ -57,18 +57,8 @@ async function getDelegatedValidatorWhoDidNotVoted(
 
   const delegatedValidator = await qb.getMany()
   const validatorNotVoted = delegatedValidator.filter((validator) => !voters[validator.accountAddress])
-  const validatorsReturn = getValidatorsReturn()
 
-  const validatorsNotVoted = validatorNotVoted.reduce((acc, validator) => {
-    acc.push(
-      generateValidatorResponse(
-        validator,
-        validatorsReturn[validator.operatorAddress] || { stakingReturn: '0', isNewValidator: false }
-      )
-    )
-    return acc
-  }, [] as ValidatorResponse[])
-  return validatorsNotVoted
+  return validatorNotVoted.map(generateValidatorResponse)
 }
 
 export default async function getProposal(proposalId: string, account?: string): Promise<GetProposalResponse> {
