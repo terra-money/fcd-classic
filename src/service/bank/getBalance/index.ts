@@ -4,13 +4,13 @@ import normalizeAccount from './normalizeAccount'
 
 import { getAccount, getUnbondingDelegations, getLatestBlock } from 'lib/lcd'
 import { sortDenoms } from 'lib/common'
-import getDelegations from 'lib/getDelegations'
+import { getDelegations, DelegationInfo } from 'lib/getDelegations'
 
 interface AccountDetails {
   balance: Balance[]
   vesting: Vesting[]
   delegations?: DelegationInfo[]
-  unbondings?: LcdUnbonding[]
+  unbondings?: LcdStakingUnbonding[]
 }
 
 export default async (address: string): Promise<AccountDetails> => {
@@ -19,18 +19,16 @@ export default async (address: string): Promise<AccountDetails> => {
     getUnbondingDelegations(address),
     getLatestBlock(),
     getDelegations(address)
-  ])
-
+  ])``
   const account = normalizeAccount(rawAccount)
   const latestBlockTimestamp = new Date(latestBlock.block.header.time).getTime()
-  const balance = rawAccount && calculate(account, unbondings, latestBlockTimestamp)
-  const vesting = rawAccount && getVesting(account, latestBlockTimestamp)
+  const balance = sortDenoms(calculate(account, unbondings, latestBlockTimestamp))
+  const vesting = sortDenoms(getVesting(account, latestBlockTimestamp))
 
-  return Object.assign(
-    {},
-    balance && { balance: sortDenoms(balance) },
-    vesting && { vesting: sortDenoms(vesting) },
-    { delegations },
-    { unbondings }
-  )
+  return {
+    balance,
+    vesting,
+    delegations,
+    unbondings
+  }
 }

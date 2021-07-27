@@ -26,6 +26,7 @@ interface ValidatorDetailsReturn extends ValidatorResponse {
     total: string
     denoms: RewardsByDenom[]
   }
+  redelegations?: LCDStakingRelegation[]
 }
 
 export async function getValidatorDetailUncached(
@@ -47,15 +48,21 @@ export async function getValidatorDetailUncached(
   }
 
   if (account) {
-    const delegation = await lcd.getDelegationForValidator(account, validator.operatorAddress)
+    const [delegation, redelegations] = await Promise.all([
+      lcd.getDelegationForValidator(account, validator.operatorAddress),
+      lcd.getRedelegations(account)
+    ])
 
+    result.redelegations = redelegations
     result.myDelegation =
       delegation?.shares && div(times(delegation.shares, validator.tokens), validator.delegatorShares)
 
     // No delegation, no remain reward
     if (result.myDelegation) {
-      const priceObj = await lcd.getActiveOraclePrices()
-      const rewards = await lcd.getRewards(account, operatorAddress)
+      const [priceObj, rewards] = await Promise.all([
+        lcd.getActiveOraclePrices(),
+        lcd.getRewards(account, operatorAddress)
+      ])
 
       let total = '0'
       const denoms = rewards.map(({ denom, amount }) => {

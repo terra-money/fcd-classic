@@ -1,7 +1,7 @@
 import * as Bluebird from 'bluebird'
 import { getConnection, getRepository } from 'typeorm'
 import { orderBy, reverse, chunk } from 'lodash'
-import * as globby from 'globby'
+import { globby } from 'globby'
 import * as fs from 'fs'
 import * as byline from 'byline'
 
