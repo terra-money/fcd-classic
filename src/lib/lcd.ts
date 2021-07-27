@@ -212,15 +212,18 @@ export async function getAccount(
 ///////////////////////////////////////////////
 // Staking
 ///////////////////////////////////////////////
-export async function getDelegations(delegator: string): Promise<LcdDelegation[]> {
+export async function getDelegations(delegator: string): Promise<LcdStakingDelegation[]> {
   return (await get(`/staking/delegators/${delegator}/delegations`)) || []
 }
 
-export function getDelegationForValidator(delegator: string, validator: string): Promise<LcdDelegation | undefined> {
+export function getDelegationForValidator(
+  delegator: string,
+  validator: string
+): Promise<LcdStakingDelegation | undefined> {
   return get(`/staking/delegators/${delegator}/delegations/${validator}`)
 }
 
-export async function getUnbondingDelegations(address: string): Promise<LcdUnbonding[]> {
+export async function getUnbondingDelegations(address: string): Promise<LcdStakingUnbonding[]> {
   return (await get(`/staking/delegators/${address}/unbonding_delegations`)) || []
 }
 
@@ -258,6 +261,10 @@ export async function getValidatorDelegations(
 
 export function getStakingPool(strHeight?: string): Promise<LcdStakingPool> {
   return get(`/staking/pool`, { height: calculateHeightParam(strHeight) })
+}
+
+export function getRedelegations(delegator: string): Promise<LCDStakingRelegation[]> {
+  return get(`/staking/redelegations`, { delegator })
 }
 
 ///////////////////////////////////////////////

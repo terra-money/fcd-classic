@@ -154,16 +154,16 @@ export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
 }
 
 export function getUndelegateSchedule(
-  unbondings: LcdUnbonding[],
+  unbondings: LcdStakingUnbonding[],
   validatorObj: { [validatorAddress: string]: ValidatorResponse }
 ): UndeligationSchedule[] {
   return orderBy(
     unbondings
-      .map((unbonding: LcdUnbonding) => {
+      .map((unbonding: LcdStakingUnbonding) => {
         const { validator_address, entries } = unbonding
         const validatorName: string = get(validatorObj, `${validator_address}`).description.moniker
         const validatorStatus: string = get(validatorObj, `${validator_address}`).status
-        return entries.map((entry: LcdUnbondingEntry) => {
+        return entries.map((entry: LcdStakingEntry) => {
           return {
             releaseTime: entry.completion_time,
             amount: entry.balance,

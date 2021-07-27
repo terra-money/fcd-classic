@@ -37,7 +37,7 @@ function tallying(votes): TallyingInfo {
 
 function getVotersVotingPowerArr(
   validatorsVotingPower: ValidatorVotingPower[],
-  delegations: LcdDelegation[]
+  delegations: LcdStakingDelegation[]
 ): ValidatorVotingPower[] {
   delegations.forEach(({ delegation }) => {
     const { delegator_address: delegatorAddress, validator_address: validatorAddress, shares } = delegation

@@ -1,6 +1,13 @@
 import * as lcd from 'lib/lcd'
 
-async function getDelegations(address: string): Promise<DelegationInfo[]> {
+export interface DelegationInfo {
+  delegator_address: string
+  validator_address: string
+  shares: string
+  amount: string
+}
+
+export async function getDelegations(address: string): Promise<DelegationInfo[]> {
   const delegations = await lcd.getDelegations(address)
 
   return delegations.map(
@@ -12,5 +19,3 @@ async function getDelegations(address: string): Promise<DelegationInfo[]> {
     })
   )
 }
-
-export default getDelegations

@@ -1,7 +1,7 @@
 import { find, chain, keyBy } from 'lodash'
 
 import * as lcd from 'lib/lcd'
-import getDelegations from 'lib/getDelegations'
+import { getDelegations, DelegationInfo } from 'lib/getDelegations'
 import { plus, div } from 'lib/math'
 import { sortDenoms } from 'lib/common'
 import memoizeCache from 'lib/memoizeCache'
@@ -30,18 +30,18 @@ interface MyDelegation {
 }
 
 async function getMyDelegation(
-  delegator: DelegationInfo,
+  delegation: DelegationInfo,
   validator: ValidatorResponse,
   prices: CoinByDenoms
 ): Promise<MyDelegation> {
-  const rewards = await lcd.getRewards(delegator.delegator_address, delegator.validator_address)
+  const rewards = await lcd.getRewards(delegation.delegator_address, delegation.validator_address)
   const adjustedRewards = rewards && prices && getTotalRewardsAdjustedToLuna(rewards, prices)
 
   return {
     validatorName: validator.description.moniker,
     validatorAddress: validator.operatorAddress,
     validatorStatus: validator.status,
-    amountDelegated: delegator.amount,
+    amountDelegated: delegation.amount,
     rewards: sortDenoms(rewards),
     totalReward: adjustedRewards
   }
@@ -91,6 +91,7 @@ function joinValidatorsWithMyDelegation(
 
 interface GetStakingReturn {
   validators: UserValidatorWithDelegationInfo[] // Validator info with user delegation and rewards (Extends with ValidatorReturn)
+  redelegations: LCDStakingRelegation[]
   delegationTotal?: string // user total delegation
   undelegations?: UndeligationSchedule[] // User undelegation info
   rewards?: {
@@ -103,12 +104,13 @@ interface GetStakingReturn {
 
 export async function getStakingUncached(address: string): Promise<GetStakingReturn> {
   // Fetch data
-  const [delegations, validators, prices, totalRewards, balance] = await Promise.all([
-    getDelegations(address),
+  const [validators, delegations, balance, redelegations, prices, totalRewards] = await Promise.all([
     getValidators(),
+    getDelegations(address),
+    getBalance(address),
+    lcd.getRedelegations(address),
     lcd.getActiveOraclePrices(),
-    lcd.getTotalRewards(address),
-    getBalance(address)
+    lcd.getTotalRewards(address)
   ])
   const validatorObj = keyBy(validators, 'operatorAddress')
 
@@ -126,13 +128,14 @@ export async function getStakingUncached(address: string): Promise<GetStakingRet
   const myDelegations = await getMyDelegations(delegations, validatorObj, prices)
 
   return {
+    validators: joinValidatorsWithMyDelegation(validators, myDelegations, myUndelegations),
+    redelegations,
     delegationTotal,
     undelegations: myUndelegations,
     rewards: {
       total: totalReward,
       denoms: sortDenoms(totalRewards)
     },
-    validators: joinValidatorsWithMyDelegation(validators, myDelegations, myUndelegations),
     myDelegations,
     availableLuna: delegatable
   }
