@@ -212,22 +212,22 @@ export default function getAddressFromMsg(
       break
   }
 
+  const wasmEventAttributeTypes = [
+    'store_code',
+    'instantiate_contract',
+    'execute_contract',
+    'migrate_contract',
+    'update_contract_admin',
+    'clear_contract_admin',
+    'update_contract_owner'
+  ]
+
   result.contract = (log?.events ?? [])
-    .map((ev) => {
-      if (
-        [
-          'store_code',
-          'instantiate_contract',
-          'execute_contract',
-          'migrate_contract',
-          'update_contract_admin',
-          'clear_contract_admin',
-          'update_contract_owner'
-        ].includes(ev.type)
-      ) {
-        return ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
-      }
-    })
+    .map(
+      (ev) =>
+        wasmEventAttributeTypes.includes(ev.type) &&
+        ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
+    )
     .flat()
     .filter(Boolean) as string[]
 
