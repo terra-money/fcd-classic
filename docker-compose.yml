@@ -4,12 +4,10 @@ services:
   db:
     image: postgres:11.6
     environment:
-      POSTGRES_USER: terra
-      POSTGRES_PASSWORD: terra
-      POSTGRES_DB: terra_fcd
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: dev_fcd
     restart: always
-    ports:
-      - "5432:5432"
 
   adminer:
     image: adminer
