@@ -212,7 +212,7 @@ export default function getAddressFromMsg(
       break
   }
 
-  result.contract = ((log && log.events) || [])
+  result.contract = (log?.events ?? [])
     .map((ev) => {
       if (
         [
