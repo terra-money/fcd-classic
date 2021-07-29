@@ -20,7 +20,14 @@ const {
   ANCHOR_TOKEN_ADDRESS,
   PYLON_API_ENDPOINT,
   LEGACY_NETWORK,
-  ORACLE_SLASH_WINDOW
+  ORACLE_SLASH_WINDOW,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  AWS_SESSION_TOKEN,
+  AWS_REGION,
+  AWS_ATHENA_DB,
+  AWS_ATHENA_OUTPUT_LOCATION,
+  AWS_S3_BUCKET
 } = process.env
 
 const config = {
@@ -72,7 +79,14 @@ const config = {
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
   LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'true'),
   // We can ORACLE_SLASH_WINDOW from {lcd}/oracle/parameters, but do this way because it's rare to be changed
-  ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800
+  ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800,
+  AWS_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID || '',
+  AWS_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY || '',
+  AWS_SESSION_TOKEN: AWS_SESSION_TOKEN || '',
+  AWS_REGION: AWS_REGION || 'ap-northeast-2',
+  AWS_ATHENA_DB: AWS_ATHENA_DB || 'athena_fcd_tequila',
+  AWS_ATHENA_OUTPUT_LOCATION: AWS_ATHENA_OUTPUT_LOCATION || 's3://athena-fcd-tequila/queries/',
+  AWS_S3_BUCKET: AWS_S3_BUCKET || 'transaction-history-tequila'
 }
 
 export default config

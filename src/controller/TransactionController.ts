@@ -7,7 +7,7 @@ import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 import { getUnconfirmedTxs } from 'lib/rpc'
 
-import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
+import { getTx, getTxList, getMsgList, postTxs, getTxCsvFile } from 'service/transaction'
 
 const Joi = Validator.Joi
 
@@ -323,5 +323,34 @@ export default class TransactionController extends KoaController {
   })
   async getUnconfirmedTxs(ctx): Promise<void> {
     success(ctx, await getUnconfirmedTxs())
+  }
+
+  /**
+   * @api {get} /txs/csv/:account Get Tx History CSV File
+   * @apiName getTxCsvFile
+   * @apiGroup Transactions
+   *
+   * @apiParam {string} [account] Account address
+   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
+   * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
+   * @apiParam {number} [from] Timestamp from (default: 0)
+   * @apiParam {number} [to] Timestamp to (default: until current time)
+   *
+   * @apiSuccess {Object} link S3 info
+   * @apiSuccess {string} link.url S3 url
+   */
+  @Get('/txs/csv')
+  @Validate({
+    query: {
+      account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User address'),
+      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
+      from: Joi.number().default(0).description('Start date'),
+      to: Joi.number().default(Date.now()).description('End date'),
+      order: Joi.string().valid('ASC', 'DESC').default('DESC').description('Ordering')
+    },
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
+  })
+  async getTxCsvFile(ctx): Promise<void> {
+    success(ctx, await getTxCsvFile(ctx.query))
   }
 }
