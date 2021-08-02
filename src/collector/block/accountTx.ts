@@ -80,7 +80,11 @@ export function extractAddressFromContractMsg(value: { [key: string]: any }): { 
     return {
       send,
       receive,
-      market
+      market,
+      // For successful transactions we parse event logs to extract addresses.
+      // But there's no event logs for failed ones.
+      // We always include value.sender here to give developers better context.
+      contract: [value.sender]
     }
   } catch (e) {
     return {}
@@ -222,14 +226,17 @@ export default function getAddressFromMsg(
     'update_contract_owner'
   ]
 
-  result.contract = (log?.events ?? [])
-    .map(
-      (ev) =>
-        wasmEventAttributeTypes.includes(ev.type) &&
-        ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
-    )
-    .flat()
-    .filter(Boolean) as string[]
+  // Extract addresses of contract type from event logs and merge it
+  result.contract = (result.contact ?? []).concat(
+    (log?.events ?? [])
+      .map(
+        (ev) =>
+          wasmEventAttributeTypes.includes(ev.type) &&
+          ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
+      )
+      .flat()
+      .filter(Boolean) as string[]
+  )
 
   Object.keys(result).forEach((action) => {
     result[action] = uniq(result[action].filter(Boolean))
