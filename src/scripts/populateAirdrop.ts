@@ -7,6 +7,8 @@ import * as lcd from 'lib/lcd'
 import { plus } from 'lib/math'
 import { init as initToken, getToken } from 'service/treasury/token'
 
+const DIST_INTERVAL = 100000
+
 const MIR_AT_SNAPSHOT = '9150000000000'
 const MIR_AT_INTERVAL = '345283000000'
 // const SNAPSHOT_HEIGHT = 680000
@@ -16,7 +18,6 @@ const MIR_START_HEIGHT = 920000
 // const SNAPSHOT_HEIGHT = 1350000
 // const SNAPSHOT_DIST_AT = 1375000
 // const DIST_STARTED_AT = 1380000
-const DIST_INTERVAL = 100000
 const MIR_END_HEIGHT = MIR_START_HEIGHT + DIST_INTERVAL * 53
 
 const ANC_AT_SNAPSHOT = '50000000000000'
@@ -24,6 +25,12 @@ const ANC_AT_INTERVAL = '961538461538'
 const ANC_INITIAL_HEIGHT = 2211000
 const ANC_START_HEIGHT = 2279600
 const ANC_END_HEIGHT = ANC_START_HEIGHT + DIST_INTERVAL * 104
+
+const MINE_AT_SNAPSHOT = '500000000000000'
+const MINE_AT_INTERVAL = '10416666666666'
+const MINE_INITIAL_HEIGHT = 3508600
+const MINE_START_HEIGHT = 3608300
+const MINE_END_HEIGHT = MINE_START_HEIGHT + DIST_INTERVAL * 104
 
 interface Airdrop {
   height: string
@@ -35,12 +42,19 @@ interface Airdrop {
  * Returns MIR token airdrop in Luna unit at given height
  * @param height target height for calculation
  */
-async function calculateMirAirdropAtHeight(height: string): Promise<Airdrop> {
-  if (+height < MIR_INITIAL_HEIGHT || +height > MIR_END_HEIGHT) {
-    throw new Error('height out of range')
+async function calculateAirdropAtHeight(
+  token: string,
+  amount: string,
+  height: string,
+  skipOld = true
+): Promise<Airdrop | undefined> {
+  const lcdBlock = await lcd.getBlock(height)
+  const timestamp = new Date(lcdBlock.block.header.time)
+
+  if (skipOld && Date.now() - timestamp.getTime() > 86400 * 5 * 1000) {
+    return
   }
 
-  const lcdBlock = await lcd.getBlock(height)
   const prices = await lcd.getOraclePrices(height)
   const lunaPriceInUST = prices.find((c) => c.denom === 'uusd')?.amount
 
@@ -48,9 +62,7 @@ async function calculateMirAirdropAtHeight(height: string): Promise<Airdrop> {
     throw new Error(`cannot find uusd price at the height ${height}`)
   }
 
-  const mirAmount = +height === MIR_INITIAL_HEIGHT ? MIR_AT_SNAPSHOT : MIR_AT_INTERVAL
-
-  const { assets } = (await lcd.getContractStore(getToken('mir').pair, { pool: {} }, height)) as any
+  const { assets } = (await lcd.getContractStore(getToken(token).pair, { pool: {} }, height)) as any
   let uusdAmount = '0'
   let assetAmount = '0'
 
@@ -64,57 +76,10 @@ async function calculateMirAirdropAtHeight(height: string): Promise<Airdrop> {
     }
   })
 
-  const mirPriceInUST = new BigNumber(uusdAmount).div(assetAmount)
-  const airdrop = mirPriceInUST.dividedBy(lunaPriceInUST).multipliedBy(mirAmount).toFixed(0)
-  const timestamp = new Date(lcdBlock.block.header.time)
+  const priceInUST = new BigNumber(uusdAmount).div(assetAmount)
+  const airdrop = priceInUST.dividedBy(lunaPriceInUST).multipliedBy(amount).toFixed(0)
 
-  console.log(timestamp, 'mir', mirPriceInUST.toString(), 'luna', lunaPriceInUST, 'airdrop', airdrop)
-
-  return {
-    height,
-    timestamp,
-    airdrop
-  }
-}
-
-/**
- * Returns MIR token airdrop in Luna unit at given height
- * @param height target height for calculation
- */
-async function calculateAncAirdropAtHeight(height: string): Promise<Airdrop> {
-  if (+height < ANC_INITIAL_HEIGHT || +height > ANC_END_HEIGHT) {
-    throw new Error('height out of range')
-  }
-
-  const lcdBlock = await lcd.getBlock(height)
-  const prices = await lcd.getOraclePrices(height)
-  const lunaPriceInUST = prices.find((c) => c.denom === 'uusd')?.amount
-
-  if (!lunaPriceInUST) {
-    throw new Error(`cannot find uusd price at the height ${height}`)
-  }
-
-  const ancAmount = +height === ANC_INITIAL_HEIGHT ? ANC_AT_SNAPSHOT : ANC_AT_INTERVAL
-
-  const { assets } = (await lcd.getContractStore(getToken('anc').pair, { pool: {} }, height)) as any
-  let uusdAmount = '0'
-  let assetAmount = '0'
-
-  assets.forEach((asset) => {
-    if (asset.info.native_token) {
-      uusdAmount = asset.amount
-    }
-
-    if (asset.info.token) {
-      assetAmount = asset.amount
-    }
-  })
-
-  const ancPriceInUST = new BigNumber(uusdAmount).div(assetAmount)
-  const airdrop = ancPriceInUST.dividedBy(lunaPriceInUST).multipliedBy(ancAmount).toFixed(0)
-  const timestamp = new Date(lcdBlock.block.header.time)
-
-  console.log(timestamp, 'anc', ancPriceInUST.toString(), 'luna', lunaPriceInUST, 'airdrop', airdrop)
+  console.log(timestamp, token, priceInUST.toString(), 'luna', lunaPriceInUST, 'airdrop', airdrop)
 
   return {
     height,
@@ -124,20 +89,40 @@ async function calculateAncAirdropAtHeight(height: string): Promise<Airdrop> {
 }
 
 async function getAirdrops() {
-  const airdrops = [await calculateMirAirdropAtHeight(MIR_INITIAL_HEIGHT.toString())]
+  const airdrops: (Airdrop | undefined)[] = []
   const latestBlock = await lcd.getLatestBlock()
 
-  for (let height = MIR_START_HEIGHT; height < +latestBlock.block.header.height; height += DIST_INTERVAL) {
-    airdrops.push(await calculateMirAirdropAtHeight(height.toString()))
+  airdrops.push(await calculateAirdropAtHeight('mir', MIR_AT_SNAPSHOT, MIR_INITIAL_HEIGHT.toString()))
+
+  for (
+    let height = MIR_START_HEIGHT;
+    height < MIR_END_HEIGHT && height < +latestBlock.block.header.height;
+    height += DIST_INTERVAL
+  ) {
+    airdrops.push(await calculateAirdropAtHeight('mir', MIR_AT_INTERVAL, height.toString()))
   }
 
-  airdrops.push(await calculateAncAirdropAtHeight(ANC_INITIAL_HEIGHT.toString()))
+  airdrops.push(await calculateAirdropAtHeight('anc', ANC_AT_SNAPSHOT, ANC_INITIAL_HEIGHT.toString()))
 
-  for (let height = ANC_START_HEIGHT; height < +latestBlock.block.header.height; height += DIST_INTERVAL) {
-    airdrops.push(await calculateAncAirdropAtHeight(height.toString()))
+  for (
+    let height = ANC_START_HEIGHT;
+    height < ANC_END_HEIGHT && height < +latestBlock.block.header.height;
+    height += DIST_INTERVAL
+  ) {
+    airdrops.push(await calculateAirdropAtHeight('anc', ANC_AT_INTERVAL, height.toString()))
   }
 
-  return airdrops
+  airdrops.push(await calculateAirdropAtHeight('mine', MINE_AT_SNAPSHOT, MINE_INITIAL_HEIGHT.toString()))
+
+  for (
+    let height = MINE_START_HEIGHT;
+    height < MINE_END_HEIGHT && height < +latestBlock.block.header.height;
+    height += DIST_INTERVAL
+  ) {
+    airdrops.push(await calculateAirdropAtHeight('mine', MINE_AT_INTERVAL, height.toString()))
+  }
+
+  return airdrops.filter(Boolean) as Airdrop[]
 }
 
 async function main() {
