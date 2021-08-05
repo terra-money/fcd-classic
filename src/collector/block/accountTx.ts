@@ -1,43 +1,8 @@
-import { getRepository, MoreThan } from 'typeorm'
 import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
 import { uniq } from 'lodash'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import { findAssetByPair, findAssetByToken } from 'service/treasury/token'
-
-async function getRecentlySyncedTx(): Promise<number> {
-  const latestSynced = await getRepository(AccountTxEntity).find({
-    order: {
-      id: 'DESC'
-    },
-    take: 1
-  })
-
-  if (!latestSynced || latestSynced.length === 0) {
-    return 0
-  }
-
-  const latestSyncedTx = await getRepository(TxEntity).findOne({
-    hash: latestSynced[0].hash
-  })
-
-  return latestSyncedTx ? latestSyncedTx.id : 0
-}
-
-export async function getTargetTx(tx?: TxEntity): Promise<TxEntity | undefined> {
-  const recentlySyncedTxNumber = tx ? tx.id : await getRecentlySyncedTx()
-  const targetTxs = await getRepository(TxEntity).find({
-    where: {
-      id: MoreThan(recentlySyncedTxNumber)
-    },
-    order: {
-      id: 'ASC'
-    },
-    take: 1
-  })
-
-  return targetTxs[0]
-}
 
 export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
   try {
@@ -227,7 +192,7 @@ export default function getAddressFromMsg(
   ]
 
   // Extract addresses of contract type from event logs and merge it
-  result.contract = (result.contact ?? []).concat(
+  result.contract = (result.contract ?? []).concat(
     (log?.events ?? [])
       .map(
         (ev) =>
@@ -261,11 +226,8 @@ export function generateAccountTxs(tx: TxEntity): AccountTxEntity[] {
       return addrObj[type].map((addr) => {
         const accountTx = new AccountTxEntity()
         accountTx.account = addr
-        accountTx.hash = tx.hash
         accountTx.tx = tx
         accountTx.type = type
-        accountTx.timestamp = new Date(tx.data['timestamp'])
-        accountTx.chainId = tx.chainId
         return accountTx
       })
     })
