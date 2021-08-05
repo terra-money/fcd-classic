@@ -227,6 +227,7 @@ export function generateAccountTxs(tx: TxEntity): AccountTxEntity[] {
         const accountTx = new AccountTxEntity()
         accountTx.account = addr
         accountTx.tx = tx
+        accountTx.timestamp = tx.timestamp
         accountTx.type = type
         return accountTx
       })

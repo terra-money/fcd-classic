@@ -11,6 +11,10 @@ export default class AccountTxEntity {
   @Column()
   account: string
 
+  @Index('account_tx_timestamp')
+  @Column()
+  timestamp: Date
+
   @Column()
   type: string
 

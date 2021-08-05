@@ -73,7 +73,6 @@ export {
   RichListEntity,
   UnvestedEntity,
   BlockRewardEntity,
-  AccountEntity,
   ValidatorReturnInfoEntity,
   ValidatorInfoEntity,
   ProposalEntity,

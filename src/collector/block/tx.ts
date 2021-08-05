@@ -1,8 +1,8 @@
 import * as Bluebird from 'bluebird'
-import { getRepository, EntityManager } from 'typeorm'
+import { EntityManager } from 'typeorm'
 import { get, min, compact, chunk, mapValues, keyBy } from 'lodash'
 
-import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
+import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
 import config from 'config'
 
 import * as lcd from 'lib/lcd'
