@@ -5,7 +5,7 @@
 ## Modules
 
 - ### Collector(Indexer)
-  - Takes block and tx from LCD and stores into the database in a usable form
+  - Takes block and tx from [LCD](https://docs.terra.money/terracli/lcd.html) and stores into the database in a usable form
   - Stores issuance, network and staking information to database every minute
   - Collect & cache validator info and store in db
   - Calculate validator daily return
