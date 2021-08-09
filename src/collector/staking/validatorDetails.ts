@@ -54,7 +54,7 @@ type SaveValidatorParams = {
 
 export async function saveValidatorDetail({ lcdValidator, activePrices, votingPower }: SaveValidatorParams) {
   if (!lcdValidator) {
-    throw new APIError(ErrorTypes.VALIDATOR_DOES_NOT_EXISTS)
+    throw new Error('lcdValidator is nil')
   }
 
   const { operator_address: operatorAddress, consensus_pubkey: consensusPubkey } = lcdValidator
@@ -116,10 +116,10 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
   const validator = await repo.findOne({ operatorAddress })
 
   if (!validator) {
-    logger.info(`New validator found (operator address: ${operatorAddress}`)
+    logger.info(`collectValidator: ${moniker}(${operatorAddress})(new)`)
     await repo.save(repo.create(validatorDetails))
   } else {
-    logger.info(`Update existing validator (op addr: ${operatorAddress}`)
+    logger.info(`collectValidator: ${moniker}(${operatorAddress})`)
     await repo.update(validator.id, validatorDetails)
   }
 }
