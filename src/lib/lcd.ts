@@ -326,7 +326,7 @@ export async function getValidatorRewards(validatorOperAddress: string): Promise
   return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)).rewards || []
 }
 
-export function getCommunityPool(strHeight?: string): Promise<Coin[]> {
+export function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
   return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
 }
 
