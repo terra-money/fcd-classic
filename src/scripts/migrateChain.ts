@@ -55,22 +55,6 @@ async function migrate() {
       }))
     )
     console.log(newTxs[0])
-
-    // AccountTx
-    const atxs = await src.getRepository(AccountTxEntity).find({ order: { timestamp: 'ASC' } })
-    console.log(atxs.length, atxs[0])
-
-    const newAtxs = await mgr.getRepository(AccountTxEntity).save(
-      atxs.map((atx) => ({
-        chainId: atx.chainId,
-        account: atx.account,
-        hash: atx.hash,
-        timestamp: atx.timestamp,
-        type: atx.type,
-        tx: find(newTxs, { hash: atx.hash })
-      }))
-    )
-    console.log(newAtxs[0])
   })
 }
 

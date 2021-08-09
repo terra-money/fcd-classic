@@ -1,43 +1,8 @@
-import { getRepository, MoreThan } from 'typeorm'
 import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
 import { uniq } from 'lodash'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import { findAssetByPair, findAssetByToken } from 'service/treasury/token'
-
-async function getRecentlySyncedTx(): Promise<number> {
-  const latestSynced = await getRepository(AccountTxEntity).find({
-    order: {
-      id: 'DESC'
-    },
-    take: 1
-  })
-
-  if (!latestSynced || latestSynced.length === 0) {
-    return 0
-  }
-
-  const latestSyncedTx = await getRepository(TxEntity).findOne({
-    hash: latestSynced[0].hash
-  })
-
-  return latestSyncedTx ? latestSyncedTx.id : 0
-}
-
-export async function getTargetTx(tx?: TxEntity): Promise<TxEntity | undefined> {
-  const recentlySyncedTxNumber = tx ? tx.id : await getRecentlySyncedTx()
-  const targetTxs = await getRepository(TxEntity).find({
-    where: {
-      id: MoreThan(recentlySyncedTxNumber)
-    },
-    order: {
-      id: 'ASC'
-    },
-    take: 1
-  })
-
-  return targetTxs[0]
-}
 
 export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
   try {
@@ -80,7 +45,11 @@ export function extractAddressFromContractMsg(value: { [key: string]: any }): { 
     return {
       send,
       receive,
-      market
+      market,
+      // For successful transactions we parse event logs to extract addresses.
+      // But there's no event logs for failed ones.
+      // We always include value.sender here to give developers better context.
+      contract: [value.sender]
     }
   } catch (e) {
     return {}
@@ -212,25 +181,28 @@ export default function getAddressFromMsg(
       break
   }
 
-  result.contract = ((log && log.events) || [])
-    .map((ev) => {
-      if (
-        [
-          'store_code',
-          'migrate_code',
-          'instantiate_contract',
-          'execute_contract',
-          'migrate_contract',
-          'update_contract_admin',
-          'clear_contract_admin',
-          'update_contract_owner'
-        ].includes(ev.type)
-      ) {
-        return ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
-      }
-    })
-    .flat()
-    .filter(Boolean) as string[]
+  const wasmEventAttributeTypes = [
+    'store_code',
+    'migrate_code',
+    'instantiate_contract',
+    'execute_contract',
+    'migrate_contract',
+    'update_contract_admin',
+    'clear_contract_admin',
+    'update_contract_owner'
+  ]
+
+  // Extract addresses of contract type from event logs and merge it
+  result.contract = (result.contract ?? []).concat(
+    (log?.events ?? [])
+      .map(
+        (ev) =>
+          wasmEventAttributeTypes.includes(ev.type) &&
+          ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
+      )
+      .flat()
+      .filter(Boolean) as string[]
+  )
 
   Object.keys(result).forEach((action) => {
     result[action] = uniq(result[action].filter(Boolean))
@@ -255,11 +227,9 @@ export function generateAccountTxs(tx: TxEntity): AccountTxEntity[] {
       return addrObj[type].map((addr) => {
         const accountTx = new AccountTxEntity()
         accountTx.account = addr
-        accountTx.hash = tx.hash
         accountTx.tx = tx
+        accountTx.timestamp = tx.timestamp
         accountTx.type = type
-        accountTx.timestamp = new Date(tx.data['timestamp'])
-        accountTx.chainId = tx.chainId
         return accountTx
       })
     })

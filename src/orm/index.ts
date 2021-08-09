@@ -42,9 +42,6 @@ export * from './UnvestedEntity'
 import BlockRewardEntity from './BlockRewardEntity'
 export * from './BlockRewardEntity'
 
-import AccountEntity from './AccountEntity'
-export * from './AccountEntity'
-
 import ValidatorReturnInfoEntity from './ValidatorReturnInfoEntity'
 export * from './ValidatorReturnInfoEntity'
 
@@ -76,7 +73,6 @@ export {
   RichListEntity,
   UnvestedEntity,
   BlockRewardEntity,
-  AccountEntity,
   ValidatorReturnInfoEntity,
   ValidatorInfoEntity,
   ProposalEntity,
@@ -101,7 +97,6 @@ export const staticOptions = {
     RichListEntity,
     UnvestedEntity,
     BlockRewardEntity,
-    AccountEntity,
     ValidatorReturnInfoEntity,
     ValidatorInfoEntity,
     ProposalEntity,

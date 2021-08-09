@@ -19,10 +19,12 @@ export async function collectGeneral(mgr: EntityManager, timestamp: number, strH
     lcd.getSeigniorageProceeds(strHeight),
     lcd.getCommunityPool(strHeight).then(
       (pool): DenomMap =>
-        pool.reduce((acc, { denom, amount }) => {
-          acc[denom] = amount
-          return acc
-        }, {})
+        Array.isArray(pool)
+          ? pool.reduce((acc, { denom, amount }) => {
+              acc[denom] = amount
+              return acc
+            }, {})
+          : {}
     ),
     lcd
       .getTaxCaps(strHeight)

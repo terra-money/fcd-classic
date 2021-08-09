@@ -7,17 +7,9 @@ export default class AccountTxEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Index('account_tx_chain_id')
-  @Column()
-  chainId: string
-
   @Index('account_tx_account')
   @Column()
   account: string
-
-  @Index('account_tx_hash')
-  @Column()
-  hash: string
 
   @Index('account_tx_timestamp')
   @Column()

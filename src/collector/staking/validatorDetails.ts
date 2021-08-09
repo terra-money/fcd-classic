@@ -46,13 +46,10 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
 export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: CoinByDenoms) {
   const { lcdValidator, signingInfo } = extendedValidator
   const operatorAddress = lcdValidator.operator_address
-
-  logger.info(`Updating validator ${lcdValidator.description.moniker} ${operatorAddress}`)
-
+  const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const accountAddr = convertAddress('terra', operatorAddress)
 
   const selfDelegation = await lcd.getDelegationForValidator(accountAddr, operatorAddress)
-  const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const profileIcon = identity && (await getAvatar(identity))
   const missedOracleVote = +(await lcd.getMissedOracleVotes(operatorAddress))
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
@@ -101,10 +98,10 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
   const validator = await repo.findOne({ operatorAddress })
 
   if (!validator) {
-    logger.info(`New validator found (operator address: ${operatorAddress}`)
+    logger.info(`collectValidator: ${moniker}(${operatorAddress})(new)`)
     await repo.save(repo.create(validatorDetails))
   } else {
-    logger.info(`Update existing validator (op addr: ${operatorAddress}`)
+    logger.info(`collectValidator: ${moniker}(${operatorAddress})`)
     await repo.update(validator.id, validatorDetails)
   }
 }
