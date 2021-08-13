@@ -189,7 +189,8 @@ export default function getAddressFromMsg(
     'migrate_contract',
     'update_contract_admin',
     'clear_contract_admin',
-    'update_contract_owner'
+    'update_contract_owner',
+    'from_contract'
   ]
 
   // Extract addresses of contract type from event logs and merge it
