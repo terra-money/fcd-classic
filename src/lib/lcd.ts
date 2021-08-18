@@ -254,7 +254,7 @@ export async function getValidator(operatorAddr: string): Promise<LcdValidator |
 export async function getValidatorDelegations(
   validatorOperKey: string,
   page = 1,
-  limit = 10000
+  limit = 1000000
 ): Promise<LcdValidatorDelegationItem[]> {
   return (await get(`/staking/validators/${validatorOperKey}/delegations?page=${page}&limit=${limit}`)) || []
 }
