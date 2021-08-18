@@ -41,7 +41,7 @@ export async function init() {
 
   if (config.CHAIN_ID.startsWith('columbus')) {
     key = 'mainnet'
-  } else if (config.CHAIN_ID.startsWith('tequila')) {
+  } else if (/^(:?tequila|bombay)/.test(config.CHAIN_ID)) {
     key = 'testnet'
   } else {
     console.log('no token info for this chain-id')
