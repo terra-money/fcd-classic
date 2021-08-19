@@ -15,9 +15,6 @@ export default class AccountTxEntity {
   @Column()
   timestamp: Date
 
-  @Column()
-  type: string
-
   @Index('account_tx_tx_id')
   @ManyToOne(() => TxEntity, (tx) => tx.accounts, {
     cascade: ['insert'],

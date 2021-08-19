@@ -65,11 +65,6 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
   let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
   const params = [param.account]
 
-  if (param.action) {
-    distinctTxQuery += ` AND type=$2`
-    params.push(param.action)
-  }
-
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {

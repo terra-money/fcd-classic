@@ -30,7 +30,10 @@ export async function getCirculatingSupply(input: string): Promise<string> {
   })
 
   let circulatingSupply = unvested.length === 0 ? totalSupply : minus(totalSupply, unvested[0].amount)
-  circulatingSupply = minus(circulatingSupply, communityPool.find((c) => c.denom === denom)?.amount || '0')
+
+  if (communityPool) {
+    circulatingSupply = minus(circulatingSupply, communityPool.find((c) => c.denom === denom)?.amount || '0')
+  }
 
   if (denom === 'uluna') {
     if (config.BANK_WALLETS.length !== 0) {

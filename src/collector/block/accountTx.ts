@@ -1,215 +1,36 @@
-import { mergeWith, union } from 'lodash'
 import { TxEntity, AccountTxEntity } from 'orm'
 import { uniq } from 'lodash'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
-import { findAssetByPair, findAssetByToken } from 'service/treasury/token'
 
-export function extractAddressFromContractMsg(value: { [key: string]: any }): { [action: string]: string[] } {
-  try {
-    const executeMsg = JSON.parse(Buffer.from(value.execute_msg, 'base64').toString())
-    const send: string[] = []
-    const receive: string[] = []
-    const market: string[] = []
+function extractAddressFromMsg(msg: Transaction.Message): string[] {
+  const addrs: string[] = []
 
-    if (findAssetByToken(value.contract)) {
-      // Sell to TerraSwap
-      if (executeMsg.send) {
-        // `to` can be assigned when selling tokens
-        if (executeMsg.send.to) {
-          send.push(value.sender)
-          receive.push(executeMsg.send.to)
-        } else {
-          market.push(value.sender)
-        }
-      } else if (executeMsg.transfer && executeMsg.transfer.recipient) {
-        // Send token to another address
-        send.push(value.sender)
-        receive.push(executeMsg.transfer.recipient)
-      }
-    } else if (findAssetByPair(value.contract)) {
-      // Buy from TerraSwap
-      if (executeMsg.swap) {
-        // `to` can be assigned when buying (swap ust to cw20) tokens
-        if (executeMsg.swap.to) {
-          send.push(value.sender)
-          receive.push(executeMsg.swap.to)
-        } else {
-          market.push(value.sender)
-        }
-      }
-    } else if (Array.isArray(value.coins) && value.coins.length) {
-      // Any contract can receive coins
-      send.push(value.sender)
-    }
-
-    return {
-      send,
-      receive,
-      market,
-      // For successful transactions we parse event logs to extract addresses.
-      // But there's no event logs for failed ones.
-      // We always include value.sender here to give developers better context.
-      contract: [value.sender]
-    }
-  } catch (e) {
-    return {}
+  if (!msg) {
+    return addrs
   }
+
+  const extractAddressesFromValue = (v) => {
+    if (typeof v === 'string' && TERRA_ACCOUNT_REGEX.test(v)) {
+      addrs.push(v)
+    } else if (Array.isArray(v)) {
+      v.forEach(extractAddressesFromValue)
+    } else if (typeof v === 'object') {
+      Object.keys(v).forEach((k) => extractAddressesFromValue(v[k]))
+    }
+  }
+
+  extractAddressesFromValue(msg.value)
+  return addrs
 }
 
-export default function getAddressFromMsg(
-  msg: Transaction.Message,
-  log?: Transaction.Log
-): { [key: string]: string[] } {
-  if (!msg) {
-    return {}
+function extractAddressFromLog(log: Transaction.Log) {
+  if (!log.events) {
+    return []
   }
 
-  let result: {
-    [action: string]: string[]
-  } = {}
-
-  const value = msg.value
-
-  switch (msg.type) {
-    case 'bank/MsgSend': {
-      const fromAddress = value.from_address
-      const toAddress = value.to_address
-
-      result = {
-        send: [fromAddress],
-        receive: [toAddress]
-      }
-      break
-    }
-
-    case 'bank/MsgMultiSend': {
-      const inputs = value.inputs || []
-      const outputs = value.outputs || []
-
-      result = {
-        send: inputs.map((input) => input.address),
-        receive: outputs.map((output) => output.address)
-      }
-      break
-    }
-
-    case 'staking/MsgDelegate':
-    case 'staking/MsgCreateValidator':
-    case 'staking/MsgBeginRedelegate':
-    case 'staking/MsgUndelegate':
-    case 'distribution/MsgWithdrawDelegationReward':
-      result = {
-        staking: [value.delegator_address]
-      }
-      break
-
-    case 'distribution/MsgModifyWithdrawAddress':
-    case 'distribution/MsgSetWithdrawAddress':
-      result = {
-        staking: [value.delegator_address, value.withdraw_address]
-      }
-      break
-
-    case 'market/MsgSwap':
-    case 'market/MsgSwapSend':
-      result = {
-        receive: [value.recipient],
-        market: [value.trader]
-      }
-      break
-
-    case 'oracle/MsgExchangeRateVote':
-    case 'oracle/MsgExchangeRatePrevote':
-    case 'oracle/MsgAggregateExchangeRateVote':
-    case 'oracle/MsgAggregateExchangeRatePrevote':
-      result = {
-        market: [value.feeder]
-      }
-      break
-
-    case 'gov/MsgDeposit':
-      result = {
-        governance: [value.depositor]
-      }
-      break
-
-    case 'gov/MsgVote':
-    case 'gov/MsgVoteWeighted': // since columbus-5
-      result = {
-        governance: [value.voter]
-      }
-      break
-
-    case 'gov/MsgSubmitProposal':
-      result = {
-        governance: [value.proposer]
-      }
-      break
-
-    case 'wasm/MsgExecuteContract':
-      result = extractAddressFromContractMsg(value)
-      break
-
-    case 'msgauth/MsgGrantAuthorization':
-      result = {
-        msgauth: [value.granter, value.grantee]
-      }
-      break
-
-    case 'msgauth/MsgRevokeAuthorization':
-      result = {
-        msgauth: [value.granter, value.grantee]
-      }
-      break
-
-    case 'msgauth/MsgExecAuthorized':
-      result = msg.value.msgs.map(getAddressFromMsg).reduce(
-        (acc, cur) => {
-          Object.keys(cur).forEach((key) => {
-            if (!acc[key]) {
-              acc[key] = []
-            }
-
-            acc[key] = acc[key].concat(cur[key])
-          })
-          return acc
-        },
-        {
-          msgauth: [value.grantee]
-        }
-      )
-      break
-  }
-
-  const wasmEventAttributeTypes = [
-    'store_code',
-    'migrate_code',
-    'instantiate_contract',
-    'execute_contract',
-    'migrate_contract',
-    'update_contract_admin',
-    'clear_contract_admin',
-    'update_contract_owner',
-    'from_contract'
-  ]
-
-  // Extract addresses of contract type from event logs and merge it
-  result.contract = (result.contract ?? []).concat(
-    (log?.events ?? [])
-      .map(
-        (ev) =>
-          wasmEventAttributeTypes.includes(ev.type) &&
-          ev.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value)
-      )
-      .flat()
-      .filter(Boolean) as string[]
-  )
-
-  Object.keys(result).forEach((action) => {
-    result[action] = uniq(result[action].filter(Boolean))
-  })
-
-  return result
+  return log.events
+    .map((event) => event.attributes.filter((attr) => TERRA_ACCOUNT_REGEX.test(attr.value)).map((attr) => attr.value))
+    .flat()
 }
 
 /**
@@ -219,20 +40,17 @@ export default function getAddressFromMsg(
 export function generateAccountTxs(tx: TxEntity): AccountTxEntity[] {
   const msgs = tx.data.tx.value.msg
   const logs = tx.data.logs
-  const addrObj = msgs
-    .map((msg, index) => getAddressFromMsg(msg, logs ? logs[index] : undefined))
-    .reduce((acc, item) => mergeWith(acc, item, union), {})
+  const addrs = msgs.map(extractAddressFromMsg).flat()
 
-  return Object.keys(addrObj)
-    .map((type) => {
-      return addrObj[type].map((addr) => {
-        const accountTx = new AccountTxEntity()
-        accountTx.account = addr
-        accountTx.tx = tx
-        accountTx.timestamp = tx.timestamp
-        accountTx.type = type
-        return accountTx
-      })
-    })
-    .flat()
+  if (logs) {
+    addrs.push(...logs.map(extractAddressFromLog).flat())
+  }
+
+  return uniq(addrs.filter(Boolean)).map((addr) => {
+    const accountTx = new AccountTxEntity()
+    accountTx.account = addr
+    accountTx.tx = tx
+    accountTx.timestamp = tx.timestamp
+    return accountTx
+  })
 }
