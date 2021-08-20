@@ -39,11 +39,10 @@ async function main() {
         const existings: {
           a_id: number
           account: string
-          type: string
           tx_id: number
         }[] = await mgr
           .createQueryBuilder(AccountTxEntity, 'a')
-          .select(['a.id', 'account', 'type', 'tx_id'])
+          .select(['a.id', 'account', 'tx_id'])
           .leftJoin(TxEntity, 'tx', 'tx.id = a.tx_id')
           .andWhere('tx.id IN(:...ids)', { ids: txEntities.map((t) => t.id) })
           .getRawMany() // getRawMany trick for saving memory
@@ -51,32 +50,34 @@ async function main() {
         console.log(`existings: ${existings.length}`)
 
         // Determine AccountTxs to be deleted
-        const accountTxsForDeletion: number[] = []
+        const accountTxIdsForDeletion: number[] = []
 
         existings.forEach((e) => {
-          const { account, type, tx_id } = e
+          const { account, tx_id } = e
 
-          if (accountTxs.findIndex((a) => a.account === account && a.type === type && a.tx.id === tx_id) === -1) {
-            accountTxsForDeletion.push(e.a_id)
+          if (accountTxs.findIndex((a) => a.account === account && a.tx.id === tx_id) === -1) {
+            accountTxIdsForDeletion.push(e.a_id)
           }
         })
 
         // Delete from the database
-        if (accountTxsForDeletion.length) {
-          console.log(`deletions: ${accountTxsForDeletion.length}`)
-          await Bluebird.mapSeries(chunk(accountTxsForDeletion, 5000), (chunk) => mgr.delete(AccountTxEntity, chunk))
+        if (accountTxIdsForDeletion.length) {
+          console.log(`deletions: ${accountTxIdsForDeletion.length}`)
+          await Bluebird.mapSeries(chunk(accountTxIdsForDeletion, 5000), (chunk) => mgr.delete(AccountTxEntity, chunk))
         }
 
-        // Determine AccountTxs to be inserted
-        const newAccountTxs = accountTxs.filter((accountTx) => {
-          const { account, type, tx } = accountTx
-          return existings.findIndex((e) => e.account === account && e.type === type && e.tx_id === tx.id) === -1
+        // Determine AccountTxs for insertion
+        const accountTxForInsertion = accountTxs.filter((accountTx) => {
+          const { account, tx } = accountTx
+          return existings.findIndex((e) => e.account === account && e.tx_id === tx.id) === -1
         })
 
-        // Save to the database
-        console.log(`insertions: ${newAccountTxs.length}`)
-        await Bluebird.mapSeries(chunk(newAccountTxs, 5000), (chunk) => mgr.save(chunk))
-        console.log(countBy(newAccountTxs, 'account'))
+        // Insert to the database
+        if (accountTxForInsertion.length) {
+          console.log(`insertions: ${accountTxForInsertion.length}`)
+          await Bluebird.mapSeries(chunk(accountTxForInsertion, 5000), (chunk) => mgr.insert(AccountTxEntity, chunk))
+          console.log(countBy(accountTxForInsertion, 'account'))
+        }
 
         currTxId = txEntities[txEntities.length - 1].id
         console.log(`moving cursor to ${currTxId} at ${txEntities[txEntities.length - 1].timestamp}`)
