@@ -82,7 +82,6 @@ export default class TransactionController extends KoaController {
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
-   * @apiParam {string='send','receive','staking','market','governance','contract'} [action] Type of tx (account is required)
    * @apiParam {string} [block] Block number
    * @apiParam {string} [memo] Memo filter
    * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
@@ -155,9 +154,6 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address'),
-      action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
-        .description('Tx types'),
       block: Joi.string()
         .allow('')
         .regex(/^\d{1,16}$/),

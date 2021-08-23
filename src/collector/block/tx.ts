@@ -1,8 +1,8 @@
 import * as Bluebird from 'bluebird'
-import { getRepository, EntityManager } from 'typeorm'
-import { get, min, compact, uniq, mapValues, keyBy } from 'lodash'
+import { EntityManager } from 'typeorm'
+import { get, min, compact, chunk, mapValues, keyBy } from 'lodash'
 
-import { BlockEntity, TxEntity, AccountEntity, AccountTxEntity } from 'orm'
+import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
 import config from 'config'
 
 import * as lcd from 'lib/lcd'
@@ -197,7 +197,7 @@ export async function getLcdTx(
   return modifiedDoc
 }
 
-export async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
+async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
   // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
@@ -223,89 +223,36 @@ export async function generateTxEntities(txHashes: string[], height: string, blo
   })
 }
 
-async function getUpdatedTxCountAccountEntity(
-  address: string,
-  newTxCount: number,
-  txDate: Date
-): Promise<AccountEntity> {
-  let account = await getRepository(AccountEntity).findOne({ address })
+export async function collectTxs(
+  mgr: EntityManager,
+  txHashes: string[],
+  height: string,
+  block: BlockEntity
+): Promise<TxEntity[]> {
+  const txEntities = await generateTxEntities(txHashes, height, block)
 
-  if (!account) {
-    account = new AccountEntity()
-    account.address = address
-    account.createdAt = txDate
-    account.txcount = 0
-  }
-
-  // TODO: Change to updated at
-  if (account.createdAt > txDate) {
-    account.createdAt = txDate
-  }
-
-  account.txcount = account.txcount + newTxCount
-  return account
-}
-
-function getUniqueAccountsByTx(accountTxDocs: AccountTxEntity[]): string[] {
-  return uniq(accountTxDocs.map((d) => d.account))
-}
-
-interface NewTxInfo {
-  [accountAddress: string]: {
-    newTxCount: number
-    timestamp: Date
-  }
-}
-
-function extractNewTxInfo(accountTxDocsArray: AccountTxEntity[][]): NewTxInfo {
-  const uniqueAccountsPerTxs: string[][] = accountTxDocsArray.map((accountTxs) => getUniqueAccountsByTx(accountTxs))
-  const newTxInfo: NewTxInfo = {}
-
-  uniqueAccountsPerTxs.map((accountsPerTx, txIndex) => {
-    accountsPerTx.map((account) => {
-      if (newTxInfo[account]) {
-        newTxInfo[account].newTxCount += 1
-        newTxInfo[account].timestamp =
-          newTxInfo[account].timestamp < accountTxDocsArray[txIndex][0].timestamp
-            ? accountTxDocsArray[txIndex][0].timestamp
-            : newTxInfo[account].timestamp
-      } else {
-        newTxInfo[account] = {
-          newTxCount: 1,
-          timestamp: accountTxDocsArray[txIndex][0].timestamp
-        }
-      }
-    })
-  })
-
-  return newTxInfo
-}
-
-export async function saveTxs(mgr: EntityManager, block: BlockEntity, txEntities: TxEntity[]): Promise<void> {
   // Save TxEntity
-  await mgr.save(txEntities)
+  // NOTE: Do not use printSql, getSql, or getQuery function.
+  // It breaks parameter number ordering caused by a bug from TypeORM
+  const qb = mgr
+    .createQueryBuilder()
+    .insert()
+    .into(TxEntity)
+    .values(txEntities)
+    .orUpdate({ conflict_target: ['chain_id', 'hash'], overwrite: ['timestamp', 'data', 'block_id'] })
+
+  await qb.execute()
 
   // generate AccountTxEntities
-  const accountTxs: AccountTxEntity[][] = compact(txEntities).map((txEntity) => generateAccountTxs(txEntity))
-
-  // Extract new tx acount and latest timestamp by address and,
-  const newTxInfo = extractNewTxInfo(accountTxs)
-
-  // Find or create AccountEntity and assign it and,
-  const updatedAccountEntity: AccountEntity[] = await Promise.all(
-    Object.keys(newTxInfo).map((account) =>
-      getUpdatedTxCountAccountEntity(account, newTxInfo[account].newTxCount, newTxInfo[account].timestamp)
-    )
-  )
-
-  // Save AccountEntity to the database
-  await mgr.save(updatedAccountEntity)
+  const accountTxs: AccountTxEntity[] = compact(txEntities)
+    .map((txEntity) => generateAccountTxs(txEntity))
+    .flat()
 
   // Save AccountTxEntity to the database
-  const accountTxEntities = await mgr.save(accountTxs.flat())
+  // chunkify array up to 5,000 elements to avoid SQL parameter overflow
+  await Bluebird.mapSeries(chunk(accountTxs, 5000), (chunk) => mgr.save(chunk))
 
-  logger.info(
-    `SaveTxs - height: ${block.height}, txs: ${txEntities.length}, ` +
-      `account: ${updatedAccountEntity.length}, accountTxs: ${accountTxEntities.length}`
-  )
+  logger.info(`SaveTxs - txs: ${txEntities.length}, accountTxs: ${accountTxs.length}`)
+
+  return txEntities
 }

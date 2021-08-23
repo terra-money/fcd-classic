@@ -378,15 +378,15 @@ describe('LCD', () => {
   })
 
   test('getAllRewards: invalid', async () => {
-    await expect(lcd.getAllRewards('invalid')).toReject()
+    await expect(lcd.getTotalRewards('invalid')).toReject()
   })
 
   test('getAllRewards: not found', async () => {
-    await expect(lcd.getAllRewards(UNKNOWN_TERRA_ADDRESS)).resolves.toBeArrayOfSize(0)
+    await expect(lcd.getTotalRewards(UNKNOWN_TERRA_ADDRESS)).resolves.toBeArrayOfSize(0)
   })
 
   test('getAllRewards: success', async () => {
-    await expect(lcd.getAllRewards(VALID_TERRA_ADDRESS)).resolves.toContainEqual(coinObject)
+    await expect(lcd.getTotalRewards(VALID_TERRA_ADDRESS)).resolves.toContainEqual(coinObject)
   })
 
   test('getRewards: invalid', async () => {

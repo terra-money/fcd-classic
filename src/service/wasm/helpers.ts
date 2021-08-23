@@ -1,5 +1,3 @@
-import { apiLogger as logger } from 'lib/logger'
-
 export type ParsedMemo = {
   name?: string
   description?: string
@@ -14,10 +12,8 @@ export function parseWasmTxMemo(txMemo: string): ParsedMemo {
 
   try {
     const parsed = JSON.parse(txMemo)
-    info = { ...parsed, ...info }
-  } catch (error) {
-    logger.error(error)
+    return (info = { ...parsed, memo: txMemo })
+  } catch (e) {
+    return info
   }
-
-  return info
 }

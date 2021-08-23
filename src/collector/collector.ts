@@ -8,8 +8,6 @@ import { initializeSentry } from 'lib/errorReporting'
 import { init as initToken } from 'service/treasury/token'
 
 import { collectBlock } from './block'
-import { collectPrice } from './price'
-import { collectGeneral } from './general'
 import { collectValidatorReturn, collectValidator } from './staking'
 import { collectProposals } from './gov'
 import { collectDashboard } from './dashboard'
@@ -30,8 +28,6 @@ process.on('unhandledRejection', (err) => {
 const tenMinute = parseDuration('10m')
 const twentyMinute = parseDuration('20m')
 
-const priceCollector = new Semaphore('PriceCollector', collectPrice, logger)
-const generalCollector = new Semaphore('GeneralCollector', collectGeneral, logger)
 const proposalCollector = new Semaphore('ProposalCollector', collectProposals, logger)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', collectValidatorReturn, logger, twentyMinute)
@@ -42,16 +38,8 @@ const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logg
 const jobs = [
   // Per minute
   {
-    method: generalCollector.run.bind(generalCollector),
-    cron: '0 * * * * *'
-  },
-  {
     method: proposalCollector.run.bind(proposalCollector),
     cron: '30 * * * * *'
-  },
-  {
-    method: priceCollector.run.bind(priceCollector),
-    cron: '50 * * * * *'
   },
   // Per Hour
   {
@@ -88,7 +76,7 @@ const init = async () => {
   await initORM()
   await initToken()
   await collectBlock()
-  // await collectValidator()
+  await collectValidator()
   await createJobs()
   await startWatcher()
   await startPolling()

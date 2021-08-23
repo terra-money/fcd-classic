@@ -38,17 +38,8 @@ GROUP BY operator_address;`
   }, {})
 }
 
-export default async function getValidators(): Promise<ValidatorResponse[]> {
-  const validatorsList = await getRepository(ValidatorInfoEntity).find({ chainId: config.CHAIN_ID })
-  const validatorsReturns = await getValidatorsReturn()
-
-  const validators = validatorsList.map((validator) => {
-    const { operatorAddress } = validator
-    return generateValidatorResponse(
-      validator,
-      validatorsReturns[operatorAddress] || { stakingReturn: '0', isNewValidator: true }
-    )
-  })
-
-  return orderBy(validators, [(v) => Number(v.votingPower.weight)], ['desc'])
+export default function getValidators(): Promise<ValidatorResponse[]> {
+  return getRepository(ValidatorInfoEntity)
+    .find({ order: { votingPowerWeight: 'DESC' } })
+    .then((validators) => validators.map(generateValidatorResponse))
 }

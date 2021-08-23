@@ -15,7 +15,6 @@ interface ValidatorResponse {
     details: string
     profileIcon: string
   }
-  isNewValidator: boolean
   operatorAddress: string
   rewardsPool: {
     total: string
@@ -25,7 +24,6 @@ interface ValidatorResponse {
     amount: string
     weight: string
   }
-  stakingReturn: string
   status: string
   tokens: string
   upTime: number

@@ -8,7 +8,7 @@ import { removeDeletedProposals } from './removeDeletedProposals'
 import { saveProposalDetails } from './saveProposal'
 import { getValidatorsVotingPower } from 'service/governance'
 
-export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[]) {
+export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[], strHeight: string) {
   const proposalUpdateSet = new Set<string>()
 
   txs.forEach((tx) => {
@@ -34,8 +34,8 @@ export async function detectAndUpdateProposal(mgr: EntityManager, txs: TxEntity[
   if (proposalUpdateSet.size) {
     const proposalIds = Array.from(proposalUpdateSet.values())
     const [proposalTallyingParams, proposalDepositParams] = await Promise.all([
-      lcd.getProposalTallyingParams(),
-      lcd.getProposalDepositParams()
+      lcd.getProposalTallyingParams(strHeight),
+      lcd.getProposalDepositParams(strHeight)
     ])
     const validatorsVotingPower = await getValidatorsVotingPower()
 

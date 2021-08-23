@@ -86,13 +86,7 @@ type WasmContractParams = {
   codeId?: string
 }
 
-export async function getWasmContracts({
-  offset,
-  limit,
-  owner,
-  search,
-  codeId
-}: WasmContractParams): Promise<{
+export async function getWasmContracts({ offset, limit, owner, search, codeId }: WasmContractParams): Promise<{
   contracts: WasmContractDetails[]
   limit: number
   next?: number
@@ -119,10 +113,7 @@ export async function getWasmContracts({
 }
 
 export async function getWasmContract(contractAddress: string): Promise<WasmContractDetails> {
-  const contract = await getRepository(WasmContractEntity).findOne({
-    contractAddress,
-    chainId: config.CHAIN_ID
-  })
+  const contract = await getRepository(WasmContractEntity).findOne({ contractAddress })
 
   if (!contract) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, undefined, 'Contract not found')

@@ -39,7 +39,7 @@ export async function getValidatorRewardAndCommissionSum(
   const query = `SELECT ${getSelectSumQueryForDenoms(operatorAddr)} FROM blockreward WHERE ${getTimeRangeQuery(
     fromTs,
     toTs
-  )} AND chain_id='${config.CHAIN_ID}' AND block_id IS NOT NULL`
+  )}`
 
   const result = await getConnection().query(query)
 

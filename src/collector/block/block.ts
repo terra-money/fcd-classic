@@ -11,12 +11,13 @@ import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 
-import { saveTxs, generateTxEntities } from './tx'
-import { saveWasmCodeAndContract } from './wasm'
-
-import { collectReward } from 'collector/reward'
-// import { collectSwap } from 'collector/swap'
-import { collectNetwork } from 'collector/network'
+import { collectTxs } from './tx'
+import { collectWasm } from './wasm'
+import { collectReward } from './reward'
+// import { collectSwap } from './swap'
+import { collectNetwork } from './network'
+import { collectPrice } from './price'
+import { collectGeneral } from './general'
 import { detectAndUpdateProposal } from 'collector/gov'
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
@@ -37,20 +38,16 @@ async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   return latestBlock[0]
 }
 
-function getBlockEntity(
-  blockHeight: number,
-  lcdBlock: LcdBlock,
-  blockReward: BlockRewardEntity
-): DeepPartial<BlockEntity> {
-  const chainId = lcdBlock.block.header.chain_id
-  const timestamp = lcdBlock.block.header.time
+function generateBlockEntity(lcdBlock: LcdBlock, blockReward: BlockRewardEntity): DeepPartial<BlockEntity> {
+  const { chain_id: chainId, height, time: timestamp } = lcdBlock.block.header
 
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
-    height: blockHeight,
+    height: +height,
     timestamp,
     reward: blockReward
   }
+
   return blockEntity
 }
 
@@ -68,11 +65,7 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
   return acc
 }
 
-export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<BlockRewardEntity>> {
-  const height = +lcdBlock.block.header.height
-  const chainId = lcdBlock.block.header.chain_id
-  const timestamp = lcdBlock.block.header.time
-
+export async function getBlockReward(height: string): Promise<DeepPartial<BlockRewardEntity>> {
   const decodedRewardsAndCommission = await rpc.getRewards(height)
 
   const totalReward = {}
@@ -104,9 +97,6 @@ export async function getBlockReward(lcdBlock: LcdBlock): Promise<DeepPartial<Bl
     })
 
   const blockReward: DeepPartial<BlockRewardEntity> = {
-    chainId,
-    height,
-    timestamp,
     reward: totalReward,
     commission: totalCommission,
     rewardPerVal,
@@ -125,33 +115,30 @@ export async function saveBlockInformation(
   const result: BlockEntity | undefined = await getManager()
     .transaction(async (mgr: EntityManager) => {
       // Save block rewards
-      const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(lcdBlock))
-      // new block height
-      const newBlockHeight = +height
+      const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(height))
       // Save block entity
-      const newBlockEntity = await mgr
-        .getRepository(BlockEntity)
-        .save(getBlockEntity(newBlockHeight, lcdBlock, newBlockReward))
+      const newBlockEntity = await mgr.getRepository(BlockEntity).save(generateBlockEntity(lcdBlock, newBlockReward))
       // get block tx hashes
       const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 
-      if (txHashes) {
-        const txEntities = await generateTxEntities(txHashes, height, newBlockEntity)
+      if (txHashes.length) {
         // save transactions
-        await saveTxs(mgr, newBlockEntity, txEntities)
+        const txEntities = await collectTxs(mgr, txHashes, height, newBlockEntity)
         // save wasm
-        await saveWasmCodeAndContract(mgr, txEntities)
+        await collectWasm(mgr, txEntities)
         // save proposals
-        await detectAndUpdateProposal(mgr, txEntities)
+        await detectAndUpdateProposal(mgr, txEntities, height)
       }
 
       // new block timestamp
       if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
         const newBlockTimeStamp = new Date(newBlockEntity.timestamp).getTime()
 
-        await collectReward(mgr, newBlockTimeStamp)
+        await collectReward(mgr, newBlockTimeStamp, height)
         // await collectSwap(mgr, newBlockTimeStamp)
-        await collectNetwork(mgr, newBlockTimeStamp)
+        await collectNetwork(mgr, newBlockTimeStamp, height)
+        await collectPrice(mgr, newBlockTimeStamp, height)
+        await collectGeneral(mgr, newBlockTimeStamp, height)
       }
 
       return newBlockEntity

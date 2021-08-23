@@ -65,11 +65,6 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
   let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
   const params = [param.account]
 
-  if (param.action) {
-    distinctTxQuery += ` AND type=$2`
-    params.push(param.action)
-  }
-
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {
@@ -82,7 +77,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
     // Disable indexscan to force use bitmap scan for query speed
     await mgr.query('SET enable_indexscan=false')
 
-    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY timestamp ${order}`
+    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause})`
     const txs = await mgr.query(query, params)
 
     await mgr.query('SET enable_indexscan=true')
@@ -107,7 +102,7 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
     .take(param.limit + 1)
-    .orderBy('timestamp', order)
+    .orderBy('id', order)
 
   if (param.offset) {
     qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })

@@ -12,7 +12,7 @@ export default class DashboardEntity {
   @Column()
   chainId: string
 
-  @Column({ type: 'jsonb', default: '{}' })
+  @Column({ type: 'jsonb' })
   txVolume: DenomMap
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })

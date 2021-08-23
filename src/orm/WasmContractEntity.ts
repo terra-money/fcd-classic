@@ -2,7 +2,6 @@ import { Column, Entity, PrimaryGeneratedColumn, Index, ManyToOne, JoinColumn } 
 import WasmCodeEntity from './WasmCodeEntity'
 
 @Entity('wasm_contract')
-@Index('index_wasm_code_chain_id_contract_address', ['chainId', 'contractAddress'], { unique: true })
 export default class WasmContractEntity {
   @PrimaryGeneratedColumn()
   id: number
@@ -14,7 +13,7 @@ export default class WasmContractEntity {
   @Column()
   owner: string
 
-  @Column()
+  @Column({ unique: true })
   contractAddress: string
 
   @Column()
@@ -31,9 +30,6 @@ export default class WasmContractEntity {
   @Column()
   timestamp: Date
 
-  @Column()
-  chainId: string
-
   @Column({ default: false })
   migratable: boolean
 
@@ -41,11 +37,9 @@ export default class WasmContractEntity {
   migrateMsg: string
 
   @ManyToOne(() => WasmCodeEntity, (code) => code, {
-    eager: true
+    eager: true,
+    onDelete: 'CASCADE'
   })
-  @JoinColumn([
-    { name: 'code_id', referencedColumnName: 'codeId' },
-    { name: 'chain_id', referencedColumnName: 'chainId' }
-  ])
+  @JoinColumn({ name: 'code_id', referencedColumnName: 'codeId' })
   code: WasmCodeEntity
 }
