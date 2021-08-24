@@ -2,6 +2,7 @@ import { unmarshalTx } from '@terra-money/amino-js'
 import * as rpc from 'lib/rpc'
 import * as lcd from 'lib/lcd'
 import { convertPublicKeyToAddress } from 'lib/common'
+import { apiLogger as logger } from 'lib/logger'
 
 interface MempoolItem {
   firstSeenAt: number // timestamp (millisecond)
@@ -18,8 +19,10 @@ class Mempool {
 
   static async updateMempool() {
     // Fetches current pending transactions from /unconfirmed_txs from RPC node
-    const txStrs = await rpc.getUnconfirmedTxs({}, false)
+    const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' }, false)
     const timestamp = Date.now()
+
+    logger.info(`mempool: ${txStrs.length} txs found`)
 
     const newItems = txStrs.map((txStr) => {
       // Convert txStr to txhash and find it from items
@@ -42,6 +45,8 @@ class Mempool {
         lcdTx,
         addresses
       }
+
+      logger.info(`mempool: ${txhash} ${item.addresses}`)
 
       this.hashMap.set(txhash, item)
       return item
@@ -72,7 +77,7 @@ class Mempool {
   }
 
   static getTransactionByHash(txhash: string) {
-    return this.hashMap.get(txhash)
+    return this.hashMap.get(txhash.toUpperCase())
   }
 }
 

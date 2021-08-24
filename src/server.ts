@@ -8,6 +8,7 @@ import createApp from 'createApp'
 import { apiLogger as logger } from 'lib/logger'
 import { initializeSentry } from 'lib/errorReporting'
 import * as token from 'service/treasury/token'
+import Mempool from 'lib/mempool'
 
 const packageJson = require('../package.json')
 
@@ -27,6 +28,8 @@ export async function createServer() {
 
   await initORM()
   await token.init()
+
+  setInterval(() => Mempool.updateMempool(), 1000)
 
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())

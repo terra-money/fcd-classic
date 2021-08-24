@@ -55,7 +55,7 @@ export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefi
 export function getTxHash(txstring: string): string {
   const s256Buffer = crypto.createHash(`sha256`).update(Buffer.from(txstring, `base64`)).digest()
   const txbytes = new Uint8Array(s256Buffer)
-  return Buffer.from(txbytes.slice(0, 32)).toString(`hex`)
+  return Buffer.from(txbytes.slice(0, 32)).toString(`hex`).toUpperCase()
 }
 
 export function getTxHashesFromBlock(lcdBlock: LcdBlock): string[] {
