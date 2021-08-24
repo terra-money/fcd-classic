@@ -1,6 +1,7 @@
 import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
+import Mempool from 'lib/mempool'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
@@ -92,6 +93,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
     return {
       next,
       limit: param.limit,
+      pendings: Mempool.getTransactionsByAddress(param.account as string),
       txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
     }
   })
