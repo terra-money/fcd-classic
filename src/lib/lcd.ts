@@ -176,7 +176,7 @@ function calculateHeightParam(strHeight?: string): string | undefined {
     return strHeight
   }
 
-  return (numHeight - (numHeight % config.PRUNING_KEEP_EVERY)).toString()
+  return Math.max(config.INITIAL_HEIGHT, numHeight - (numHeight % config.PRUNING_KEEP_EVERY)).toString()
 }
 
 ///////////////////////////////////////////////
