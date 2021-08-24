@@ -5,7 +5,6 @@ import normalizeAccount from './normalizeAccount'
 import { getAccount, getUnbondingDelegations, getLatestBlock } from 'lib/lcd'
 import { sortDenoms } from 'lib/common'
 import { getDelegations, DelegationInfo } from 'lib/getDelegations'
-import Mempool from 'lib/mempool'
 
 interface AccountDetails {
   balance: Balance[]
@@ -25,9 +24,6 @@ export default async (address: string): Promise<AccountDetails> => {
   const latestBlockTimestamp = new Date(latestBlock.block.header.time).getTime()
   const balance = sortDenoms(calculate(account, unbondings, latestBlockTimestamp))
   const vesting = sortDenoms(getVesting(account, latestBlockTimestamp))
-
-  // Sequence correction
-  account.value.sequence = account.value.sequence + Mempool.getTransactionsByAddress(address).length
 
   return {
     balance,
