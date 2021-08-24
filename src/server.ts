@@ -29,12 +29,11 @@ export async function createServer() {
   await initORM()
   await token.init()
 
-  setInterval(() => Mempool.updateMempool(), 1000)
-
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())
 
   server.listen(config.PORT, () => {
+    Mempool.start()
     logger.info(`${packageJson.description} is listening on port ${config.PORT}`)
   })
 

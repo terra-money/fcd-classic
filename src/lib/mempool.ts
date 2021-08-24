@@ -3,6 +3,8 @@ import * as rpc from 'lib/rpc'
 import * as lcd from 'lib/lcd'
 import { convertPublicKeyToAddress } from 'lib/common'
 import { apiLogger as logger } from 'lib/logger'
+import RPCWatcher from 'lib/RPCWatcher'
+import config from 'config'
 
 interface MempoolItem {
   firstSeenAt: number // timestamp (millisecond)
@@ -16,6 +18,28 @@ interface MempoolItem {
 class Mempool {
   static hashMap: Map<string, MempoolItem> = new Map()
   static items: MempoolItem[] = []
+
+  static start() {
+    const watcher = new RPCWatcher({
+      url: `${config.RPC_URI}/websocket`,
+      logger
+    })
+
+    watcher.registerSubscriber(`tm.event='NewBlock'`, async (data) => {
+      const marshalTxs = data.result.data?.value.block?.data.txs as string[]
+
+      if (marshalTxs) {
+        marshalTxs.map((strTx) => {
+          const txhash = lcd.getTxHash(strTx)
+          logger.info(`mempool: removing ${txhash}`)
+          this.hashMap.delete(txhash)
+        })
+      }
+    })
+
+    watcher.start()
+    setInterval(() => this.updateMempool(), 1000)
+  }
 
   static async updateMempool() {
     // Fetches current pending transactions from /unconfirmed_txs from RPC node
