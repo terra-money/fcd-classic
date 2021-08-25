@@ -48,15 +48,15 @@ declare namespace Transaction {
   interface LcdTransaction {
     height: string
     txhash: string
-    raw_log: string
-    logs: Log[] // doesn't exist if tx failed
+    codespace?: string
+    code?: number
+    // raw_log: string
+    logs?: Log[] // doesn't exist for failed ones
     gas_wanted: string
     gas_used: string
-    codespace: string
-    code?: number
     tx: LcdTx
-    timestamp: string // unix time at GMT 0
-    events: Event[]
+    timestamp: string // unix time (GMT)
+    // timeout_height: string
   }
 
   interface LcdTransactions {

@@ -3,7 +3,6 @@ import { EntityManager } from 'typeorm'
 import { get, min, compact, chunk, mapValues, keyBy } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
-import config from 'config'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'

@@ -2,7 +2,7 @@ import * as crypto from 'crypto'
 import * as rp from 'request-promise'
 
 import config from 'config'
-
+import { pick, pickBy } from 'lodash'
 import { plus, times, div, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
 
@@ -48,8 +48,58 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
 ///////////////////////////////////////////////
 // Transactions
 ///////////////////////////////////////////////
-export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
-  return get(`/txs/${hash}`)
+export async function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
+  const { tx_response } = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
+
+  const intermediate = pickBy(
+    pick(tx_response, ['height', 'txhash', 'logs', 'gas_wanted', 'gas_used', 'codespace', 'code', 'timestamp'])
+  ) as Pick<
+    Transaction.LcdTransaction,
+    'height' | 'txhash' | 'logs' | 'gas_wanted' | 'gas_used' | 'codespace' | 'code' | 'timestamp'
+  >
+
+  const { auth_info, body, signatures } = tx_response.tx
+
+  return {
+    ...intermediate,
+    tx: {
+      type: 'core/StdTx',
+      value: {
+        fee: {
+          amount: auth_info.fee.amount,
+          gas: auth_info.fee.gas_limit
+        },
+        msg: body.messages.map((m) => {
+          // '/terra.oracle.v1beta1.MsgAggregateExchangeRatePrevote' ->
+          // [ 'terra', 'oracle', 'v1beta1', 'MsgAggregateExchangeRatePrevote' ]
+          const tokens = m['@type'].match(/([a-zA-Z0-9]+)/g)
+          let type
+
+          if (tokens[0] === 'terra' || tokens[0] === 'cosmos') {
+            type = `${tokens[1]}/${tokens[tokens.length - 1]}`
+          } else {
+            type = `${tokens[0]}/${tokens[tokens.length - 1]}`
+          }
+
+          return {
+            type,
+            value: pick(
+              m,
+              Object.keys(m).filter((key) => key !== '@type')
+            )
+          }
+        }),
+        signatures: auth_info.signer_infos.map((si, idx) => ({
+          pub_key: {
+            type: 'tendermint/PubKeySecp256k1',
+            value: si.public_key.key
+          },
+          signature: signatures[idx]
+        })),
+        memo: body.memo
+      }
+    }
+  }
 }
 
 function getTxHash(txstring: string): string {

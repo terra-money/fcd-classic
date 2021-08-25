@@ -10,6 +10,11 @@ function extractAddressFromMsg(msg: Transaction.Message): string[] {
   }
 
   const extractAddressesFromValue = (v) => {
+    // v can be null and typeof null is object
+    if (!v) {
+      return
+    }
+
     if (typeof v === 'string' && TERRA_ACCOUNT_REGEX.test(v)) {
       addrs.push(v)
     } else if (Array.isArray(v)) {
