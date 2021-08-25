@@ -51,7 +51,7 @@ declare namespace Transaction {
     codespace?: string
     code?: number
     // raw_log: string
-    logs?: Log[] // doesn't exist for failed ones
+    logs: Log[]
     gas_wanted: string
     gas_used: string
     tx: LcdTx

@@ -4,6 +4,10 @@ import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
 import { collectorLogger as logger } from 'lib/logger'
 
 function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] {
+  if (tx.data.code) {
+    return []
+  }
+
   return tx.data.tx.value.msg
     .map(
       (msg, index) =>
@@ -75,6 +79,10 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
 }
 
 function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
+  if (tx.data.code) {
+    return []
+  }
+
   return tx.data.tx.value.msg
     .map(
       (msg, index) =>
