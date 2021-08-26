@@ -9,7 +9,7 @@ import config from 'config'
 const debug = require('debug')('mempool')
 
 interface MempoolItem {
-  timestamp: number // unix timestamp (millisecond)
+  timestamp: string // ISO Date
   txhash: string
   tx: Transaction.LcdTx
   addresses: string[] // account address of signatures
@@ -18,7 +18,7 @@ interface MempoolItem {
 export type MempoolItemResponse = Omit<MempoolItem, 'addresses'> & { chainId: string }
 
 const transformItemToResponse = (item: MempoolItem): MempoolItemResponse => ({
-  timestamp: item.timestamp,
+  timestamp: new Date(item.timestamp).toISOString(),
   tx: item.tx,
   txhash: item.txhash,
   chainId: config.CHAIN_ID
