@@ -6,12 +6,23 @@ import { apiLogger as logger } from 'lib/logger'
 import RPCWatcher from 'lib/RPCWatcher'
 import config from 'config'
 
+const debug = require('debug')('mempool')
+
 interface MempoolItem {
-  firstSeenAt: number // timestamp (millisecond)
+  timestamp: number // unix timestamp (millisecond)
   txhash: string
-  lcdTx: Transaction.LcdTx
+  tx: Transaction.LcdTx
   addresses: string[] // account address of signatures
 }
+
+export type MempoolItemResponse = Omit<MempoolItem, 'addresses'> & { chainId: string }
+
+const transformItemToResponse = (item: MempoolItem): MempoolItemResponse => ({
+  timestamp: item.timestamp,
+  tx: item.tx,
+  txhash: item.txhash,
+  chainId: config.CHAIN_ID
+})
 
 // Mempool
 // updatetores mempool data with map of address to txs and map of hash to tx
@@ -21,7 +32,7 @@ class Mempool {
 
   static start() {
     const watcher = new RPCWatcher({
-      url: `${config.RPC_URI}/websocket`,
+      url: `${config.RPC_URI.replace('http', 'ws')}/websocket`,
       logger
     })
 
@@ -31,7 +42,7 @@ class Mempool {
       if (marshalTxs) {
         marshalTxs.map((strTx) => {
           const txhash = lcd.getTxHash(strTx)
-          logger.info(`mempool: removing ${txhash}`)
+          debug(`mempool: removing ${txhash}`)
           this.hashMap.delete(txhash)
         })
       }
@@ -46,7 +57,7 @@ class Mempool {
     const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' }, false)
     const timestamp = Date.now()
 
-    logger.info(`mempool: ${txStrs.length} txs found`)
+    debug(`${txStrs.length} txs found`)
 
     const newItems = txStrs.map((txStr) => {
       // Convert txStr to txhash and find it from items
@@ -64,13 +75,13 @@ class Mempool {
       const addresses = lcdTx.value.signatures.map((sig) => convertPublicKeyToAddress(sig.pub_key.value))
 
       const item: MempoolItem = {
-        firstSeenAt: timestamp,
+        timestamp,
         txhash,
-        lcdTx,
+        tx: lcdTx,
         addresses
       }
 
-      logger.info(`mempool: ${txhash} ${item.addresses}`)
+      debug(`${txhash} ${item.addresses}`)
 
       this.hashMap.set(txhash, item)
       return item
@@ -88,20 +99,30 @@ class Mempool {
     // console.log(`${new Date().toISOString()}: ${newItems.length} txs in mempool`)
   }
 
-  static getTransactionsByAddress(address: string): Transaction.LcdTx[] {
-    const lcdTxs: Transaction.LcdTx[] = []
+  static getTransactionsByAddress(address: string): MempoolItemResponse[] {
+    const items: MempoolItemResponse[] = []
 
-    this.hashMap.forEach((item) => {
-      if (item.addresses.indexOf(address) !== -1) {
-        lcdTxs.push(item.lcdTx)
+    this.hashMap.forEach((i) => {
+      if (i.addresses.indexOf(address) !== -1) {
+        items.push(transformItemToResponse(i))
       }
     })
 
-    return lcdTxs
+    return items
   }
 
-  static getTransactionByHash(txhash: string) {
-    return this.hashMap.get(txhash.toUpperCase())
+  static getTransactionByHash(txhash: string): MempoolItemResponse | null {
+    const item = this.hashMap.get(txhash.toUpperCase())
+
+    if (!item) {
+      return null
+    }
+
+    return transformItemToResponse(item)
+  }
+
+  static getTransactions(): MempoolItemResponse[] {
+    return this.items.map(transformItemToResponse)
   }
 }
 

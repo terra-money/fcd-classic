@@ -1,29 +1,14 @@
-import Mempool from 'lib/mempool'
+import Mempool, { MempoolItemResponse } from 'lib/mempool'
 import { TxEntity } from 'orm'
 import { getRepository } from 'typeorm'
-import config from 'config'
 
-type FcdTx =
-  | (Transaction.LcdTransaction & { chainId: string })
-  | {
-      height: ''
-      txhash: string
-      tx: Transaction.LcdTx
-      timestamp: string // First seen at
-      chainId: string
-    }
+type FcdTx = (Transaction.LcdTransaction & { chainId: string }) | MempoolItemResponse
 
 export async function getTx(txhash: string): Promise<FcdTx | undefined> {
   const mempoolItem = Mempool.getTransactionByHash(txhash)
 
   if (mempoolItem) {
-    return {
-      height: '',
-      txhash: mempoolItem.txhash,
-      tx: mempoolItem.lcdTx,
-      timestamp: new Date(mempoolItem.firstSeenAt).toISOString(),
-      chainId: config.CHAIN_ID
-    }
+    return mempoolItem
   }
 
   const qb = getRepository(TxEntity)

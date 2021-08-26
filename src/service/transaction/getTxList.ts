@@ -1,7 +1,7 @@
 import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
-import Mempool from 'lib/mempool'
+import Mempool, { MempoolItemResponse } from 'lib/mempool'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
@@ -14,13 +14,14 @@ export interface GetTxListParam {
   chainId?: string
 }
 
-interface GetTxsReturn {
+interface GetTxsResponse {
   next?: number
   limit: number
   txs: ({ id: number } & Transaction.LcdTransaction)[]
+  pendings?: MempoolItemResponse[]
 }
 
-export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
+export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
   const qb = await getRepository(BlockEntity)
     .createQueryBuilder('block')
     .where('block.height = :height AND block.chainId = :chainId', {
@@ -54,7 +55,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   }
 }
 
-export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsReturn> {
+export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsResponse> {
   if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
@@ -93,13 +94,13 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
     return {
       next,
       limit: param.limit,
-      pendings: Mempool.getTransactionsByAddress(param.account as string),
-      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
+      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data })),
+      pendings: Mempool.getTransactionsByAddress(param.account as string)
     }
   })
 }
 
-async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
+async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
@@ -123,14 +124,16 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
   return {
     next,
     limit: param.limit,
-    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data })),
+    pendings: Mempool.getTransactions()
   }
 }
 
-interface GetTxListReturn {
+interface GetTxListResponse {
   next?: number
   limit: number
   txs: Transaction.LcdTransaction[]
+  pendings: Transaction.LcdTx[]
 }
 
 interface GetMsgListReturn {
@@ -139,18 +142,18 @@ interface GetMsgListReturn {
   txs: ParsedTxInfo[]
 }
 
-export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn> {
-  let txs
+export async function getTxList(param: GetTxListParam): Promise<GetTxListResponse> {
+  let response
 
   if (param.account) {
-    txs = await getTxFromAccount(param)
+    response = await getTxFromAccount(param)
   } else if (param.block) {
-    txs = await getTxFromBlock(param)
+    response = await getTxFromBlock(param)
   } else {
-    txs = await getTxs(param)
+    response = await getTxs(param)
   }
 
-  return txs
+  return response
 }
 
 export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
