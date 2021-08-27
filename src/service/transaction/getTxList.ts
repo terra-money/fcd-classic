@@ -1,7 +1,6 @@
 import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
-import Mempool, { MempoolItemResponse } from 'lib/mempool'
 import parseTx from './parseTx'
 
 export interface GetTxListParam {
@@ -18,7 +17,6 @@ interface GetTxsResponse {
   next?: number
   limit: number
   txs: ({ id: number } & Transaction.LcdTransaction)[]
-  pendings?: MempoolItemResponse[]
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
@@ -94,8 +92,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
     return {
       next,
       limit: param.limit,
-      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data })),
-      pendings: Mempool.getTransactionsByAddress(param.account as string)
+      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
     }
   })
 }
@@ -124,8 +121,7 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
   return {
     next,
     limit: param.limit,
-    txs: txs.map((tx) => ({ id: tx.id, ...tx.data })),
-    pendings: Mempool.getTransactions()
+    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
   }
 }
 
@@ -133,7 +129,6 @@ interface GetTxListResponse {
   next?: number
   limit: number
   txs: Transaction.LcdTransaction[]
-  pendings: Transaction.LcdTx[]
 }
 
 interface GetMsgListReturn {

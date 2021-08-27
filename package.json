@@ -95,7 +95,7 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.33",
-    "@types/jest": "^26.0.19",
+    "@types/jest": "^27.0.1",
     "@types/koa": "^2.11.6",
     "@types/koa-router": "^7.4.1",
     "@types/lodash": "^4.14.166",
@@ -116,7 +116,7 @@
     "pinst": "^2.1.6",
     "prettier": "^2.2.1",
     "supertest": "^6.1.4",
-    "ts-jest": "^27.0.4"
+    "ts-jest": "^27.0.5"
   },
   "prettier": {
     "printWidth": 120,
