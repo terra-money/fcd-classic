@@ -360,7 +360,7 @@ export default class TransactionController extends KoaController {
 
   /**
    * @api {get} /mempool Get transactions in mempool
-   * @apiName getMempoolByHash
+   * @apiName getMempool
    * @apiGroup Transactions
    *
    * @apiParam {string} [account] Account address
