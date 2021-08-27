@@ -82,10 +82,10 @@ async function collectBlocks() {
 
 export async function startWatcher() {
   let eventCounter = 0
+
   const watcher = new RPCWatcher({
     url: SOCKET_URL,
-    logger,
-    maxRetryAttempt: Number.MAX_SAFE_INTEGER
+    logger
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (resp: RpcResponse) => {

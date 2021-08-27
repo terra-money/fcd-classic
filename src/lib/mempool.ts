@@ -55,7 +55,7 @@ class Mempool {
   static async updateMempool() {
     // Fetches current pending transactions from /unconfirmed_txs from RPC node
     const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' }, false)
-    const timestamp = Date.now()
+    const timestamp = new Date().toISOString()
 
     debug(`${txStrs.length} txs found`)
 

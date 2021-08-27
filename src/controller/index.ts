@@ -2,7 +2,6 @@ import { KoaController } from 'koa-joi-controllers'
 import config from 'config'
 
 import DashboardController from './DashboardController'
-import AuthController from './AuthController'
 import BankController from './BankController'
 import TransactionController from './TransactionController'
 import MarketController from './MarketController'
@@ -13,7 +12,6 @@ import WasmController from './WasmController'
 
 const controllers = [
   DashboardController,
-  AuthController,
   BankController,
   TransactionController,
   MarketController,
