@@ -6,7 +6,7 @@ import * as WebSocket from 'ws'
 
 type RPCWatcherConfig = {
   url: string
-  maxRetries?: number
+  maxRetries?: number // Maxmimum number of reconnect attempts
   logger: Logger
 }
 
@@ -43,8 +43,7 @@ export default class RPCWatcher {
     this.client = new ReconnectingWebSocket(config.url, [], {
       maxRetries: config.maxRetries || Infinity,
       startClosed: true,
-      WebSocket: WebSocket,
-      binaryType: 'arraybuffer'
+      WebSocket: WebSocket
     })
 
     this.client.onerror = this.onError.bind(this)

@@ -316,7 +316,7 @@ export default class TransactionController extends KoaController {
     }
   })
   async getUnconfirmedTxs(ctx): Promise<void> {
-    success(ctx, await getUnconfirmedTxs())
+    success(ctx, await getUnconfirmedTxs(ctx.query))
   }
 
   /**

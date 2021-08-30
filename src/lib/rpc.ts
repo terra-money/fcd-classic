@@ -19,8 +19,8 @@ async function getRequest(url: string, params?: Record<string, unknown>): Promis
     logger.error(`RPC request to ${url} failed by ${e}`)
   })
 
-  if (typeof response.jsonrpc !== 'string') {
-    throw new Error('failed to query rpc')
+  if (!response || typeof response.jsonrpc !== 'string') {
+    throw new Error('failed to query RPC')
   }
 
   return response.result

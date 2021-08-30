@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node'
 import { unmarshalTx } from '@terra-money/amino-js'
 import * as rpc from 'lib/rpc'
 import * as lcd from 'lib/lcd'
@@ -7,6 +8,7 @@ import RPCWatcher from 'lib/RPCWatcher'
 import config from 'config'
 
 const debug = require('debug')('mempool')
+const UPDATE_PERIOD = 1000
 
 interface MempoolItem {
   timestamp: string // ISO Date
@@ -24,13 +26,24 @@ const transformItemToResponse = (item: MempoolItem): MempoolItemResponse => ({
   chainId: config.CHAIN_ID
 })
 
-// Mempool
-// updatetores mempool data with map of address to txs and map of hash to tx
+/**
+ * Mempool is a singleton indexes mempool periodically in local cache
+ * Provides transaction queries by hash, and account (terra1..)
+ */
 class Mempool {
+  // key = txhash
   static hashMap: Map<string, MempoolItem> = new Map()
   static items: MempoolItem[] = []
+  static updatePeriod = UPDATE_PERIOD
 
-  static start() {
+  /**
+   * This is the entry point for initializing and starting up
+   * @param updatePeriod interval time for updating mempool data in local cache
+   */
+  static start(updatePeriod = UPDATE_PERIOD) {
+    this.updatePeriod = updatePeriod
+
+    // Listen to new block event via RPCWatcher (websocket) for removing committed tx from cached mempool
     const watcher = new RPCWatcher({
       url: `${config.RPC_URI.replace('http', 'ws')}/websocket`,
       logger
@@ -49,10 +62,21 @@ class Mempool {
     })
 
     watcher.start()
-    setInterval(() => this.updateMempool(), 1000)
+
+    // Trigger updateMempool periodically
+    setInterval(() => {
+      this.updateMempool().catch((err) => {
+        sentry.captureException(err)
+      })
+    }, this.updatePeriod)
   }
 
-  static async updateMempool() {
+  /**
+   * updateMempool queries `unconfirmed_txs` to Terra RPC server and stores it into hashMap and items.
+   * To prepare for situations where RPCWatcher doesn't fire NewBlock events (connection lost, etc.),
+   * it additionally removes transactions that no longer exist in cached mempool.
+   */
+  private static async updateMempool() {
     // Fetches current pending transactions from /unconfirmed_txs from RPC node
     const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' }, false)
     const timestamp = new Date().toISOString()
@@ -96,7 +120,6 @@ class Mempool {
 
     // Replace items
     this.items = newItems
-    // console.log(`${new Date().toISOString()}: ${newItems.length} txs in mempool`)
   }
 
   static getTransactionsByAddress(address: string): MempoolItemResponse[] {
