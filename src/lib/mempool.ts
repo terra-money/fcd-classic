@@ -27,8 +27,8 @@ const transformItemToResponse = (item: MempoolItem): MempoolItemResponse => ({
 })
 
 /**
- * Mempool is a singleton indexes mempool periodically in local cache
- * Provides transaction queries by hash, and account (terra1..)
+ * Mempool is a singleton that indexes mempool periodically in local cache
+ * for providing transaction queries by hash, and account (terra1..)
  */
 class Mempool {
   // key = txhash
