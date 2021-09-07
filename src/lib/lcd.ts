@@ -1,4 +1,5 @@
 import * as crypto from 'crypto'
+import * as sentry from '@sentry/node'
 import * as rp from 'request-promise'
 import { uniqBy } from 'lodash'
 
@@ -118,6 +119,23 @@ export function getTxHashesFromBlock(lcdBlock: LcdBlock): string[] {
 
   const hashes = txStrings.map(getTxHash)
   return hashes
+}
+
+export function decodeTx(tx: string): Promise<Transaction.LcdTx> {
+  return rp
+    .post(`${config.LCD_URI}/txs/decode`, { json: true, body: { tx } })
+    .then((res) => ({
+      type: 'core/StdTx',
+      value: res.result
+    }))
+    .catch((err) => {
+      sentry.withScope((scope) => {
+        scope.setExtra('tx', tx)
+        sentry.captureException(err)
+      })
+
+      return {}
+    })
 }
 
 export function broadcast(body: { tx: Transaction.Value; mode: string }): Promise<Transaction.LcdPostTransaction> {

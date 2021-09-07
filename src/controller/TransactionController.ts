@@ -1,9 +1,11 @@
+import * as Bluebird from 'bluebird'
 import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-joi-controllers'
 import config from 'config'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
-import { getUnconfirmedTxs } from 'lib/rpc'
+import * as rpc from 'lib/rpc'
+import * as lcd from 'lib/lcd'
 import Mempool from 'lib/mempool'
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
@@ -313,7 +315,7 @@ export default class TransactionController extends KoaController {
     }
   })
   async getUnconfirmedTxs(ctx): Promise<void> {
-    success(ctx, await getUnconfirmedTxs(ctx.query))
+    success(ctx, await Bluebird.map(rpc.getUnconfirmedTxs(ctx.query), lcd.decodeTx))
   }
 
   /**

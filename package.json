@@ -1,6 +1,6 @@
 {
   "name": "fcd",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Terra FCD Suite",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
@@ -53,7 +53,6 @@
   "dependencies": {
     "@koa/cors": "^3.1.0",
     "@sentry/node": "^6.1.0",
-    "@terra-money/amino-js": "^3.0.1",
     "apidoc-core": "^0.11.1",
     "apidoc-swagger": "file:apidoc-swagger-0.2.5-terra.tgz",
     "bech32": "^2.0.0",

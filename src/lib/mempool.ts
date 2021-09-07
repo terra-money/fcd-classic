@@ -1,5 +1,5 @@
+import * as Bluebird from 'bluebird'
 import * as sentry from '@sentry/node'
-import { unmarshalTx } from '@terra-money/amino-js'
 import * as rpc from 'lib/rpc'
 import * as lcd from 'lib/lcd'
 import { convertPublicKeyToAddress } from 'lib/common'
@@ -78,12 +78,12 @@ class Mempool {
    */
   private static async updateMempool() {
     // Fetches current pending transactions from /unconfirmed_txs from RPC node
-    const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' }, false)
+    const txStrs = await rpc.getUnconfirmedTxs({ limit: '1000000000000' })
     const timestamp = new Date().toISOString()
 
     debug(`${txStrs.length} txs found`)
 
-    const newItems = txStrs.map((txStr) => {
+    const newItems = await Bluebird.map(txStrs, async (txStr) => {
       // Convert txStr to txhash and find it from items
       const txhash = lcd.getTxHash(txStr)
       const existingItem = this.hashMap.get(txhash)
@@ -92,8 +92,8 @@ class Mempool {
         return existingItem
       }
 
-      // Unmarshal(decode) amino encoded text to json string
-      const lcdTx = unmarshalTx(Buffer.from(txStr, 'base64')) as Transaction.LcdTx
+      // decode encoded text to json string
+      const lcdTx = await lcd.decodeTx(txStr)
 
       // Decode address from signatures
       const addresses = lcdTx.value.signatures.map((sig) => convertPublicKeyToAddress(sig.pub_key.value))
