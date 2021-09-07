@@ -1,5 +1,6 @@
 import * as crypto from 'crypto'
 import * as rp from 'request-promise'
+import { uniqBy } from 'lodash'
 
 import config from 'config'
 
@@ -85,24 +86,18 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 ///////////////////////////////////////////////
 // Tendermint RPC
 ///////////////////////////////////////////////
-export function getValidatorConsensus(): Promise<LcdValidatorConsensus[]> {
+export function getValidatorConsensus(strHeight?: string): Promise<LcdValidatorConsensus[]> {
+  const height = calculateHeightParam(strHeight)
+
   return Promise.all([
-    get(`/validatorsets/latest`),
-    // hotfix: if page 2 fails, ignore it
-    get(`/validatorsets/latest?page=2`).catch(() => ({
-      validators: []
-    })),
-    get(`/validatorsets/latest?page=3`).catch(() => ({
-      validators: []
-    }))
-  ]).then((results: LcdValidatorSets[]) =>
-    results
-      .reduce((p, c) => {
-        p.push(...c.validators)
-        return p
-      }, [] as LcdValidatorConsensus[])
-      .flat()
-  )
+    get(`/validatorsets/${height || 'latest'}`, { height }).then((res): LcdValidatorConsensus[] => res.validators),
+    get(`/validatorsets/${height || 'latest'}`, { page: '2', height })
+      .then((res): LcdValidatorConsensus[] => res.validators)
+      .catch((): LcdValidatorConsensus[] => []),
+    get(`/validatorsets/${height || 'latest'}`, { page: '3', height })
+      .then((res): LcdValidatorConsensus[] => res.validators)
+      .catch((): LcdValidatorConsensus[] => [])
+  ]).then((results) => uniqBy(results.flat(), 'address'))
 }
 
 export interface VotingPower {
@@ -158,7 +153,7 @@ function calculateHeightParam(strHeight?: string): string | undefined {
     return strHeight
   }
 
-  return (numHeight - (numHeight % config.PRUNING_KEEP_EVERY)).toString()
+  return (numHeight + (config.PRUNING_KEEP_EVERY - (numHeight % config.PRUNING_KEEP_EVERY))).toString()
 }
 
 ///////////////////////////////////////////////
@@ -214,16 +209,22 @@ const STATUS_MAPPINGS = {
   bonded: 'BOND_STATUS_BONDED' // 3
 }
 
-export async function getValidators(status?: 'bonded' | 'unbonded' | 'unbonding'): Promise<LcdValidator[]> {
+export async function getValidators(
+  status?: 'bonded' | 'unbonded' | 'unbonding',
+  strHeight?: string
+): Promise<LcdValidator[]> {
   if (status) {
     return get(`/staking/validators?status=${config.LEGACY_NETWORK ? status : STATUS_MAPPINGS[status]}`)
   }
 
-  const urlBonded = `/staking/validators?status=${config.LEGACY_NETWORK ? 'bonded' : STATUS_MAPPINGS.bonded}`
-  const urlUnbonded = `/staking/validators?status=${config.LEGACY_NETWORK ? 'unbonded' : STATUS_MAPPINGS.unbonded}`
-  const urlUnbonding = `/staking/validators?status=${config.LEGACY_NETWORK ? 'unbonding' : STATUS_MAPPINGS.unbonding}`
+  const height = calculateHeightParam(strHeight)
+  const url = `/staking/validators`
 
-  const [bonded, unbonded, unbonding] = await Promise.all([get(urlBonded), get(urlUnbonded), get(urlUnbonding)])
+  const [bonded, unbonded, unbonding] = await Promise.all([
+    get(url, { status: config.LEGACY_NETWORK ? 'bonded' : STATUS_MAPPINGS.bonded, height }),
+    get(url, { status: config.LEGACY_NETWORK ? 'unbonded' : STATUS_MAPPINGS.unbonded, height }),
+    get(url, { status: config.LEGACY_NETWORK ? 'unbonding' : STATUS_MAPPINGS.unbonding, height })
+  ])
 
   return [bonded, unbonded, unbonding].flat()
 }

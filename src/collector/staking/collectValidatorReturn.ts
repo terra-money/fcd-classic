@@ -3,7 +3,7 @@ import { getRepository } from 'typeorm'
 
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 
-import { getValidators, getVotingPower } from 'lib/lcd'
+import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ONE_DAY_IN_MS } from 'lib/constant'
 import { getAvgVotingPower, getAvgPrice } from 'service/staking'
@@ -37,7 +37,7 @@ export async function generateValidatorReturns(
 
   const priceObj = await getAvgPrice(fromTs, fromTs + ONE_DAY_IN_MS)
   const valMap = await getExistingValidatorsMap(timestamp)
-  const votingPower = await getVotingPower()
+  const votingPower = await lcd.getVotingPower()
 
   for (const validator of validatorsList) {
     if (!updateExisting && valMap[validator.operator_address]) {
@@ -98,13 +98,8 @@ export async function collectValidatorReturn() {
     return
   }
 
-  const validatorsList = await getValidators()
+  const validatorsList = await lcd.getValidators('bonded')
   logger.info(`Got a list of ${validatorsList.length} validators`)
-
-  if (!validatorsList) {
-    return
-  }
-
   logger.info(`Pre-calculator started for validators from date ${to.toString()}`)
   // used -10 for just to make sure it doesn't calculate for today
   toTs -= 10

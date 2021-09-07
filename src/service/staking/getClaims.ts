@@ -1,5 +1,5 @@
 import { get } from 'lodash'
-import { getRepository, Brackets, WhereExpression } from 'typeorm'
+import { getRepository, Brackets, WhereExpressionBuilder } from 'typeorm'
 import { TxEntity } from 'orm'
 import { convertAddress, sortDenoms, splitDenomAndAmount } from 'lib/common'
 
@@ -122,7 +122,7 @@ function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
   return txs.map(parseTxEntity).flat().filter(Boolean)
 }
 
-export interface GetClaimsParam {
+interface GetClaimsParam {
   operatorAddr: string
   limit: number
   offset?: number
@@ -139,7 +139,7 @@ interface ClaimTxList {
   txs: TxEntity[] // claims tx list
 }
 
-function addClaimFilterToQuery(qb: WhereExpression, operatorAddress: string, accountAddress: string) {
+function addClaimFilterToQuery(qb: WhereExpressionBuilder, operatorAddress: string, accountAddress: string) {
   qb.andWhere(
     new Brackets((q) => {
       q.andWhere(
@@ -186,7 +186,7 @@ async function getClaimTxs({ operatorAddr, limit, offset }: GetClaimsParam): Pro
   return { next, txs }
 }
 
-export default async function getClaims(param: GetClaimsParam): Promise<ClaimTxReturn> {
+export async function getClaims(param: GetClaimsParam): Promise<ClaimTxReturn> {
   const { next, txs } = await getClaimTxs(param)
 
   return {

@@ -255,9 +255,6 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
-      action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
-        .description('Tx types'),
       limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
       offset: Joi.number().description('id offset')
     },
@@ -312,7 +309,7 @@ export default class TransactionController extends KoaController {
   @Get('/txs/unconfirmed')
   @Validate({
     query: {
-      limit: Joi.number().description('maximum number of txs to query')
+      limit: Joi.number().min(100).multiple(100).max(10000).description('maximum number of txs to query')
     }
   })
   async getUnconfirmedTxs(ctx): Promise<void> {

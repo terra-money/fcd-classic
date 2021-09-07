@@ -36,10 +36,9 @@ export async function getValidatorRewardAndCommissionSum(
   fromTs: number,
   toTs: number
 ): Promise<RewardAndCommissionObj> {
-  const query = `SELECT ${getSelectSumQueryForDenoms(operatorAddr)} FROM blockreward WHERE ${getTimeRangeQuery(
-    fromTs,
-    toTs
-  )}`
+  const query = `SELECT ${getSelectSumQueryForDenoms(
+    operatorAddr
+  )} FROM blockreward r, block b WHERE r.block_id=b.id AND ${getTimeRangeQuery(fromTs, toTs)}`
 
   const result = await getConnection().query(query)
 

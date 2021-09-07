@@ -7,7 +7,6 @@ export interface GetTxListParam {
   offset?: number
   account?: string
   block?: string
-  action?: string
   limit: number
   order?: string
   chainId?: string
@@ -20,6 +19,7 @@ interface GetTxsResponse {
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
   const qb = await getRepository(BlockEntity)
     .createQueryBuilder('block')
     .where('block.height = :height AND block.chainId = :chainId', {
@@ -33,7 +33,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRespo
     qb.leftJoinAndSelect('block.txs', 'txs')
   }
 
-  qb.orderBy('txs.id', 'DESC').limit(param.limit + 1)
+  qb.orderBy('txs.id', order).take(param.limit + 1)
 
   const blockWithTxs = await qb.getOne()
   const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
@@ -103,6 +103,12 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
     .createQueryBuilder()
     .take(param.limit + 1)
     .orderBy('id', order)
+
+  if (param.chainId) {
+    qb.where({
+      chainId: param.chainId
+    })
+  }
 
   if (param.offset) {
     qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
