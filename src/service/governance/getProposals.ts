@@ -1,9 +1,7 @@
 import { getRepository } from 'typeorm'
-import { filter, orderBy } from 'lodash'
-
 import { ProposalEntity } from 'orm'
 import * as lcd from 'lib/lcd'
-import { getProposalBasic } from './helper'
+import { getProposalBasic, ProposalStatus } from './helper'
 
 interface ProposalsReturn {
   minDeposit: Coins // proposal min deposit
@@ -12,25 +10,36 @@ interface ProposalsReturn {
   proposals: ProposalBasic[]
 }
 
-export default async function getProposals(status?: string): Promise<ProposalsReturn> {
-  const proposals = await getRepository(ProposalEntity).find({
-    // chainId: config.CHAIN_ID
-  })
+function transformProposalStatusToNative(status: string): string {
+  if (status === 'Voting') {
+    return 'VotingPeriod'
+  }
+  if (status === 'Deposit') {
+    return 'DepositPeriod'
+  }
 
-  const depositParmas = await lcd.getProposalDepositParams()
-  const { min_deposit: minDeposit, max_deposit_period: maxDepositPeriod } = depositParmas
-  const { voting_period: votingPeriod } = await lcd.getProposalVotingParams()
+  return status
+}
 
-  const orderedProposals = orderBy(
-    await Promise.all(proposals.map((proposal) => getProposalBasic(proposal))),
-    ['submitTime'],
-    ['desc']
-  )
+export default async function getProposals(status?: ProposalStatus): Promise<ProposalsReturn> {
+  const qb = getRepository(ProposalEntity).createQueryBuilder().select().orderBy('submit_time', 'DESC')
+
+  if (status) {
+    qb.where({ status: transformProposalStatusToNative(status) })
+  }
+
+  const [
+    proposals,
+    { min_deposit: minDeposit, max_deposit_period: maxDepositPeriod },
+    { voting_period: votingPeriod }
+  ] = await Promise.all([qb.getMany(), lcd.getProposalDepositParams(), lcd.getProposalVotingParams()])
+
+  const transformedProposals = await Promise.all(proposals.map(getProposalBasic))
 
   return {
     minDeposit,
     maxDepositPeriod,
     votingPeriod,
-    proposals: status ? filter(orderedProposals, { status }) : orderedProposals
+    proposals: transformedProposals
   }
 }

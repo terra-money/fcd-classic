@@ -1,14 +1,9 @@
 import { getRepository } from 'typeorm'
-
 import { ValidatorInfoEntity, ProposalEntity } from 'orm'
-import config from 'config'
-
 import * as lcd from 'lib/lcd'
 import { APIError, ErrorTypes } from 'lib/error'
-
 import { getProposalBasic, ProposalStatus } from './helper'
 import { generateValidatorResponse } from 'service/staking/helper'
-import { getValidatorsReturn } from 'service/staking/getValidators'
 
 interface ProposalPramsModuleSpace {
   subspace: string // module
@@ -62,10 +57,7 @@ async function getDelegatedValidatorWhoDidNotVoted(
 }
 
 export default async function getProposal(proposalId: string, account?: string): Promise<GetProposalResponse> {
-  const proposal = await getRepository(ProposalEntity).findOne({
-    proposalId
-    // chainId: config.CHAIN_ID
-  })
+  const proposal = await getRepository(ProposalEntity).findOne({ proposalId })
 
   if (!proposal) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')

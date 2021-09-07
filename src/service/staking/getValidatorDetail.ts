@@ -99,4 +99,3 @@ export const getValidatorDetail = memoizeCache(getValidatorDetailUncached, {
   promise: true,
   maxAge: 10 * 1000 // 10 seconds
 })
-export default getValidatorDetail

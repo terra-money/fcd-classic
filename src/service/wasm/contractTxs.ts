@@ -1,4 +1,4 @@
-import { getRepository, WhereExpression } from 'typeorm'
+import { getRepository, WhereExpressionBuilder } from 'typeorm'
 
 import { TxEntity } from 'orm'
 
@@ -9,7 +9,7 @@ type GetContractTxsParams = {
   sender?: string
 }
 
-function addWasmContractTxFilter(qb: WhereExpression, contractAddress: string, sender?: string) {
+function addWasmContractTxFilter(qb: WhereExpressionBuilder, contractAddress: string, sender?: string) {
   qb.where(`data->'tx'->'value'->'msg'@>'[{ "type": "wasm/ExecuteContract"}]'`)
   qb.andWhere(`data->'tx'->'value'->'msg'@>'[{ "value": { "contract": "${contractAddress}" } }]'`)
   if (sender) {
@@ -17,12 +17,7 @@ function addWasmContractTxFilter(qb: WhereExpression, contractAddress: string, s
   }
 }
 
-export async function getContractTxs({
-  offset,
-  limit,
-  sender,
-  contractAddress
-}: GetContractTxsParams): Promise<{
+export async function getContractTxs({ offset, limit, sender, contractAddress }: GetContractTxsParams): Promise<{
   next?: number
   limit: number
   contractTxs: Transaction.LcdTransaction[]

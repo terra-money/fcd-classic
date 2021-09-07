@@ -229,7 +229,7 @@ export async function collectTxs(
     .insert()
     .into(TxEntity)
     .values(txEntities)
-    .orUpdate({ conflict_target: ['chain_id', 'hash'], overwrite: ['timestamp', 'data', 'block_id'] })
+    .orUpdate(['timestamp', 'data', 'block_id'], ['chain_id', 'hash'])
 
   await qb.execute()
 

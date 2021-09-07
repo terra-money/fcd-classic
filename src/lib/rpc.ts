@@ -19,8 +19,8 @@ async function getRequest(url: string, params?: Record<string, unknown>): Promis
     logger.error(`RPC request to ${url} failed by ${e}`)
   })
 
-  if (typeof response.jsonrpc !== 'string') {
-    throw new Error('failed to query rpc')
+  if (!response || typeof response.jsonrpc !== 'string') {
+    throw new Error('failed to query RPC')
   }
 
   return response.result
@@ -76,7 +76,7 @@ export async function getRewards(height: string): Promise<Reward[]> {
   return decodedRewardsAndCommission
 }
 
-export async function getUnconfirmedTxs(params: Record<string, unknown> = {}, decode = true) {
+export async function getUnconfirmedTxs(params: Record<string, unknown> = { limit: '1000000000000' }, decode = true) {
   const unconfirmedTxs = await getRequest(`/unconfirmed_txs`, params)
 
   if (!Array.isArray(unconfirmedTxs.txs)) {

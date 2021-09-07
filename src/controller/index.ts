@@ -11,12 +11,12 @@ import TreasuryController from './TreasuryController'
 import WasmController from './WasmController'
 
 const controllers = [
-  BankController,
   DashboardController,
-  GovernanceController,
+  BankController,
+  TransactionController,
   MarketController,
   StakingController,
-  TransactionController,
+  GovernanceController,
   TreasuryController,
   WasmController
 ]

@@ -7,7 +7,7 @@ import { sortDenoms } from 'lib/common'
 import memoizeCache from 'lib/memoizeCache'
 
 import { getBalance } from '../bank'
-import getValidators from './getValidators'
+import { getValidators } from './getValidators'
 import { getUndelegateSchedule } from './helper'
 
 function getTotalRewardsAdjustedToLuna(rewards: { denom: string; amount: string }[], prices: CoinByDenoms): string {
@@ -89,8 +89,8 @@ function joinValidatorsWithMyDelegation(
   })
 }
 
-interface GetStakingReturn {
-  validators: UserValidatorWithDelegationInfo[] // Validator info with user delegation and rewards (Extends with ValidatorReturn)
+interface GetStakingResponse {
+  validators: UserValidatorWithDelegationInfo[] // Validator info with user delegation and rewards
   redelegations: LCDStakingRelegation[]
   delegationTotal?: string // user total delegation
   undelegations?: UndeligationSchedule[] // User undelegation info
@@ -98,11 +98,11 @@ interface GetStakingReturn {
     total: string // total rewards
     denoms: Coin[] // rewards by denom
   }
-  myDelegations?: MyDelegation[] // users delegation with validators info //TODO: this info already contains in validators list
+  myDelegations?: MyDelegation[] // users delegation with validators info // TODO: this info already contains in validators list
   availableLuna?: string // available user luna
 }
 
-export async function getStakingUncached(address: string): Promise<GetStakingReturn> {
+export async function getStakingUncached(address: string): Promise<GetStakingResponse> {
   // Fetch data
   const [validators, delegations, balance, redelegations, prices, totalRewards] = await Promise.all([
     getValidators(),

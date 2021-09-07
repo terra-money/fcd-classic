@@ -1,7 +1,7 @@
 import * as Bluebird from 'bluebird'
 import { getManager } from 'typeorm'
 import { init, TxEntity, AccountTxEntity } from 'orm'
-import { countBy, chunk } from 'lodash'
+import { countBy, chunk, uniqBy } from 'lodash'
 import { generateAccountTxs } from 'collector/block'
 import * as token from 'service/treasury/token'
 
@@ -51,13 +51,16 @@ async function main() {
 
         // Determine AccountTxs to be deleted
         const accountTxIdsForDeletion: number[] = []
+        const uniqueExistings = uniqBy(existings, (e) => `${e.account}${e.tx_id}`)
 
         existings.forEach((e) => {
-          const { account, tx_id } = e
-
-          if (accountTxs.findIndex((a) => a.account === account && a.tx.id === tx_id) === -1) {
+          // const { account, tx_id } = e
+          if (uniqueExistings.findIndex((u) => u.account === e.account && u.a_id === e.a_id) === -1) {
             accountTxIdsForDeletion.push(e.a_id)
           }
+          // else if (accountTxs.findIndex((a) => a.account === account && a.tx.id === tx_id) === -1) {
+          //   accountTxIdsForDeletion.push(e.a_id)
+          // }
         })
 
         // Delete from the database

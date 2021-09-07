@@ -30,10 +30,7 @@ interface GetProposalDepositsReturn {
 
 export default async function getProposalDeposits(input: GetProposalDepositsInput): Promise<GetProposalDepositsReturn> {
   const { proposalId, page, limit } = input
-  const proposal = await getRepository(ProposalEntity).findOne({
-    proposalId
-    // chainId: config.CHAIN_ID
-  })
+  const proposal = await getRepository(ProposalEntity).findOne({ proposalId })
 
   if (!proposal) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', 'Proposal not found')

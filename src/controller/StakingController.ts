@@ -4,9 +4,7 @@ import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-con
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
-import { plus } from 'lib/math'
 import { daysBeforeTs } from 'lib/time'
-import { getAirdropAnnualAvgReturn } from 'service/dashboard'
 import {
   getStaking,
   getValidators,
@@ -14,7 +12,7 @@ import {
   getDelegationTxs,
   getClaims,
   getPaginatedDelegators,
-  getValidatorAnnualAvgReturn,
+  getValidatorReturn,
   getTotalStakingReturn
 } from 'service/staking'
 
@@ -351,10 +349,8 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingReturnOfValidator(ctx): Promise<void> {
-    const { stakingReturn } = await getValidatorAnnualAvgReturn(ctx.params.operatorAddr)
-    const airdropReturn = await getAirdropAnnualAvgReturn()
-
-    success(ctx, plus(stakingReturn, airdropReturn))
+    const result = await getValidatorReturn(ctx.params.operatorAddr)
+    success(ctx, result[ctx.params.operatorAddr] ? result[ctx.params.operatorAddr].stakingReturn : '0')
   }
 
   /**

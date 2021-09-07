@@ -9,7 +9,7 @@ import config from 'config'
 import { saveValidatorDetail } from './staking/validatorDetails'
 import { collectBlock } from './block'
 
-const SOCKET_URL = `${config.RPC_URI}/websocket`
+const SOCKET_URL = `${config.RPC_URI.replace('http', 'ws')}/websocket`
 const NEW_BLOCK_Q = `tm.event='NewBlock'`
 
 /**
@@ -84,10 +84,10 @@ async function collectBlocks() {
 
 export async function startWatcher() {
   let eventCounter = 0
+
   const watcher = new RPCWatcher({
     url: SOCKET_URL,
-    logger,
-    maxRetryAttempt: Number.MAX_SAFE_INTEGER
+    logger
   })
 
   watcher.registerSubscriber(NEW_BLOCK_Q, async (resp: RpcResponse) => {

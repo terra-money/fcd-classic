@@ -21,6 +21,9 @@ export default class BlockEntity {
   @Column()
   timestamp: Date
 
+  @Column({ type: 'char', length: 51 })
+  proposer: string
+
   @OneToMany(() => TxEntity, (txs) => txs.block, {
     cascade: true
   })
