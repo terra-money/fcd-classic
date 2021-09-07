@@ -229,13 +229,11 @@ function calculateHeightParam(strHeight?: string): string | undefined {
     return undefined
   }
 
-  // Pruning not happened yet
-  if (numHeight < config.PRUNING_KEEP_EVERY) {
-    return strHeight
-  }
-
-  // Last 100 heights are guarenteed
-  if (latestHeight && latestHeight - numHeight < config.PRUNING_KEEP_EVERY) {
+  if (
+    latestHeight &&
+    (latestHeight < config.INITIAL_HEIGHT + config.PRUNING_KEEP_EVERY || // Pruning not happened yet
+      latestHeight - numHeight < config.PRUNING_KEEP_EVERY) // Last 100 heights are guarenteed
+  ) {
     return strHeight
   }
 
