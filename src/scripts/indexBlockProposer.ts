@@ -24,8 +24,10 @@ async function main() {
     )
   ).height
 
-  console.log(`Total ${latestHeight} heights`)
-  const heights = Array.from(Array(latestHeight + 1).keys()).slice(1)
+  console.log(`Total ${latestHeight - +config.INITIAL_HEIGHT} heights`)
+  const heights = Array.from(Array(latestHeight + 1).keys())
+    .slice(1)
+    .map((n) => n + config.INITIAL_HEIGHT - 1)
 
   // do 1,000 updates at a time
   await Bluebird.mapSeries(chunk(heights, 1000), async (chk) => {
