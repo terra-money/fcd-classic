@@ -47,8 +47,8 @@ export default class TreasuryController extends KoaController {
       denom: Joi.string().required().valid(config.ACTIVE_DENOMS, TOKEN_SYMBOLS).description('Denom name')
     },
     query: {
-      page: Joi.number().default(1).min(1).description('Page number'),
-      limit: Joi.number().default(1000).min(1).max(10000).description('Items per page')
+      page: Joi.number().default(1).min(1).max(100).description('Page number'),
+      limit: Joi.number().default(1000).valid(1000).description('Items per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

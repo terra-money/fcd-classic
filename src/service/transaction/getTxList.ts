@@ -62,13 +62,13 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
     throw new TypeError('Invalid parameter: limit')
   }
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
+  let subQuery = `SELECT tx_id FROM account_tx WHERE account=$1 `
   const params = [param.account]
 
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {
-    distinctTxQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+    subQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
   }
 
   const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
@@ -77,7 +77,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
     // Disable indexscan to force use bitmap scan for query speed
     await mgr.query('SET enable_indexscan=false')
 
-    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause}) ORDER BY id DESC`
+    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
     const txs = await mgr.query(query, params)
 
     await mgr.query('SET enable_indexscan=true')
