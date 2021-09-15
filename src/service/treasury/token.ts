@@ -37,19 +37,14 @@ export async function init() {
     json: true
   }).catch(() => ({}))
 
-  let key
-
-  if (config.CHAIN_ID.startsWith('columbus')) {
-    key = 'mainnet'
-  } else if (/^(:?tequila|bombay)/.test(config.CHAIN_ID)) {
-    key = 'testnet'
-  } else {
-    console.log('no token info for this chain-id')
+  if (!config.TOKEN_NETWORK) {
+    console.warn('TOKEN_NETWORK not defined in environment variable')
     return
   }
 
-  const tokens = tokensRes[key]
-  const pairs = pairsRes[key]
+  const network = config.TOKEN_NETWORK
+  const tokens = tokensRes[network]
+  const pairs = pairsRes[network]
   const whitelist: { [address: string]: Asset } = {}
 
   Object.keys(tokens).forEach((address) => {

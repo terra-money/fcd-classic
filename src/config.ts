@@ -21,7 +21,8 @@ const {
   PYLON_API_ENDPOINT,
   LEGACY_NETWORK,
   INITIAL_HEIGHT,
-  ORACLE_SLASH_WINDOW
+  ORACLE_SLASH_WINDOW,
+  TOKEN_NETWORK
 } = process.env
 
 const config = {
@@ -36,6 +37,7 @@ const config = {
   PYLON_API_ENDPOINT: PYLON_API_ENDPOINT || 'https://api.dev.pylon.rocks/api',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
+  TOKEN_NETWORK: TOKEN_NETWORK,
   ANCHOR_BANK_WALLETS: ANCHOR_BANK_WALLETS
     ? (JSON.parse(ANCHOR_BANK_WALLETS) as string[])
     : [
