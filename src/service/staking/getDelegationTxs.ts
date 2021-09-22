@@ -2,7 +2,7 @@ import { get } from 'lodash'
 import { isSuccessfulTx } from 'lib/tx'
 import { getRawDelegationTxs } from './helper'
 
-export interface GetDelegationEventsParam {
+interface GetDelegationEventsParam {
   operatorAddr: string // operator address
   limit?: number // tx count limit per page
   offset?: number // for pagination
@@ -96,7 +96,7 @@ function extractEvents(
   })
 }
 
-export default async function getDelegationTxs(param: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
+export async function getDelegationTxs(param: GetDelegationEventsParam): Promise<DelegationTxsReturn> {
   const { next, txs } = await getRawDelegationTxs(param)
 
   const events = txs

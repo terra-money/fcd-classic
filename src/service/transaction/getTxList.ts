@@ -7,19 +7,19 @@ export interface GetTxListParam {
   offset?: number
   account?: string
   block?: string
-  action?: string
   limit: number
   order?: string
   chainId?: string
 }
 
-interface GetTxsReturn {
+interface GetTxsResponse {
   next?: number
   limit: number
   txs: ({ id: number } & Transaction.LcdTransaction)[]
 }
 
-export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsReturn> {
+export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
   const qb = await getRepository(BlockEntity)
     .createQueryBuilder('block')
     .where('block.height = :height AND block.chainId = :chainId', {
@@ -33,7 +33,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
     qb.leftJoinAndSelect('block.txs', 'txs')
   }
 
-  qb.orderBy('txs.id', 'DESC').limit(param.limit + 1)
+  qb.orderBy('txs.id', order).take(param.limit + 1)
 
   const blockWithTxs = await qb.getOne()
   const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
@@ -53,7 +53,7 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRetur
   }
 }
 
-export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsReturn> {
+export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsResponse> {
   if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
@@ -62,13 +62,13 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
     throw new TypeError('Invalid parameter: limit')
   }
 
-  let distinctTxQuery = `SELECT DISTINCT ON (tx_id) tx_id FROM account_tx WHERE account=$1 `
+  let subQuery = `SELECT tx_id FROM account_tx WHERE account=$1 `
   const params = [param.account]
 
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {
-    distinctTxQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+    subQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
   }
 
   const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
@@ -77,7 +77,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
     // Disable indexscan to force use bitmap scan for query speed
     await mgr.query('SET enable_indexscan=false')
 
-    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${distinctTxQuery}${orderAndPageClause})`
+    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
     const txs = await mgr.query(query, params)
 
     await mgr.query('SET enable_indexscan=true')
@@ -97,12 +97,18 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRet
   })
 }
 
-async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
+async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
     .take(param.limit + 1)
     .orderBy('id', order)
+
+  if (param.chainId) {
+    qb.where({
+      chainId: param.chainId
+    })
+  }
 
   if (param.offset) {
     qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
@@ -125,7 +131,7 @@ async function getTxs(param: GetTxListParam): Promise<GetTxsReturn> {
   }
 }
 
-interface GetTxListReturn {
+interface GetTxListResponse {
   next?: number
   limit: number
   txs: Transaction.LcdTransaction[]
@@ -137,18 +143,18 @@ interface GetMsgListReturn {
   txs: ParsedTxInfo[]
 }
 
-export async function getTxList(param: GetTxListParam): Promise<GetTxListReturn> {
-  let txs
+export async function getTxList(param: GetTxListParam): Promise<GetTxListResponse> {
+  let response
 
   if (param.account) {
-    txs = await getTxFromAccount(param)
+    response = await getTxFromAccount(param)
   } else if (param.block) {
-    txs = await getTxFromBlock(param)
+    response = await getTxFromBlock(param)
   } else {
-    txs = await getTxs(param)
+    response = await getTxs(param)
   }
 
-  return txs
+  return response
 }
 
 export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {

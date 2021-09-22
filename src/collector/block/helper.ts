@@ -1,4 +1,4 @@
-import { WhereExpression, getRepository } from 'typeorm'
+import { WhereExpressionBuilder, getRepository } from 'typeorm'
 
 import { PriceEntity } from 'orm'
 
@@ -22,7 +22,7 @@ export function getUSDValue(denom: string, amount: string, prices: { [denom: str
   return usdValue
 }
 
-export function addDatetimeFilterToQuery(timestamp: number, qb: WhereExpression) {
+export function addDatetimeFilterToQuery(timestamp: number, qb: WhereExpressionBuilder) {
   const { from, to } = getDateRangeOfLastMinute(timestamp)
 
   qb.andWhere(`timestamp >= '${getQueryDateTime(from)}'`)

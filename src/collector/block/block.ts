@@ -5,7 +5,7 @@ import * as Bluebird from 'bluebird'
 
 import config from 'config'
 import { BlockEntity, BlockRewardEntity } from 'orm'
-import { splitDenomAndAmount } from 'lib/common'
+import { splitDenomAndAmount, convertAddressToHex } from 'lib/common'
 import { plus } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
@@ -19,6 +19,34 @@ import { collectNetwork } from './network'
 import { collectPrice } from './price'
 import { collectGeneral } from './general'
 import { detectAndUpdateProposal } from 'collector/gov'
+
+const validatorCache = new Map()
+
+export async function getValidatorOperatorAddressByHexAddress(hexAddress: string, height: string) {
+  const operatorAddress = validatorCache.get(hexAddress)
+
+  if (operatorAddress) {
+    return operatorAddress
+  }
+
+  const validators = await lcd.getValidators(undefined, height)
+  const validatorSet = await lcd.getValidatorConsensus(height)
+
+  validatorSet.forEach((s) => {
+    const v = validators.find((v) => v.consensus_pubkey === s.pub_key)
+
+    if (v) {
+      const h = convertAddressToHex(s.address).toUpperCase()
+      validatorCache.set(h, v.operator_address)
+    }
+  })
+
+  if (!validatorCache.has(hexAddress)) {
+    throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
+  }
+
+  return validatorCache.get(hexAddress)
+}
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   const latestBlock = await getRepository(BlockEntity).find({
@@ -38,14 +66,18 @@ async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
   return latestBlock[0]
 }
 
-function generateBlockEntity(lcdBlock: LcdBlock, blockReward: BlockRewardEntity): DeepPartial<BlockEntity> {
-  const { chain_id: chainId, height, time: timestamp } = lcdBlock.block.header
+async function generateBlockEntity(
+  lcdBlock: LcdBlock,
+  blockReward: BlockRewardEntity
+): Promise<DeepPartial<BlockEntity>> {
+  const { chain_id: chainId, height, time: timestamp, proposer_address } = lcdBlock.block.header
 
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
     height: +height,
     timestamp,
-    reward: blockReward
+    reward: blockReward,
+    proposer: await getValidatorOperatorAddressByHexAddress(proposer_address, height)
   }
 
   return blockEntity
@@ -117,7 +149,9 @@ export async function saveBlockInformation(
       // Save block rewards
       const newBlockReward = await mgr.getRepository(BlockRewardEntity).save(await getBlockReward(height))
       // Save block entity
-      const newBlockEntity = await mgr.getRepository(BlockEntity).save(generateBlockEntity(lcdBlock, newBlockReward))
+      const newBlockEntity = await mgr
+        .getRepository(BlockEntity)
+        .save(await generateBlockEntity(lcdBlock, newBlockReward))
       // get block tx hashes
       const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
 

@@ -1,3 +1,4 @@
+import * as crypto from 'crypto'
 import { default as parseDuration } from 'parse-duration'
 import { bech32 } from 'bech32'
 import { orderBy } from 'lodash'
@@ -82,6 +83,13 @@ export function convertAddressToHex(address: string): string {
 
 export function convertHexToAddress(prefix: Prefix, hexstring: string): string {
   return bech32.encode(prefix, bech32.toWords(Buffer.from(hexstring, 'hex')))
+}
+
+export function convertPublicKeyToAddress(pubKey: string): string {
+  const sha256 = crypto.createHash('sha256')
+  const ripemd160 = crypto.createHash('ripemd160')
+  const buf = ripemd160.update(sha256.update(Buffer.from(pubKey, 'base64')).digest()).digest()
+  return bech32.encode('terra', bech32.toWords(buf))
 }
 
 export function isNumeric(data: string): boolean {

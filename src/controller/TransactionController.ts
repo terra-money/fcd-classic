@@ -1,12 +1,10 @@
 import { KoaController, Validate, Get, Controller, Validator, Post } from 'koa-joi-controllers'
-
 import config from 'config'
-
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 import { getUnconfirmedTxs } from 'lib/rpc'
-
+import Mempool from 'lib/mempool'
 import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
@@ -20,8 +18,8 @@ export default class TransactionController extends KoaController {
    *
    * @apiParam {string} txhash Tx Hash
    *
-   * @apiSuccess {Object} tx tx info
-   * @apiSuccess {string} tx.type tx type
+   * @apiSuccess {Object} tx
+   * @apiSuccess {string} tx.type
    * @apiSuccess {Object} tx.value
    * @apiSuccess {Object} tx.value.fee
    * @apiSuccess {Object[]} tx.value.fee.amount
@@ -41,7 +39,7 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {string} tx.value.signatures.pubKey.value
    * @apiSuccess {string} tx.value.signatures.signature
    *
-   * @apiSuccess {Object[]} events events of tx
+   * @apiSuccess {Object[]} events
    * @apiSuccess {Object[]} events
    * @apiSuccess {string} events.type
    * @apiSuccess {Object[]} events.attributes
@@ -57,12 +55,12 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {string} logs.log.tax
    * @apiSuccess {number} logs.msg_index
    * @apiSuccess {boolean} logs.success
-   * @apiSuccess {string} height block height
-   * @apiSuccess {string} txhash tx hash
-   * @apiSuccess {string} raw_log tx raw log
-   * @apiSuccess {string} gas_used total gas used in tx
-   * @apiSuccess {string} timestamp timestamp tx in utc 0
-   * @apiSuccess {string} gas_wanted gas wanted
+   * @apiSuccess {string} height
+   * @apiSuccess {string} txhash
+   * @apiSuccess {string} raw_log
+   * @apiSuccess {string} gas_used
+   * @apiSuccess {string} timestamp
+   * @apiSuccess {string} gas_wanted
    * @apiSuccess {string} chainId
    */
   @Get('/tx/:txhash')
@@ -94,8 +92,8 @@ export default class TransactionController extends KoaController {
    *
    * @apiSuccess {number} limit Per page item limit
    * @apiSuccess {Object[]} txs tx list
-   * @apiSuccess {Object} txs.tx tx info
-   * @apiSuccess {string} txs.tx.type Tx type
+   * @apiSuccess {Object} txs.tx
+   * @apiSuccess {string} txs.tx.type
    * @apiSuccess {Object} txs.tx.value
    * @apiSuccess {Object} txs.tx.value.fee
    * @apiSuccess {string} txs.tx.value.fee.gas
@@ -158,8 +156,8 @@ export default class TransactionController extends KoaController {
         .allow('')
         .regex(/^\d{1,16}$/),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
-      limit: Joi.number().default(10).min(10).max(500).description('Items per page'),
-      offset: Joi.number().description('id offset')
+      limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
+      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -257,11 +255,8 @@ export default class TransactionController extends KoaController {
   @Validate({
     query: {
       account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
-      action: Joi.string()
-        .valid('', 'send', 'receive', 'staking', 'market', 'governance', 'contract')
-        .description('Tx types'),
-      limit: Joi.number().default(10).min(1).max(500).description('Items per page'),
-      offset: Joi.number().description('id offset')
+      limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
+      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -286,13 +281,15 @@ export default class TransactionController extends KoaController {
   }
 
   /**
-   * @api {get} /txs/unconfirmed Get unconfirmed transactions
-   * @apiName getUnconfirmedTxs
+   * @api {get} /mempool/:txhash Get transaction in mempool
+   * @apiName getMempoolByHash
    * @apiGroup Transactions
    *
-   * @apiSuccess {Object[]} tx transactions
-   * @apiSuccess {string} tx.type type of transaction
-   * @apiSuccess {Object} tx.value value of transaction
+   * @apiSuccess {String} timestamp Last seen
+   * @apiSuccess {String} txhash
+   * @apiSuccess {Object} tx
+   * @apiSuccess {string} tx.type
+   * @apiSuccess {Object} tx.value
    * @apiSuccess {Object} tx.value.fee
    * @apiSuccess {Object[]} tx.value.fee.amount
    * @apiSuccess {string} tx.value.fee.amount.denom
@@ -311,13 +308,72 @@ export default class TransactionController extends KoaController {
    * @apiSuccess {string} tx.value.signatures.pubKey.value
    * @apiSuccess {string} tx.value.signatures.signature
    */
-  @Get('/txs/unconfirmed')
+  @Get('/mempool/:txhash')
+  @Validate({
+    params: {
+      txhash: Joi.string().required().alphanum().description('Tx hash')
+    },
+    failure: ErrorCodes.INVALID_REQUEST_ERROR
+  })
+  getMempoolByHash(ctx) {
+    success(ctx, Mempool.getTransactionByHash(ctx.params.txhash))
+  }
+
+  /**
+   * @api {get} /mempool Get transactions in mempool
+   * @apiName getMempool
+   * @apiGroup Transactions
+   *
+   * @apiParam {string} [account] Account address
+   *
+   * @apiSuccess {Object[]} txs
+   * @apiSuccess {String} txs.timestamp Last seen
+   * @apiSuccess {String} txs.txhash
+   * @apiSuccess {Object} txs.tx
+   * @apiSuccess {string} txs.tx.type
+   * @apiSuccess {Object} txs.tx.value
+   * @apiSuccess {Object} txs.tx.value.fee
+   * @apiSuccess {string} txs.tx.value.fee.gas
+   * @apiSuccess {Object[]} txs.tx.value.fee.amount
+   * @apiSuccess {string} txs.tx.value.fee.amount.denom
+   * @apiSuccess {string} txs.tx.value.fee.amount.amount
+   * @apiSuccess {string} txs.tx.value.memo
+   * @apiSuccess {Object[]} txs.tx.value.msg
+   * @apiSuccess {string} txs.tx.value.msg.type
+   * @apiSuccess {Object} txs.tx.value.msg.value
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.address
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.inputs.coins
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.deonm
+   * @apiSuccess {string} txs.tx.value.msg.value.inputs.coins.amount
+   *
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.address
+   * @apiSuccess {Object[]} txs.tx.value.msg.value.outputs.coins
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.deonm
+   * @apiSuccess {string} txs.tx.value.msg.value.outputs.coins.amount
+   *
+   * @apiSuccess {Object[]} txs.tx.value.signatures
+   * @apiSuccess {string} txs.tx.value.signatures.signature
+   * @apiSuccess {Object} txs.tx.value.signatures.pub_key
+   * @apiSuccess {string} txs.tx.value.signatures.pub_key.type
+   * @apiSuccess {string} txs.tx.value.signatures.pub_key.value
+   */
+  @Get('/mempool')
   @Validate({
     query: {
-      limit: Joi.number().description('maximum number of txs to query')
+      account: Joi.string().allow('').regex(TERRA_ACCOUNT_REGEX).description('User address')
     }
   })
-  async getUnconfirmedTxs(ctx): Promise<void> {
-    success(ctx, await getUnconfirmedTxs())
+  async getMempool(ctx) {
+    if (ctx.query.account) {
+      success(ctx, {
+        txs: Mempool.getTransactionsByAddress(ctx.query.account)
+      })
+    } else {
+      success(ctx, {
+        txs: Mempool.getTransactions()
+      })
+    }
   }
 }

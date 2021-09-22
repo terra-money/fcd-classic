@@ -1,7 +1,9 @@
 import { TxEntity } from 'orm'
 import { getRepository } from 'typeorm'
 
-export async function getTx(txhash: string): Promise<(Transaction.LcdTransaction & { chainId: string }) | undefined> {
+type FcdTx = Transaction.LcdTransaction & { chainId: string }
+
+export async function getTx(txhash: string): Promise<FcdTx | undefined> {
   const qb = getRepository(TxEntity)
     .createQueryBuilder()
     .where('hash=lower(:txhash) OR hash=upper(:txhash) ', { txhash })

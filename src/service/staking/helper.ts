@@ -1,5 +1,5 @@
 import { get, orderBy } from 'lodash'
-import { getRepository, Brackets, WhereExpression, getConnection } from 'typeorm'
+import { getRepository, Brackets, WhereExpressionBuilder, getConnection } from 'typeorm'
 import { startOfDay } from 'date-fns'
 
 import config from 'config'
@@ -11,8 +11,7 @@ import { div, plus, minus, times } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
-import getDelegationTxs from './getDelegationTxs'
-import { ValidatorAnnualReturn } from './getValidatorReturn'
+import { getDelegationTxs } from './getDelegationTxs'
 
 enum ValidatorStatusType {
   INACTIVE = 'inactive',
@@ -59,7 +58,7 @@ export function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus
   }
 }
 
-function addDelegateFilterToQuery(qb: WhereExpression, operatorAddress: string) {
+function addDelegateFilterToQuery(qb: WhereExpressionBuilder, operatorAddress: string) {
   qb.andWhere(
     new Brackets((q) => {
       q.andWhere(

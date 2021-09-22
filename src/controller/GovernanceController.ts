@@ -161,8 +161,8 @@ export default class GovernanceController extends KoaController {
       proposalId: Joi.number().min(1).required().description('Proposal id')
     },
     query: {
-      page: Joi.number().min(1).default(1).description('Page number'),
-      limit: Joi.number().min(1).max(100).default(5).description('Item count per page')
+      page: Joi.number().default(1).min(1).max(100).description('Page number'),
+      limit: Joi.number().default(10).valid(10, 100).description('Item count per page')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -201,8 +201,8 @@ export default class GovernanceController extends KoaController {
       proposalId: Joi.number().min(1).required().description('Proposal id')
     },
     query: {
-      page: Joi.number().min(1).default(1).description('Page number'),
-      limit: Joi.number().min(1).max(100).default(5).description('Item count per page'),
+      page: Joi.number().default(1).min(1).max(100).description('Page number'),
+      limit: Joi.number().default(10).valid(10, 100).description('Item count per page'),
       option: Joi.string()
         .valid(['', Object.values(VoteTypes)])
         .description('Votes types')
