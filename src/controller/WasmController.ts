@@ -50,11 +50,10 @@ export default class WasmController extends KoaController {
   @Validate({
     query: {
       owner: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('contract owner'),
-      search: Joi.string().description('full text search query'),
+      // search: Joi.string().description('full text search query'),
       // codeId: Joi.string().regex(/^\d+$/).description('Code id'),
-      page: Joi.number().default(1).min(1).description('Page number'), // deprecated
-      limit: Joi.number().default(10).min(1).description('Items per page'),
-      offset: Joi.number().description('id offset')
+      limit: Joi.number().default(10).valid(10).description('Items per page'),
+      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
