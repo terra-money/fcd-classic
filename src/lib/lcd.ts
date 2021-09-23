@@ -83,6 +83,14 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
             type = `${tokens[0]}/${tokens[tokens.length - 1]}`
           }
 
+          type = type
+            .replace('distribution/MsgSetWithdrawAddress', 'distribution/MsgModifyWithdrawAddress')
+            .replace('distribution/MsgWithdrawDelegatorReward', 'distribution/MsgWithdrawDelegationReward')
+            .replace('authz/MsgGrant', 'msgauth/MsgGrantAuthorization')
+            .replace('authz/MsgRevoke', 'msgauth/MsgRevokeAuthorization')
+            .replace('authz/MsgExec', 'msgauth/MsgExecAuthorized')
+            .replace('ibc/MsgTransfer', 'cosmos-sdk/MsgTransfer')
+
           return {
             type,
             value: pick(
