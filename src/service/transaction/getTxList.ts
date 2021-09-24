@@ -1,7 +1,6 @@
 import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 import config from 'config'
-import parseTx from './parseTx'
 
 export interface GetTxListParam {
   offset?: number
@@ -137,12 +136,6 @@ interface GetTxListResponse {
   txs: Transaction.LcdTransaction[]
 }
 
-interface GetMsgListReturn {
-  next?: number
-  limit: number
-  txs: ParsedTxInfo[]
-}
-
 export async function getTxList(param: GetTxListParam): Promise<GetTxListResponse> {
   let response
 
@@ -155,14 +148,4 @@ export async function getTxList(param: GetTxListParam): Promise<GetTxListRespons
   }
 
   return response
-}
-
-export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
-  const { next, limit, txs } = await getTxFromAccount(param)
-
-  return {
-    next,
-    limit,
-    txs: await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
-  }
 }

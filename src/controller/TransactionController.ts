@@ -4,7 +4,7 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 import Mempool from 'lib/mempool'
-import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
+import { getTx, getTxList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
 
@@ -213,54 +213,6 @@ export default class TransactionController extends KoaController {
   async postTxs(ctx): Promise<void> {
     const body = ctx.request.body
     success(ctx, await postTxs(body))
-  }
-
-  /**
-   * @api {get} /msgs Get Parsed Tx List
-   * @apiName getParsedTxList
-   * @apiGroup Transactions
-   *
-   * @apiParam {string} account Account address
-   * @apiParam {number} [page=1] Page
-   * @apiParam {number} [limit=10] Limit
-   * @apiParam {string} [action] Action filter
-   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
-   * @apiParam {number} [from] Timestamp from
-   * @apiParam {number} [to] Timestamp to
-   *
-   * @apiSuccess {number} limit Per page item limit
-   * @apiSuccess {Object[]} txs tx list
-   * @apiSuccess {string} txs.timestamp tx time
-   * @apiSuccess {string} txs.txhash tx hash
-   * @apiSuccess {Object[]} txs.msgs Parsed tx messages
-   * @apiSuccess {string} txs.msgs.tag tx tag
-   * @apiSuccess {string} txs.msgs.text tx message text format
-   * @apiSuccess {Object[]} txs.msgs.in
-   * @apiSuccess {string} txs.msgs.in.denom
-   * @apiSuccess {string} txs.msgs.in.amount
-   * @apiSuccess {Object[]} txs.msgs.out
-   * @apiSuccess {string} txs.msgs.out.denom
-   * @apiSuccess {string} txs.msgs.out.amount
-   * @apiSuccess {string} txs.msgs.tax transaction tax
-   * @apiSuccess {Object[]} txs.txFee
-   * @apiSuccess {string} txs.txFee.denom
-   * @apiSuccess {string} txs.txFee.amount
-   * @apiSuccess {string} txs.memo
-   * @apiSuccess {boolean} txs.success
-   * @apiSuccess {string} txs.errorMessage
-   * @apiSuccess {string} txs.chainId
-   */
-  @Get('/msgs')
-  @Validate({
-    query: {
-      account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
-      limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async getMsgList(ctx): Promise<void> {
-    success(ctx, await getMsgList(ctx.request.query))
   }
 
   /**
