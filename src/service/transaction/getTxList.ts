@@ -74,8 +74,12 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
 
   return getManager().transaction(async (mgr) => {
     // Disable indexscan to force use bitmap scan for query speed
+    await mgr.query('SET enable_indexscan=false')
+
     const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
     const txs = await mgr.query(query, params)
+
+    await mgr.query('SET enable_indexscan=true')
 
     let next
 
