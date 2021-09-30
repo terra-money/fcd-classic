@@ -20,7 +20,7 @@ export default class TransactionController extends KoaController {
     }
   })
   async getBlock(ctx): Promise<void> {
-    success(ctx, await getBlock(ctx.query.chainId, ctx.query.height))
+    success(ctx, await getBlock(ctx.query.chainId, ctx.params.height))
   }
 
   /**
