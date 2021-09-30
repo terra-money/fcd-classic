@@ -54,10 +54,20 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
   const { tx_response } = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
 
   const intermediate = pickBy(
-    pick(tx_response, ['height', 'txhash', 'logs', 'gas_wanted', 'gas_used', 'codespace', 'code', 'timestamp'])
+    pick(tx_response, [
+      'height',
+      'txhash',
+      'logs',
+      'gas_wanted',
+      'gas_used',
+      'codespace',
+      'code',
+      'timestamp',
+      'raw_log'
+    ])
   ) as Pick<
     Transaction.LcdTransaction,
-    'height' | 'txhash' | 'logs' | 'gas_wanted' | 'gas_used' | 'codespace' | 'code' | 'timestamp'
+    'height' | 'txhash' | 'logs' | 'gas_wanted' | 'gas_used' | 'codespace' | 'code' | 'timestamp' | 'raw_log'
   >
 
   const { auth_info, body, signatures } = tx_response.tx
@@ -106,7 +116,8 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
           },
           signature: signatures[idx]
         })),
-        memo: body.memo
+        memo: body.memo,
+        timeout_height: body.timeout_height
       }
     }
   }

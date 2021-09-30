@@ -4,12 +4,25 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 import Mempool from 'lib/mempool'
-import { getTx, getTxList, postTxs } from 'service/transaction'
+import { getBlock, getTx, getTxList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
 
 @Controller('')
 export default class TransactionController extends KoaController {
+  @Get('/blocks/:height')
+  @Validate({
+    params: {
+      height: Joi.number().required().description('Block height')
+    },
+    query: {
+      chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX)
+    }
+  })
+  async getBlock(ctx): Promise<void> {
+    success(ctx, await getBlock(ctx.query.chainId, ctx.query.height))
+  }
+
   /**
    * @api {get} /tx/:txhash Get Tx
    * @apiName getTx
