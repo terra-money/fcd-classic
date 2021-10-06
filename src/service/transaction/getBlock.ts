@@ -6,6 +6,7 @@ type GetBlockResponse =
   | (Pick<BlockEntity, 'chainId' | 'height' | 'timestamp'> & {
       proposer: {
         moniker: string
+        identity: string
         operatorAddress: string
       }
       txs: ({ id: number } & Transaction.LcdTransaction)[]
@@ -32,6 +33,7 @@ export async function getBlock(height: number): Promise<GetBlockResponse> {
     ...omit(block, ['id', 'reward', 'txs', 'proposer']),
     proposer: {
       moniker: val ? val.moniker : '',
+      identity: val ? val.identity : '',
       operatorAddress: block.proposer
     },
     txs: block.txs.map((item) => ({ id: item.id, ...item.data }))
