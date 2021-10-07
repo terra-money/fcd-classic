@@ -40,7 +40,7 @@ async function main() {
 
     const lcdDatas = await Bluebird.map(
       chk,
-      async (height) => rp(`${config.LCD_URI}/blocks/${height}`, { json: true }),
+      async (height) => rp(`${config.LCD_URI}/blocks/${height}`, options),
       {
         concurrency: 16
       }
