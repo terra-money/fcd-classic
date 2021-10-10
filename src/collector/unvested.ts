@@ -1,5 +1,5 @@
 import { orderBy, reverse, chain } from 'lodash'
-import * as globby from 'globby'
+import { globby } from 'globby'
 import * as fs from 'fs'
 import { getConnection } from 'typeorm'
 import { UnvestedEntity } from 'orm'
