@@ -45,13 +45,27 @@ interface Columbus3LazyVestingAccount {
   }
 }
 
-interface LazyVestingAccount {
+interface Columbus4LazyVestingAccount {
   type: string
   value: AccountValue & {
     original_vesting: Coins
     delegated_free: Coins
     delegated_vesting: Coins
     end_time: string
+    vesting_schedules: VestingSchedules[]
+  }
+}
+
+interface LazyVestingAccount {
+  type: string
+  value: {
+    coins: Coins
+    base_vesting_account: {
+      base_account: AccountValue
+      original_vesting: Coins
+      delegated_free: Coins
+      delegated_vesting: Coins
+    }
     vesting_schedules: VestingSchedules[]
   }
 }

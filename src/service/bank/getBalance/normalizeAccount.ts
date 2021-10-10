@@ -9,8 +9,9 @@ enum AccountType {
 type Account =
   | StandardAccount
   | VestingAccount
-  | Columbus3LazyVestingAccount
   | LazyVestingAccount
+  | Columbus3LazyVestingAccount
+  | Columbus4LazyVestingAccount
   | Columbus3ModuleAccount
   | ModuleAccount
 
@@ -49,7 +50,36 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
   }
 
   if (account.type === AccountType.LAZY_VESTING) {
-    // LCD response in columbus-2 and 3 and columbus-4 are different.
+    // Columbus-5
+    if ('base_vesting_account' in account.value) {
+      const value = (account as LazyVestingAccount).value
+
+      return {
+        value: {
+          ...value.base_vesting_account.base_account,
+          coins: value.coins
+        },
+        original_vesting: value.base_vesting_account.original_vesting,
+        delegated_free: value.base_vesting_account.delegated_free,
+        delegated_vesting: value.base_vesting_account.delegated_vesting,
+        vesting_schedules: value.vesting_schedules
+      }
+    }
+
+    // Columbus-4
+    if ('address' in account.value) {
+      const value = (account as Columbus4LazyVestingAccount).value
+
+      return {
+        value,
+        original_vesting: value.original_vesting,
+        delegated_free: value.delegated_free,
+        delegated_vesting: value.delegated_vesting,
+        vesting_schedules: value.vesting_schedules
+      }
+    }
+
+    // Columbus-3 and past
     if ('BaseVestingAccount' in account.value) {
       // Before columbus-4
       const value = (account as Columbus3LazyVestingAccount).value
@@ -63,16 +93,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
       }
     }
 
-    // From columbus-4
-    const value = (account as LazyVestingAccount).value
-
-    return {
-      value,
-      original_vesting: value.original_vesting,
-      delegated_free: value.delegated_free,
-      delegated_vesting: value.delegated_vesting,
-      vesting_schedules: value.vesting_schedules
-    }
+    throw new Error(`unknown LazyGradedVestingAccount, value: ${JSON.stringify(account.value)}`)
   }
 
   if (account.type === AccountType.MODULE) {
@@ -103,7 +124,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     }
   }
 
-  throw new Error(`unknown account type ${account.type}, address: ${JSON.stringify(account.value)}`)
+  throw new Error(`unknown account type ${account.type}, value: ${JSON.stringify(account.value)}`)
 }
 
 export default normalizeAccount
