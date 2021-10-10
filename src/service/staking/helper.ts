@@ -6,56 +6,16 @@ import config from 'config'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
-import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
 import { getDelegationTxs } from './getDelegationTxs'
 
-enum ValidatorStatusType {
-  INACTIVE = 'inactive',
-  ACTIVE = 'active',
-  JAILED = 'jailed',
-  UNBONDING = 'unbonding',
-  UNKNOWN = 'unknown'
-}
-
 interface GetRawDelegationTxsParam {
   operatorAddr: string
   limit?: number
   offset?: number
-}
-
-export function getUptime(signingInfo: LcdValidatorSigningInfo): number {
-  const missedBlocksCounter = get(signingInfo, 'missed_blocks_counter')
-  return 1 - Number(missedBlocksCounter) / SLASHING_PERIOD || 0
-}
-
-export function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatusType {
-  const { status, jailed } = validatorInfo
-
-  if (jailed) {
-    return ValidatorStatusType.JAILED
-  }
-
-  switch (status) {
-    case 0: {
-      return ValidatorStatusType.INACTIVE
-    }
-
-    case 1: {
-      return ValidatorStatusType.UNBONDING
-    }
-
-    case 2: {
-      return ValidatorStatusType.ACTIVE
-    }
-
-    default: {
-      return ValidatorStatusType.UNKNOWN
-    }
-  }
 }
 
 function addDelegateFilterToQuery(qb: WhereExpressionBuilder, operatorAddress: string) {
