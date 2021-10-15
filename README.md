@@ -15,14 +15,12 @@
 
 ## Prerequisites
 
-1. `Node.js` >= 12
-1. `PostgreSQL` == 10.x || 11.x
+1. `Node.js` version 14 or later
+1. `PostgreSQL` version 12 or later
 
 ### Terra Core
 
-1. You **must** use [columbus-4-tracking](https://github.com/terra-project/core/tree/columbus-4-tracking) for calculating taxes. This branch adds TaxCaps, TaxRate event in BeginBlocker
-1. `terrad start --tracking` parameter creates the Richlist in the /tmp at the beginning of each day. The more accounts you have, the longer it takes, so you don't have to use them if you don't need it.
-1. Setup a LCD
+1. Setup a RPC & LCD node ([Run a Full Terra Node](https://docs.terra.money/How-to/Run-a-full-Terra-node/Hardware-requirements.html))
 1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration))
 
 ## Project setup
@@ -71,24 +69,26 @@ module.exports = {
 
 ### 4. Configure Environment Variables
 
-| Name                   | Description                                            | Default                                                                                | Module(s)                          |
-| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------- |
-| SERVER_PORT            | Listening port for API server                          | 3060                                                                                   | API                                |
-| SENTRY_DSN             | Sentry DSN for error management                        |                                                                                        | All                                |
-| CHAIN_ID               | Chain ID of Terra network                              | tequila-0004                                                                           | API, Collector                     |
-| LCD_URI                | LCD URI for Terra network                              | https://tequila-lcd.terra.dev                                                          | API, Collector, Validator Scrapper |
-| FCD_URI                | FCD URI for Terra network                              | https://tequila-fcd.terra.dev                                                          | Collector                          |
-| RPC_URI                | RPC URI for Terra network                              | <required>                                                                             | API, Collector                     |
-| BYPASS_URI             | Terra LCD address                                      | https://tequila-lcd.terra.dev                                                          | API                                |
-| MIRROR_GRAPH_URI       | Mirror GraphQL endpoint                                | https://tequila-graph.mirror.finance/graphql                                           | API                                |
-| PYLON_API_ENDPOINT     | Pylon API endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
-| STATION_STATUS_JSON    | URL for Station version control                        | https://terra.money/station/version-web.json                                           | API                                |
-| USE_LOG_FILE           | Creates logs/\* when enabled                           | false                                                                                  | All                                |
-| ACTIVE_DENOMS          | Active Denominations                                   | ["uluna","usdr","ukrw","uusd","umnt"]                                                  | API                                |
-| ACTIVE_CURRENCY        | Active Currencies                                      | ["luna","sdt","krt","ust","mnt"]                                                       | API                                |
-| DISABLE_API            | Disable REST APIs                                      | false                                                                                  | API                                |
-| EXCLUDED_ROUTES        | List of regular expression string for excluding routes | []                                                                                     | API                                |
-| MIN_GAS_PRICES         | Minimum gas price by denom object                      | {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"} | API                                |
+| Name                | Description                                              | Default                                                                                | Module(s)                          |
+| ------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| SERVER_PORT         | Listening port for API server                            | 3060                                                                                   | API                                |
+| SENTRY_DSN          | Sentry DSN for error management                          |                                                                                        | All                                |
+| CHAIN_ID            | Chain ID of Terra network                                | tequila-0004                                                                           | API, Collector                     |
+| LCD_URI             | LCD URI for Terra network                                | https://tequila-lcd.terra.dev                                                          | API, Collector, Validator Scrapper |
+| FCD_URI             | FCD URI for Terra network                                | https://tequila-fcd.terra.dev                                                          | Collector                          |
+| RPC_URI             | RPC URI for Terra network                                | <required>                                                                             | API, Collector                     |
+| BYPASS_URI          | Terra LCD address                                        | https://tequila-lcd.terra.dev                                                          | API                                |
+| MIRROR_GRAPH_URI    | Mirror GraphQL endpoint                                  | https://tequila-graph.mirror.finance/graphql                                           | API                                |
+| PYLON_API_ENDPOINT  | Pylon API endpoint                                       | https://api.dev.pylon.rocks/api                                                        | API                                |
+| STATION_STATUS_JSON | URL for Station version control                          | https://terra.money/station/version-web.json                                           | API                                |
+| USE_LOG_FILE        | Creates logs/\* when enabled                             | false                                                                                  | All                                |
+| ACTIVE_DENOMS       | Active Denominations                                     | ["uluna","usdr","ukrw","uusd","umnt"]                                                  | API                                |
+| ACTIVE_CURRENCY     | Active Currencies                                        | ["luna","sdt","krt","ust","mnt"]                                                       | API                                |
+| DISABLE_API         | Disable REST APIs                                        | false                                                                                  | API                                |
+| EXCLUDED_ROUTES     | List of regular expression string for excluding routes   | []                                                                                     | API                                |
+| MIN_GAS_PRICES      | Minimum gas price by denom object                        | {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"} | API                                |
+| INITIAL_HEIGHT      | The initial height of network (options: mainnet/testnet) |                                                                                        | Collector                          |
+| TOKEN_NETWORK       | Network specifier for whitelisted tokens                 |                                                                                        | API                                |
 
 > In Terra, we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
@@ -118,7 +118,7 @@ module.exports = {
   ```
 - API
   ```bash
-  npm start
+  npm run start
   ```
 
 ## APIDoc & Swagger

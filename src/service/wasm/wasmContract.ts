@@ -20,7 +20,7 @@ function applyFindCondition(
   } else if (search) {
     // If it is all numbers, find it by code id
     if (/^\d+$/.test(search)) {
-      qb.andWhere('codeId = :codeId', { codeId: search })
+      qb.andWhere('code.code_id = :code_id', { code_id: search })
     } else if (TERRA_ACCOUNT_REGEX.test(search)) {
       qb.andWhere('owner = :owner', { owner: search })
         .orWhere('creator = :creator', { creator: search })
@@ -34,6 +34,7 @@ function applyFindCondition(
 type WasmContractDetails = {
   id: number
   owner: string
+  creator: string
   code_id: string
   init_msg: string
   txhash: string
@@ -48,6 +49,7 @@ function transformToContractDetails(contract: WasmContractEntity): WasmContractD
   return {
     id: contract.id,
     owner: contract.owner,
+    creator: contract.creator,
     code_id: contract.codeId,
     init_msg: contract.initMsg,
     txhash: contract.txHash,
