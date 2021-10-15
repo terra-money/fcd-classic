@@ -4,8 +4,8 @@
 import * as fs from 'fs'
 import * as Bluebird from 'bluebird'
 import { getConnection, EntityManager } from 'typeorm'
-import { chunk, find } from 'lodash'
-import { init as initORM, BlockEntity, TxEntity, AccountTxEntity } from 'orm'
+import { chunk } from 'lodash'
+import { init as initORM, BlockEntity, TxEntity } from 'orm'
 
 async function migrate() {
   const src = getConnection('default')

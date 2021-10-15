@@ -1,5 +1,5 @@
 import 'koa-body'
-import { KoaController, Validate, Get, Controller, Validator } from 'koa-joi-controllers'
+import { KoaController, Get, Controller } from 'koa-joi-controllers'
 
 import { success } from 'lib/response'
 

@@ -1,49 +1,34 @@
-import { getRepository, Raw, FindConditions, LessThan } from 'typeorm'
-
+import { getRepository, SelectQueryBuilder } from 'typeorm'
 import { WasmContractEntity } from 'orm'
-import config from 'config'
-
 import { APIError, ErrorTypes } from 'lib/error'
-
+import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import { parseWasmTxMemo, ParsedMemo } from './helpers'
 import { getWasmCodeDetails, WasmCodeDetails } from './wasmCode'
 
-function buildContractFindConditions(
+function applyFindCondition(
+  qb: SelectQueryBuilder<WasmContractEntity>,
   offset?: number,
   owner?: string,
-  search?: string,
-  codeId?: string
-): FindConditions<WasmContractEntity>[] {
-  const commonCondition: FindConditions<WasmContractEntity> = {}
-
+  search?: string
+): SelectQueryBuilder<WasmContractEntity> {
   if (offset) {
-    commonCondition['id'] = LessThan(offset)
+    qb.where('contract.id < :offset', { offset })
   }
 
   if (owner) {
-    commonCondition['owner'] = owner
+    qb.andWhere('owner = :owner', { owner }).orWhere('creator = :creator', { creator: owner })
+  } else if (search) {
+    // If it is all numbers, find it by code id
+    if (/^\d+$/.test(search)) {
+      qb.andWhere('codeId = :codeId', { codeId: search })
+    } else if (TERRA_ACCOUNT_REGEX.test(search)) {
+      qb.andWhere('owner = :owner', { owner: search })
+        .orWhere('creator = :creator', { creator: search })
+        .orWhere('contract_address = :contract_address', { contract_address: search })
+    }
   }
 
-  // if (codeId) {
-  //   commonCondition['codeId'] = codeId
-  // }
-
-  let whereCondition: FindConditions<WasmContractEntity>[] = [commonCondition]
-
-  if (search) {
-    whereCondition = [
-      {
-        ...commonCondition,
-        txMemo: Raw((alias) => `${alias} ILIKE '%${search}%'`)
-      }
-      // {
-      //   ...commonCondition,
-      //   initMsg: Raw((alias) => `${alias} ILIKE '%${search}%'`)
-      // }
-    ]
-  }
-
-  return whereCondition
+  return qb
 }
 
 type WasmContractDetails = {
@@ -56,7 +41,7 @@ type WasmContractDetails = {
   contract_address: string
   migrate_msg: string
   info: ParsedMemo
-  code: WasmCodeDetails
+  code?: WasmCodeDetails
 }
 
 function transformToContractDetails(contract: WasmContractEntity): WasmContractDetails {
@@ -70,7 +55,7 @@ function transformToContractDetails(contract: WasmContractEntity): WasmContractD
     contract_address: contract.contractAddress,
     migrate_msg: contract.migrateMsg,
     info: parseWasmTxMemo(contract.txMemo),
-    code: getWasmCodeDetails(contract.code)
+    code: contract.code && getWasmCodeDetails(contract.code)
   }
 }
 
@@ -82,18 +67,20 @@ type WasmContractParams = {
   codeId?: string
 }
 
-export async function getWasmContracts({ offset, limit, owner, search, codeId }: WasmContractParams): Promise<{
+export async function getWasmContracts({ offset, limit, owner, search }: WasmContractParams): Promise<{
   contracts: WasmContractDetails[]
   limit: number
   next?: number
 }> {
-  const result = await getRepository(WasmContractEntity).find({
-    where: buildContractFindConditions(offset, owner, search, codeId),
-    take: limit + 1,
-    order: {
-      timestamp: 'DESC'
-    }
-  })
+  const qb = await getRepository(WasmContractEntity)
+    .createQueryBuilder('contract')
+    .leftJoinAndSelect('contract.code', 'code')
+    .take(limit + 1)
+    .orderBy('contract.timestamp', 'DESC')
+
+  applyFindCondition(qb, offset, owner, search)
+
+  const result = await qb.getMany()
   let next
 
   if (limit + 1 === result.length) {

@@ -1,5 +1,4 @@
 import { getRepository } from 'typeorm'
-import { chain } from 'lodash'
 import { startOfToday, subDays } from 'date-fns'
 import { plus, div, times, minus } from 'lib/math'
 import { MOVING_AVG_WINDOW_IN_DAYS, DAYS_IN_YEAR } from 'lib/constant'

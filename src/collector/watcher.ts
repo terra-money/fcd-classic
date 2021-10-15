@@ -54,7 +54,7 @@ async function collectValidators() {
 
 async function processNewBlock(data: RpcResponse) {
   const marshalTxs = data.result.data?.value.block?.data.txs as string[]
-  const height = data.result.data?.value.block?.header.height as string
+  // const height = data.result.data?.value.block?.header.height as string
 
   if (marshalTxs) {
     try {

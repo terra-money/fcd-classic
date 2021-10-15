@@ -5,7 +5,7 @@ import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 import * as lcd from 'lib/lcd'
 
-import { getWasmContracts, getWasmCode, getWasmContract } from 'service/wasm'
+import { getWasmContracts, getWasmCode } from 'service/wasm'
 
 const Joi = Validator.Joi
 
@@ -50,8 +50,9 @@ export default class WasmController extends KoaController {
   @Validate({
     query: {
       owner: Joi.string().regex(TERRA_ACCOUNT_REGEX).description('contract owner'),
-      // search: Joi.string().description('full text search query'),
-      // codeId: Joi.string().regex(/^\d+$/).description('Code id'),
+      search: Joi.alternatives(Joi.string().regex(TERRA_ACCOUNT_REGEX), Joi.number()).description(
+        'query string (contract/owner/creator address, or code id)'
+      ),
       limit: Joi.number().default(10).valid(10).description('Items per page'),
       offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
     },
