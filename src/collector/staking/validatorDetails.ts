@@ -98,7 +98,7 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
     missedOracleVote,
-    upTime: getOracleUptime(missedOracleVote),
+    upTime: getOracleUptime(missedOracleVote) * getBlockUptime(signingInfo),
     votingPower: times(votingPowerByPubKey[consensusPubkey], TOKEN_MICRO_UNIT_MULTIPLICAND),
     votingPowerWeight: div(votingPowerByPubKey[consensusPubkey], totalVotingPower),
     commissionRate: lcdValidator.commission.commission_rates.rate,
