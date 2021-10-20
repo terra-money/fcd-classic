@@ -161,7 +161,7 @@ export async function saveBlockInformation(
         // save wasm
         await collectWasm(mgr, txEntities)
         // save proposals
-        await detectAndUpdateProposal(mgr, txEntities, height)
+        await detectAndUpdateProposal(mgr, txEntities)
       }
 
       // new block timestamp
