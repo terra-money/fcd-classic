@@ -53,7 +53,7 @@ function transformToContractDetails(contract: WasmContractEntity): WasmContractD
     code_id: contract.codeId,
     init_msg: contract.initMsg,
     txhash: contract.txHash,
-    timestamp: contract.timestamp.toISOString(),
+    timestamp: contract.timestamp ? contract.timestamp.toISOString() : '',
     contract_address: contract.contractAddress,
     migrate_msg: contract.migrateMsg,
     info: parseWasmTxMemo(contract.txMemo),

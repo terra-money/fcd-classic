@@ -3,6 +3,14 @@ import { DeepPartial, EntityManager } from 'typeorm'
 import { TxEntity, WasmCodeEntity, WasmContractEntity } from 'orm'
 import { collectorLogger as logger } from 'lib/logger'
 
+function findAttribute(attributes: { key: string; value: string }[], key: string): string | undefined {
+  for (let i = 0; i < attributes.length; i += 1) {
+    if (attributes[i].key === key) {
+      return attributes[i].value
+    }
+  }
+}
+
 function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] {
   if (tx.data.code) {
     return []
@@ -16,56 +24,37 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
             const contracts: DeepPartial<WasmContractEntity>[] = []
 
             if (ev.type === 'instantiate_contract') {
-              const txHash = tx.hash
-              const txMemo = msg.value.txMemo || ''
-              const timestamp = tx.timestamp
-              const initMsg = JSON.stringify(msg.value.init_msg || {})
-
-              for (let i = 0; i < ev.attributes.length; i += 4) {
-                contracts.push({
-                  contractAddress: ev.attributes[i + 3].value,
-                  codeId: ev.attributes[i + 2].value,
-                  owner: ev.attributes[i + 1].value || '',
-                  creator: ev.attributes[i].value,
-                  txHash,
-                  txMemo,
-                  timestamp,
-                  initMsg
-                })
-              }
-              return contracts
+              contracts.push({
+                contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                owner: findAttribute(ev.attributes, 'admin'),
+                creator: findAttribute(ev.attributes, 'creator'),
+                txHash: tx.hash,
+                txMemo: msg.value.txMemo || '',
+                timestamp: tx.timestamp,
+                initMsg: JSON.stringify(msg.value.init_msg || {})
+              })
             } else if (ev.type === 'migrate_contract') {
-              const migrateMsg = JSON.stringify(msg.value.migrate_msg || {})
-
-              for (let i = 0; i < ev.attributes.length; i += 2) {
-                contracts.push({
-                  contractAddress: ev.attributes[i + 1].value,
-                  codeId: ev.attributes[i].value,
-                  migrateMsg
-                })
-              }
+              contracts.push({
+                contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                codeId: findAttribute(ev.attributes, 'code_id'),
+                migrateMsg: JSON.stringify(msg.value.migrate_msg || {})
+              })
             } else if (ev.type === 'update_contract_admin') {
-              for (let i = 0; i < ev.attributes.length; i += 2) {
-                contracts.push({
-                  contractAddress: ev.attributes[i + 1].value,
-                  owner: ev.attributes[i].value
-                })
-              }
+              contracts.push({
+                contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                owner: findAttribute(ev.attributes, 'admin')
+              })
             } else if (ev.type === 'clear_contract_admin') {
-              for (let i = 0; i < ev.attributes.length; i += 1) {
-                contracts.push({
-                  contractAddress: ev.attributes[i].value,
-                  owner: ''
-                })
-              }
+              contracts.push({
+                contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                owner: undefined
+              })
             } else if (ev.type === 'update_contract_owner') {
-              // Columbus-4
-              for (let i = 0; i < ev.attributes.length; i += 2) {
-                contracts.push({
-                  contractAddress: ev.attributes[i + 1].value,
-                  owner: ev.attributes[i].value
-                })
-              }
+              // The type exists in Columbus-4 only
+              contracts.push({
+                contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                owner: findAttribute(ev.attributes, 'owner')
+              })
             }
 
             if (contracts.length) {
@@ -91,19 +80,13 @@ function generateWasmCodes(tx: TxEntity): DeepPartial<WasmCodeEntity>[] {
             const codes: DeepPartial<WasmCodeEntity>[] = []
 
             if (ev.type === 'store_code' || ev.type === 'migrate_code') {
-              const txHash = tx.hash
-              const txMemo = msg.value.txMemo || ''
-              const timestamp = tx.timestamp
-
-              for (let i = 0; i < ev.attributes.length; i += 2) {
-                codes.push({
-                  codeId: ev.attributes[i + 1].value,
-                  sender: ev.attributes[i].value,
-                  txHash,
-                  txMemo,
-                  timestamp
-                })
-              }
+              codes.push({
+                codeId: findAttribute(ev.attributes, 'code_id'),
+                sender: findAttribute(ev.attributes, 'sender'),
+                txHash: tx.hash,
+                txMemo: msg.value.txMemo || '',
+                timestamp: tx.timestamp
+              })
             }
 
             if (codes.length) {

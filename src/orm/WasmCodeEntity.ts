@@ -20,6 +20,6 @@ export default class WasmCodeEntity {
   txMemo: string
 
   @Index('wcode_index_timestamp')
-  @Column()
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date
 }
