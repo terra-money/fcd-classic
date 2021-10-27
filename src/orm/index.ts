@@ -30,9 +30,6 @@ export * from './GeneralInfoEntity'
 import SwapEntity from './SwapEntity'
 export * from './SwapEntity'
 
-import DenomEntity from './DenomEntity'
-export * from './DenomEntity'
-
 import RichListEntity from './RichListEntity'
 export * from './RichListEntity'
 
@@ -69,7 +66,6 @@ export {
   RewardEntity,
   GeneralInfoEntity,
   SwapEntity,
-  DenomEntity,
   RichListEntity,
   UnvestedEntity,
   BlockRewardEntity,
@@ -93,7 +89,6 @@ export const staticOptions = {
     RewardEntity,
     GeneralInfoEntity,
     SwapEntity,
-    DenomEntity,
     RichListEntity,
     UnvestedEntity,
     BlockRewardEntity,

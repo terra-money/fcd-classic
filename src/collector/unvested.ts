@@ -1,20 +1,11 @@
-import { orderBy, reverse, chain } from 'lodash'
-import { globby } from 'globby'
+import { orderBy, reverse } from 'lodash'
+import * as globby from 'globby'
 import * as fs from 'fs'
 import { getConnection } from 'typeorm'
 import { UnvestedEntity } from 'orm'
 import { collectorLogger as logger } from 'lib/logger'
 
-function unvestedMapper(unvested: Coin): UnvestedEntity {
-  const item = new UnvestedEntity()
-
-  item.datetime = new Date()
-  item.denom = unvested.denom
-  item.amount = unvested.amount
-  return item
-}
-
-async function getUnvested(): Promise<UnvestedEntity[]> {
+async function generateUnvestedEntities(): Promise<UnvestedEntity[]> {
   const paths = await globby([`/tmp/vesting-*`])
   const recentFile = reverse(orderBy(paths))[0]
 
@@ -22,14 +13,20 @@ async function getUnvested(): Promise<UnvestedEntity[]> {
     return []
   }
 
-  const unvestedString = fs.readFileSync(recentFile, 'utf8')
-  const unvested = JSON.parse(unvestedString)
-  return chain(unvested.map(unvestedMapper)).compact().value()
+  const coins = JSON.parse(fs.readFileSync(recentFile, 'utf8'))
+
+  return coins.map((coin) => {
+    const item = new UnvestedEntity()
+
+    item.datetime = new Date()
+    item.denom = coin.denom
+    item.amount = coin.amount
+  })
 }
 
 export async function collectUnvested() {
-  const docs = await getUnvested()
-
+  logger.info('collectUnvested: start')
+  const docs = await generateUnvestedEntities()
   await getConnection().manager.save(docs)
-  logger.info(`Save Unvested - success.`)
+  logger.info('collectUnvested: end')
 }
