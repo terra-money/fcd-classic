@@ -26,6 +26,7 @@ function generateWasmContracts(tx: TxEntity): DeepPartial<WasmContractEntity>[] 
             if (ev.type === 'instantiate_contract') {
               contracts.push({
                 contractAddress: findAttribute(ev.attributes, 'contract_address'),
+                codeId: findAttribute(ev.attributes, 'code_id'),
                 owner: findAttribute(ev.attributes, 'admin'),
                 creator: findAttribute(ev.attributes, 'creator'),
                 txHash: tx.hash,
