@@ -6,6 +6,7 @@ import { startOfDay } from 'date-fns'
 import * as lcd from 'lib/lcd'
 import { plus } from 'lib/math'
 import { init as initToken, getToken } from 'service/treasury/token'
+import config from 'config'
 
 const DIST_INTERVAL = 100000
 
@@ -48,6 +49,10 @@ async function calculateAirdropAtHeight(
   height: string,
   skipOld = true
 ): Promise<Airdrop | undefined> {
+  if (+height < config.INITIAL_HEIGHT) {
+    return
+  }
+
   const lcdBlock = await lcd.getBlock(height)
   const timestamp = new Date(lcdBlock.block.header.time)
 
