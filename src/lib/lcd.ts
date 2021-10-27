@@ -375,8 +375,40 @@ export async function getProposalDeposits(proposalId: string): Promise<LcdPropos
   return (await get(`/gov/proposals/${proposalId}/deposits`)) || []
 }
 
+const VoteOptionMap = {
+  VOTE_OPTION_YES: 'Yes',
+  VOTE_OPTION_ABSTAIN: 'Abstain',
+  VOTE_OPTION_NO: 'No',
+  VOTE_OPTION_NO_WITH_VETO: 'NoWithVeto'
+}
+
 export async function getProposalVotes(proposalId: string): Promise<LcdProposalVote[]> {
-  return (await get(`/gov/proposals/${proposalId}/votes?limit=1000000000000`)) || []
+  const { txs } = await get(`/cosmos/tx/v1beta1/txs`, { events: `proposal_vote.proposal_id=${proposalId}` })
+
+  const votes: LcdProposalVote[] = txs.reduce((prev, curr) => {
+    if (!Array.isArray(curr.body.messages)) {
+      return prev
+    }
+
+    curr.body.messages.forEach((msg) => {
+      if (msg['@type'] === '/cosmos.gov.v1beta1.MsgVote') {
+        prev.push({ proposal_id: proposalId, voter: msg.voter, option: VoteOptionMap[msg.option], weight: 1 })
+      } else if (msg['@type'] === '/cosmos.gov.v1beta1.MsgVoteWeighted' && Array.isArray(msg.options)) {
+        msg.options.forEach((opt) => {
+          prev.push({
+            proposal_id: proposalId,
+            voter: msg.voter,
+            option: VoteOptionMap[opt.option],
+            weight: opt.weight
+          })
+        })
+      }
+    })
+
+    return prev
+  }, [])
+
+  return votes
 }
 
 export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {

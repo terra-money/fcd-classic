@@ -47,6 +47,7 @@ interface LcdProposalVote {
   proposal_id: string // number
   voter: string // terra address
   option: VoteOption
+  weight: number
 }
 
 interface LcdProposalDeposit {
