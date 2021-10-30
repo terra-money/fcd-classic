@@ -14,12 +14,14 @@ type GetBlockResponse =
   | null
 
 export async function getBlock(height: number): Promise<GetBlockResponse> {
-  const qb = await getRepository(BlockEntity).createQueryBuilder('block').where('block.height = :height', {
-    height
-  })
-
-  qb.leftJoinAndSelect('block.txs', 'txs')
-  qb.orderBy('txs.id')
+  const qb = await getRepository(BlockEntity)
+    .createQueryBuilder('block')
+    .where('block.height = :height', {
+      height
+    })
+    .leftJoinAndSelect('block.txs', 'txs')
+    .orderBy('block.id', 'DESC')
+    .addOrderBy('txs.id')
 
   const block = await qb.getOne()
 
