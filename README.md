@@ -46,7 +46,7 @@ FCD requires PostgreSQL as a backend database and [TypeORM](https://github.com/t
 #### Create a new database for FCD
 
 ```psql
-postgres=> CREATE DATABASED fcd OWNER terra;
+postgres=> CREATE DATABASE fcd OWNER terra;
 ```
 
 #### Synchronize Database Scheme
@@ -71,24 +71,24 @@ module.exports = {
 
 ### 4. Configure Environment Variables
 
-| Name                   | Description                                            | Default                                                                                | Module(s)                          |
-| ---------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------- |
-| SERVER_PORT            | Listening port for API server                          | 3060                                                                                   | API                                |
-| SENTRY_DSN             | Sentry DSN for error management                        |                                                                                        | All                                |
-| CHAIN_ID               | Chain ID of Terra network                              | tequila-0004                                                                           | API, Collector                     |
-| LCD_URI                | LCD URI for Terra network                              | https://tequila-lcd.terra.dev                                                          | API, Collector, Validator Scrapper |
-| FCD_URI                | FCD URI for Terra network                              | https://tequila-fcd.terra.dev                                                          | Collector                          |
-| RPC_URI                | RPC URI for Terra network                              | <required>                                                                             | API, Collector                     |
-| BYPASS_URI             | Terra LCD address                                      | https://tequila-lcd.terra.dev                                                          | API                                |
-| MIRROR_GRAPH_URI       | Mirror GraphQL endpoint                                | https://tequila-graph.mirror.finance/graphql                                           | API                                |
-| PYLON_API_ENDPOINT     | Pylon API endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
-| STATION_STATUS_JSON    | URL for Station version control                        | https://terra.money/station/version-web.json                                           | API                                |
-| USE_LOG_FILE           | Creates logs/\* when enabled                           | false                                                                                  | All                                |
-| ACTIVE_DENOMS          | Active Denominations                                   | ["uluna","usdr","ukrw","uusd","umnt"]                                                  | API                                |
-| ACTIVE_CURRENCY        | Active Currencies                                      | ["luna","sdt","krt","ust","mnt"]                                                       | API                                |
-| DISABLE_API            | Disable REST APIs                                      | false                                                                                  | API                                |
-| EXCLUDED_ROUTES        | List of regular expression string for excluding routes | []                                                                                     | API                                |
-| MIN_GAS_PRICES         | Minimum gas price by denom object                      | {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"} | API                                |
+| Name                | Description                                            | Default                                                                                | Module(s)                          |
+| ------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| SERVER_PORT         | Listening port for API server                          | 3060                                                                                   | API                                |
+| SENTRY_DSN          | Sentry DSN for error management                        |                                                                                        | All                                |
+| CHAIN_ID            | Chain ID of Terra network                              | tequila-0004                                                                           | API, Collector                     |
+| LCD_URI             | LCD URI for Terra network                              | https://tequila-lcd.terra.dev                                                          | API, Collector, Validator Scrapper |
+| FCD_URI             | FCD URI for Terra network                              | https://tequila-fcd.terra.dev                                                          | Collector                          |
+| RPC_URI             | RPC URI for Terra network                              | <required>                                                                             | API, Collector                     |
+| BYPASS_URI          | Terra LCD address                                      | https://tequila-lcd.terra.dev                                                          | API                                |
+| MIRROR_GRAPH_URI    | Mirror GraphQL endpoint                                | https://tequila-graph.mirror.finance/graphql                                           | API                                |
+| PYLON_API_ENDPOINT  | Pylon API endpoint                                     | https://api.dev.pylon.rocks/api                                                        | API                                |
+| STATION_STATUS_JSON | URL for Station version control                        | https://terra.money/station/version-web.json                                           | API                                |
+| USE_LOG_FILE        | Creates logs/\* when enabled                           | false                                                                                  | All                                |
+| ACTIVE_DENOMS       | Active Denominations                                   | ["uluna","usdr","ukrw","uusd","umnt"]                                                  | API                                |
+| ACTIVE_CURRENCY     | Active Currencies                                      | ["luna","sdt","krt","ust","mnt"]                                                       | API                                |
+| DISABLE_API         | Disable REST APIs                                      | false                                                                                  | API                                |
+| EXCLUDED_ROUTES     | List of regular expression string for excluding routes | []                                                                                     | API                                |
+| MIN_GAS_PRICES      | Minimum gas price by denom object                      | {"uluna": "0.015", "usdr": "0.015", "uusd": "0.015", "ukrw": "0.015", "umnt": "0.015"} | API                                |
 
 > In Terra, we use [direnv](https://direnv.net) for managing environment variable for development. See [sample of .envrc](.envrc_sample)
 
