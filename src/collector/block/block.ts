@@ -33,7 +33,12 @@ export async function getValidatorOperatorAddressByHexAddress(hexAddress: string
   const validatorSet = await lcd.getValidatorConsensus(height)
 
   validatorSet.forEach((s) => {
-    const v = validators.find((v) => v.consensus_pubkey === s.pub_key)
+    let v
+    if (config.CHAIN_ID === 'columbus-5') {
+      v = validators.find((v) => v.consensus_pubkey.value === s.pub_key.value)
+    } else {
+      v = validators.find((v) => v.consensus_pubkey === s.pub_key)
+    }
 
     if (v) {
       const h = convertAddressToHex(s.address).toUpperCase()
@@ -213,6 +218,10 @@ export async function collectBlock(): Promise<void> {
 
   let latestIndexedBlock = await getLatestIndexedBlock()
   const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : 0
+  if (latestHeight === 0 && config.CHAIN_ID === 'columbus-5') {
+    // Colombus-5 first block start at 4724001
+    latestIndexedHeight === 4724000
+  }
   let nextSyncHeight = latestIndexedHeight + 1
 
   while (nextSyncHeight <= latestHeight) {
