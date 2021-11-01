@@ -21,7 +21,8 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
     method: 'GET',
     rejectUnauthorized: false,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'User-Agent': 'terra-fcd'
     },
     qs: params,
     json: true,

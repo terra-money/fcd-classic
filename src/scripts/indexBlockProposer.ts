@@ -31,9 +31,16 @@ async function main() {
 
   // do 1,000 updates at a time
   await Bluebird.mapSeries(chunk(heights, 1000), async (chk) => {
+    const options = {
+      json: true,
+      headers: {
+          'User-Agent': 'terra-fcd'
+      }
+    }
+
     const lcdDatas = await Bluebird.map(
       chk,
-      async (height) => rp(`${config.LCD_URI}/blocks/${height}`, { json: true }),
+      async (height) => rp(`${config.LCD_URI}/blocks/${height}`, options),
       {
         concurrency: 16
       }

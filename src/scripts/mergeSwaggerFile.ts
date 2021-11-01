@@ -89,7 +89,13 @@ function normalizeSwagger(doc: Swagger): Swagger {
 }
 
 async function getLcdSwaggerObject(): Promise<Swagger> {
-  const doc = yaml.load(await rp(LCD_SWAGGER_URL))
+  const options = {
+    headers: {
+      'User-Agent': 'terra-fcd'
+    }
+  }
+
+  const doc = yaml.load(await rp(LCD_SWAGGER_URL, options))
   return filterExcludedRoutes(normalizeSwagger(doc))
 }
 
