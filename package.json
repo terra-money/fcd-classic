@@ -1,13 +1,13 @@
 {
   "name": "fcd",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Terra FCD Suite",
   "main": "index.js",
   "author": "Terra Engineering <engineering@terra.money>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/terra-project/fcd.git"
+    "url": "https://github.com/terra-money/fcd.git"
   },
   "engines": {
     "node": ">=14"

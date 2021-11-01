@@ -1,6 +1,5 @@
 const {
   SERVER_PORT,
-  CHAIN_ID,
   LCD_URI,
   FCD_URI,
   RPC_URI,
@@ -20,20 +19,33 @@ const {
   ANCHOR_TOKEN_ADDRESS,
   PYLON_API_ENDPOINT,
   LEGACY_NETWORK,
-  INITIAL_HEIGHT,
   ORACLE_SLASH_WINDOW,
   TOKEN_NETWORK
 } = process.env
 
+const CHAIN_ID = process.env.CHAIN_ID || 'bombay-12'
+let INITIAL_HEIGHT = parseInt(process.env.INITIAL_HEIGHT || '')
+
+if (isNaN(INITIAL_HEIGHT) || INITIAL_HEIGHT <= 0) {
+  if (CHAIN_ID === 'columbus-5') {
+    INITIAL_HEIGHT = 4724001
+  } else if (CHAIN_ID === 'bombay-12') {
+    INITIAL_HEIGHT = 5900001
+  } else {
+    INITIAL_HEIGHT = 1
+  }
+}
+
 const config = {
   ORM: 'default',
-  PORT: SERVER_PORT ? +SERVER_PORT : 3060,
-  CHAIN_ID: CHAIN_ID || 'tequila-0004',
-  LCD_URI: LCD_URI || 'https://tequila-lcd.terra.dev',
-  FCD_URI: FCD_URI || 'https://tequila-fcd.terra.dev',
+  CHAIN_ID,
+  INITIAL_HEIGHT,
+  SERVER_PORT: SERVER_PORT ? +SERVER_PORT : 3060,
+  LCD_URI: LCD_URI || 'https://bombay-lcd.terra.dev',
+  FCD_URI: FCD_URI || 'https://bombay-fcd.terra.dev',
   RPC_URI: RPC_URI || 'http://localhost:26657',
-  BYPASS_URI: BYPASS_URI || 'https://tequila-lcd.terra.dev',
-  MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://tequila-graph.mirror.finance/graphql',
+  BYPASS_URI: BYPASS_URI || 'https://bombay-lcd.terra.dev',
+  MIRROR_GRAPH_URI: MIRROR_GRAPH_URI || 'https://bombay-graph.mirror.finance/graphql',
   PYLON_API_ENDPOINT: PYLON_API_ENDPOINT || 'https://api.dev.pylon.rocks/api',
   STATION_STATUS_JSON_URL: STATION_STATUS_JSON || 'https://terra.money/station/version-web.json',
   BANK_WALLETS: BANK_WALLETS ? (JSON.parse(BANK_WALLETS) as string[]) : [],
@@ -74,7 +86,6 @@ const config = {
       } as CoinByDenoms),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
   LEGACY_NETWORK: !!JSON.parse(LEGACY_NETWORK || 'false'),
-  INITIAL_HEIGHT: parseInt(INITIAL_HEIGHT || '1'),
   // We can ORACLE_SLASH_WINDOW from {lcd}/oracle/parameters, but do this way because it's rare to be changed
   ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800
 }

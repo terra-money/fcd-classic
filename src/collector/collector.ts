@@ -1,4 +1,4 @@
-import { init as initORM } from 'orm'
+import { init as initORM, ValidatorInfoEntity } from 'orm'
 import * as nodeCron from 'node-cron'
 import { get } from 'lodash'
 import { default as parseDuration } from 'parse-duration'
@@ -16,6 +16,7 @@ import { collectRichList } from './richlist'
 import { collectUnvested } from './unvested'
 
 import Semaphore from './Semaphore'
+import { getRepository } from 'typeorm'
 
 process.on('unhandledRejection', (err) => {
   logger.error({
@@ -76,7 +77,14 @@ const init = async () => {
   await initORM()
   await initToken()
   await collectBlock()
-  // await collectValidator()
+  // Initialize validator_info table when it is empty
+  await getRepository(ValidatorInfoEntity)
+    .count()
+    .then((c) => {
+      if (c === 0) {
+        return collectValidator()
+      }
+    })
   await createJobs()
   await startWatcher()
   await startPolling()
