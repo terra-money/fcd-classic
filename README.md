@@ -21,7 +21,7 @@
 ### Terra Core
 
 1. Setup a LCD
-1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration))
+1. Configure firewall ([Reference](https://docs.terra.money/How-to/Run-a-full-Terra-node/Set-up-production-environment.html#configure-the-firewall))
 
 ## Project setup
 
