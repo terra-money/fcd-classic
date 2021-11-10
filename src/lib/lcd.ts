@@ -464,8 +464,12 @@ export async function getValidatorRewards(validatorOperAddress: string): Promise
   return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)).rewards || []
 }
 
-export function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
-  return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
+export async function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
+  if (config.LEGACY_NETWORK) {
+    return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
+  }
+
+  return (await get(`/cosmos/distribution/v1beta1/community_pool`, { height: calculateHeightParam(strHeight) })).pool
 }
 
 ///////////////////////////////////////////////
