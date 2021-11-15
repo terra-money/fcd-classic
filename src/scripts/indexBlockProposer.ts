@@ -34,17 +34,13 @@ async function main() {
     const options = {
       json: true,
       headers: {
-          'User-Agent': 'terra-fcd'
+        'User-Agent': 'terra-fcd'
       }
     }
 
-    const lcdDatas = await Bluebird.map(
-      chk,
-      async (height) => rp(`${config.LCD_URI}/blocks/${height}`, options),
-      {
-        concurrency: 16
-      }
-    )
+    const lcdDatas = await Bluebird.map(chk, async (height) => rp(`${config.LCD_URI}/blocks/${height}`, options), {
+      concurrency: 16
+    })
     console.log(`height ${chk[0]}`)
 
     await getManager().transaction(async (mgr) => {

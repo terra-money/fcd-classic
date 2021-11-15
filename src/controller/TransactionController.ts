@@ -166,7 +166,8 @@ export default class TransactionController extends KoaController {
         .regex(/^\d{1,16}$/),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
+      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset'),
+      compact: Joi.boolean().description('Compact mode')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })

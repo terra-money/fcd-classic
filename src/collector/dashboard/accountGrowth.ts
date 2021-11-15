@@ -9,9 +9,7 @@ export interface DailyAccountStat {
   activeAccount: number
 }
 
-async function getTotalAccount(
-  until: Date
-): Promise<{
+async function getTotalAccount(until: Date): Promise<{
   date: string
   total_account_count: number
 }> {
