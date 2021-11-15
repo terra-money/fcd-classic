@@ -74,12 +74,16 @@ function hasValueInLog(log: Transaction.Log, value: string) {
   return log.events.some((event) => event.attributes.some((attr) => value === attr.value))
 }
 
+/**
+ * This function is for reducing size of response data by stripping out irrelevant msgs & logs by specific address
+ */
 function compactTransactionData(data: Transaction.LcdTransaction, address: string) {
   const newData = {
     ...data
   }
   const msgIndexes: number[] = []
 
+  // Look for address in each messages
   if (data.tx.value.msg) {
     data.tx.value.msg.forEach((m, index) => {
       if (hasValueInObject(m, address)) {
@@ -88,6 +92,7 @@ function compactTransactionData(data: Transaction.LcdTransaction, address: strin
     })
   }
 
+  // Look for address in each logs
   if (data.logs) {
     data.logs.forEach((l) => {
       if (hasValueInLog(l, address)) {
@@ -96,11 +101,13 @@ function compactTransactionData(data: Transaction.LcdTransaction, address: strin
     })
   }
 
+  // Strip out irrelevant msgs & logs
   if (msgIndexes.length) {
     newData.tx.value.msg = data.tx.value.msg.filter((_, index) => msgIndexes.indexOf(index) !== -1)
     newData.logs = data.logs.filter((l) => msgIndexes.indexOf(l.msg_index) !== -1)
   }
 
+  // Strip out raw_log if the tx has not been failed
   if (!data.code) {
     newData.raw_log = ''
   }
@@ -109,7 +116,7 @@ function compactTransactionData(data: Transaction.LcdTransaction, address: strin
 }
 
 export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsResponse> {
-  if (param.account) {
+  if (!param.account) {
     throw new TypeError(`Account address is required.`)
   }
 
