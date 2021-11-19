@@ -5,7 +5,7 @@
 ## Modules
 
 - ### Collector(Indexer)
-  - Takes block and tx from [LCD](https://docs.terra.money/terracli/lcd.html) and stores into the database in a usable form
+  - Takes block and tx from [LCD](https://docs.terra.money/How-to/Start-LCD.html#start-the-light-client-daemon-lcd) and stores into the database in a usable form
   - Stores issuance, network and staking information to database every minute
   - Collect & cache validator info and store in db
   - Calculate validator daily return
@@ -21,7 +21,7 @@
 ### Terra Core
 
 1. Setup a LCD
-1. Configure firewall ([Reference](https://docs.terra.money/node/installation.html#firewall-configuration))
+1. Configure firewall ([Reference](https://docs.terra.money/How-to/Run-a-full-Terra-node/Set-up-production-environment.html#configure-the-firewall))
 
 ## Project setup
 
