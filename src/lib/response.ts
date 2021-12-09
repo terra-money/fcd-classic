@@ -15,8 +15,8 @@ const TYPES_TO_HTTP_STATUS_CODES = {
   [ErrorTypes.LCD_ERROR]: 500
 }
 
-export function success(ctx: Context, body: any = null) {
-  ctx.status = 200
+export function success(ctx: Context, body: any = null, statusCode = 200) {
+  ctx.status = statusCode
 
   if (body === null) {
     ctx.body = JSON.stringify(body)

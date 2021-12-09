@@ -80,7 +80,8 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    success(ctx, await getTx(ctx.params.txhash))
+    const tx = await getTx(ctx.params.txhash)
+    success(ctx, tx, tx ? 200 : 206)
   }
 
   /**
