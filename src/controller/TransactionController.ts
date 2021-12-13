@@ -91,16 +91,12 @@ export default class TransactionController extends KoaController {
    *
    * @apiParam {string} [account] Account address
    * @apiParam {string} [block] Block number
-   * @apiParam {string} [memo] Memo filter
-   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
    * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
-   * @apiParam {number} [from] Timestamp from
-   * @apiParam {number} [to] Timestamp to
-   * @apiParam {number} [offset] Use last id from previous result for pagination
-   * @apiParam {number} [page=1] # of page
-   * @apiParam {number} [limit=10] Size of page
+   * @apiParam {number} [offset] Use next property from previous result for pagination
+   * @apiParam {number} [limit=10,100] Size of page
    *
-   * @apiSuccess {number} limit Per page item limit
+   * @apiSuccess {number} limit Size of page
+   * @apiSuccess {number} next Offset of next page
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx
    * @apiSuccess {string} txs.tx.type

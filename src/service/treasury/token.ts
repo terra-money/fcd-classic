@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node'
 import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
@@ -93,16 +94,23 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
       operationName: 'statistic',
       query: `query statistic {
           statistic {
-            mirTotalSupply
-            mirCirculatingSupply
+            mirSupply {
+              circulating
+              total
+            }
           }
         }`,
       variables: {}
     },
     json: true
+  }).catch((err) => {
+    sentry.captureException(err)
+    throw err
   })
 
-  if (!res?.data?.statistic) {
+  const mirSupply = res?.data?.statistic?.mirSupply
+
+  if (!mirSupply) {
     return {
       totalSupply: '',
       circulatingSupply: ''
@@ -110,8 +118,8 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
   }
 
   return {
-    totalSupply: div(res.data.statistic.mirTotalSupply, 1000000),
-    circulatingSupply: div(res.data.statistic.mirCirculatingSupply, 1000000)
+    totalSupply: div(mirSupply.total, 1000000),
+    circulatingSupply: div(mirSupply.circulating, 1000000)
   }
 }
 
