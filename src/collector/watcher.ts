@@ -38,7 +38,7 @@ async function collectValidators() {
   const addrs = Array.from(validatorUpdateSet.values())
   validatorUpdateSet.clear()
 
-  const extValidators = await lcd.getExtendedValidators()
+  const extValidators = await lcd.getExtendedValidators('bonded')
   const activePrices = await lcd.getActiveOraclePrices()
 
   await Bluebird.mapSeries(addrs, (addr) => {

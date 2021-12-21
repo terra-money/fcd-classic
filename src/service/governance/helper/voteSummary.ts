@@ -83,7 +83,7 @@ function getVoteCount(votes: LcdProposalVote[]): VoteCount {
 }
 
 export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]> {
-  const extendedValidators = await lcd.getExtendedValidators()
+  const extendedValidators = await lcd.getExtendedValidators('bonded')
 
   return extendedValidators.map((extVal) => {
     const accAddr = convertAddress('terra', extVal.lcdValidator.operator_address)

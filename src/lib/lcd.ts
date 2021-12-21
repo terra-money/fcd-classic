@@ -209,8 +209,10 @@ export interface ExtendedValidator {
   votingPowerWeight: string
 }
 
-export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
-  const [validators, validatorConsensus] = await Promise.all([getValidators(), getValidatorConsensus()])
+export async function getExtendedValidators(
+  status?: 'bonded' | 'unbonded' | 'unbonding'
+): Promise<ExtendedValidator[]> {
+  const [validators, validatorConsensus] = await Promise.all([getValidators(status), getValidatorConsensus()])
   const totalVotingPower = validatorConsensus.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
 
   return validators.reduce((prev, lcdValidator) => {
