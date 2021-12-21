@@ -29,7 +29,7 @@ export async function getValidatorOperatorAddressByHexAddress(hexAddress: string
     return operatorAddress
   }
 
-  const validators = await lcd.getValidators(undefined, height)
+  const validators = await lcd.getValidators('bonded', height)
   const validatorSet = await lcd.getValidatorConsensus(height)
 
   validatorSet.forEach((s) => {

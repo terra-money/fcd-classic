@@ -1,8 +1,6 @@
 import * as crypto from 'crypto'
 import * as sentry from '@sentry/node'
 import * as rp from 'request-promise'
-import { uniqBy } from 'lodash'
-
 import config from 'config'
 import { pick, pickBy } from 'lodash'
 import { plus, times, div, getIntegerPortion } from 'lib/math'
@@ -174,22 +172,34 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 ///////////////////////////////////////////////
 // Tendermint RPC
 ///////////////////////////////////////////////
-async function getSigningInfos(): Promise<LcdValidatorSigningInfo[]> {
-  return (await get('/cosmos/slashing/v1beta1/signing_infos')).info
-}
-
-export function getValidatorConsensus(strHeight?: string): Promise<LcdValidatorConsensus[]> {
+export async function getValidatorConsensus(strHeight?: string): Promise<LcdValidatorConsensus[]> {
   const height = calculateHeightParam(strHeight)
+  const {
+    validators,
+    total
+  }: {
+    validators: LcdValidatorConsensus[]
+    total: string
+  } = await get(`/validatorsets/${height || 'latest'}`, { height })
 
-  return Promise.all([
-    get(`/validatorsets/${height || 'latest'}`, { height }).then((res): LcdValidatorConsensus[] => res.validators),
-    get(`/validatorsets/${height || 'latest'}`, { page: '2', height })
-      .then((res): LcdValidatorConsensus[] => res.validators)
-      .catch((): LcdValidatorConsensus[] => []),
-    get(`/validatorsets/${height || 'latest'}`, { page: '3', height })
-      .then((res): LcdValidatorConsensus[] => res.validators)
-      .catch((): LcdValidatorConsensus[] => [])
-  ]).then((results) => uniqBy(results.flat(), 'address'))
+  const result = [validators]
+  let remaining = parseInt(total) - 100
+  let page = 2
+
+  while (remaining > 0) {
+    const {
+      validators
+    }: {
+      validators: LcdValidatorConsensus[]
+      total: string
+    } = await get(`/validatorsets/${height || 'latest'}`, { page: page.toString(), height })
+
+    result.push(validators)
+    page += 1
+    remaining -= 100
+  }
+
+  return result.flat()
 }
 
 // ExtendedValidator includes all LcdValidator, VotingPower and Uptime
@@ -197,15 +207,10 @@ export interface ExtendedValidator {
   lcdValidator: LcdValidator
   votingPower: string
   votingPowerWeight: string
-  signingInfo?: LcdValidatorSigningInfo
 }
 
 export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
-  const [validators, validatorConsensus, signingInfos] = await Promise.all([
-    getValidators(),
-    getValidatorConsensus(),
-    getSigningInfos()
-  ])
+  const [validators, validatorConsensus] = await Promise.all([getValidators(), getValidatorConsensus()])
   const totalVotingPower = validatorConsensus.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
 
   return validators.reduce((prev, lcdValidator) => {
@@ -214,8 +219,7 @@ export async function getExtendedValidators(): Promise<ExtendedValidator[]> {
     prev.push({
       lcdValidator,
       votingPower: consVal ? times(consVal.voting_power, 1000000) : '0.0',
-      votingPowerWeight: consVal ? div(consVal.voting_power, totalVotingPower) : '0.0',
-      signingInfo: consVal && signingInfos.find((si) => si.address === consVal.address)
+      votingPowerWeight: consVal ? div(consVal.voting_power, totalVotingPower) : '0.0'
     })
 
     return prev

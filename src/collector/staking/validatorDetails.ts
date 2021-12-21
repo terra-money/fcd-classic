@@ -44,7 +44,7 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
 }
 
 export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: CoinByDenoms) {
-  const { lcdValidator, signingInfo } = extendedValidator
+  const { lcdValidator } = extendedValidator
   const operatorAddress = lcdValidator.operator_address
   const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const accountAddr = convertAddress('terra', operatorAddress)
@@ -90,7 +90,6 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
     selfDelegation: selfDelegation?.balance.amount ?? '0.0',
     selfDelegationWeight: div(selfDelegation?.delegation.shares ?? '0.0', lcdValidator.delegator_shares),
-    signingInfo,
     rewardPool: sortDenoms(rewardPool)
   }
 
