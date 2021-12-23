@@ -42,7 +42,10 @@ export async function getValidatorOperatorAddressByHexAddress(hexAddress: string
   })
 
   if (!validatorCache.has(hexAddress)) {
-    throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
+    // TODO: Need to figure out solution when a block was proposed by inactive validators
+    // when collecting old blocks
+    // throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
+    return validatorCache.values().next().value
   }
 
   return validatorCache.get(hexAddress)
