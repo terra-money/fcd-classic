@@ -2,9 +2,10 @@ import { reverse, uniqBy } from 'lodash'
 import * as Bluebird from 'bluebird'
 
 import * as lcd from 'lib/lcd'
-import { plus, times, minus } from 'lib/math'
+import { plus, minus } from 'lib/math'
 import { convertAddress } from 'lib/common'
 import { errorReport } from 'lib/errorReporting'
+import { STATUS_MAPPING } from './proposalBasic'
 
 export type ValidatorVotingPower = {
   accountAddress: string
@@ -38,7 +39,7 @@ function getVotersVotingPowerArr(
   validatorsVotingPower: ValidatorVotingPower[],
   delegations: LcdStakingDelegation[]
 ): ValidatorVotingPower[] {
-  delegations.forEach((delegation) => {
+  delegations.forEach(({ delegation }) => {
     const { delegator_address: delegatorAddress, validator_address: validatorAddress, shares } = delegation
     const validator = validatorsVotingPower.find((v) => v.operatorAddress === validatorAddress)
     const delegator = validatorsVotingPower.find((v) => v.accountAddress === delegatorAddress)
@@ -82,21 +83,21 @@ function getVoteCount(votes: LcdProposalVote[]): VoteCount {
 }
 
 export async function getValidatorsVotingPower(): Promise<ValidatorVotingPower[]> {
-  const [votingPower, validators] = await Promise.all([lcd.getVotingPower(), lcd.getValidators()])
+  const extendedValidators = await lcd.getExtendedValidators('bonded')
 
-  return validators.map((item) => {
-    const accAddr = convertAddress('terra', item.operator_address)
+  return extendedValidators.map((extVal) => {
+    const accAddr = convertAddress('terra', extVal.lcdValidator.operator_address)
 
     return {
       accountAddress: accAddr,
-      operatorAddress: item.operator_address,
-      votingPower: times(votingPower.votingPowerByPubKey[item.consensus_pubkey], '1000000')
+      operatorAddress: extVal.lcdValidator.operator_address,
+      votingPower: extVal.votingPower
     }
   })
 }
 
 async function getVoteDistributionAndTotal(proposal: LcdProposal, votes: LcdProposalVote[]) {
-  if (proposal.proposal_status === 'VotingPeriod') {
+  if (STATUS_MAPPING[proposal.status] === 'VotingPeriod') {
     const { distribution, total } = tallying(votes)
     return { distribution, total }
   }

@@ -3,14 +3,23 @@ import config from 'config'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
-import { getUnconfirmedTxs } from 'lib/rpc'
 import Mempool from 'lib/mempool'
-import { getTx, getTxList, getMsgList, postTxs } from 'service/transaction'
+import { getBlock, getTx, getTxList, postTxs } from 'service/transaction'
 
 const Joi = Validator.Joi
 
 @Controller('')
 export default class TransactionController extends KoaController {
+  @Get('/blocks/:height')
+  @Validate({
+    params: {
+      height: Joi.number().required().description('Block height')
+    }
+  })
+  async getBlock(ctx): Promise<void> {
+    success(ctx, await getBlock(ctx.params.height))
+  }
+
   /**
    * @api {get} /tx/:txhash Get Tx
    * @apiName getTx
@@ -71,7 +80,8 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    success(ctx, await getTx(ctx.params.txhash))
+    const tx = await getTx(ctx.params.txhash)
+    success(ctx, tx, tx ? 200 : 206)
   }
 
   /**
@@ -81,16 +91,12 @@ export default class TransactionController extends KoaController {
    *
    * @apiParam {string} [account] Account address
    * @apiParam {string} [block] Block number
-   * @apiParam {string} [memo] Memo filter
-   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
    * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
-   * @apiParam {number} [from] Timestamp from
-   * @apiParam {number} [to] Timestamp to
-   * @apiParam {number} [offset] Use last id from previous result for pagination
-   * @apiParam {number} [page=1] # of page
-   * @apiParam {number} [limit=10] Size of page
+   * @apiParam {number} [offset] Use next property from previous result for pagination
+   * @apiParam {number} [limit=10,100] Size of page
    *
-   * @apiSuccess {number} limit Per page item limit
+   * @apiSuccess {number} limit Size of page
+   * @apiSuccess {number} next Offset of next page
    * @apiSuccess {Object[]} txs tx list
    * @apiSuccess {Object} txs.tx
    * @apiSuccess {string} txs.tx.type
@@ -157,7 +163,8 @@ export default class TransactionController extends KoaController {
         .regex(/^\d{1,16}$/),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
+      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset'),
+      compact: Joi.boolean().description('Compact mode')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -214,54 +221,6 @@ export default class TransactionController extends KoaController {
   async postTxs(ctx): Promise<void> {
     const body = ctx.request.body
     success(ctx, await postTxs(body))
-  }
-
-  /**
-   * @api {get} /msgs Get Parsed Tx List
-   * @apiName getParsedTxList
-   * @apiGroup Transactions
-   *
-   * @apiParam {string} account Account address
-   * @apiParam {number} [page=1] Page
-   * @apiParam {number} [limit=10] Limit
-   * @apiParam {string} [action] Action filter
-   * @apiParam {string} [order='ASC','DESC'] Ordering (default: DESC)
-   * @apiParam {number} [from] Timestamp from
-   * @apiParam {number} [to] Timestamp to
-   *
-   * @apiSuccess {number} limit Per page item limit
-   * @apiSuccess {Object[]} txs tx list
-   * @apiSuccess {string} txs.timestamp tx time
-   * @apiSuccess {string} txs.txhash tx hash
-   * @apiSuccess {Object[]} txs.msgs Parsed tx messages
-   * @apiSuccess {string} txs.msgs.tag tx tag
-   * @apiSuccess {string} txs.msgs.text tx message text format
-   * @apiSuccess {Object[]} txs.msgs.in
-   * @apiSuccess {string} txs.msgs.in.denom
-   * @apiSuccess {string} txs.msgs.in.amount
-   * @apiSuccess {Object[]} txs.msgs.out
-   * @apiSuccess {string} txs.msgs.out.denom
-   * @apiSuccess {string} txs.msgs.out.amount
-   * @apiSuccess {string} txs.msgs.tax transaction tax
-   * @apiSuccess {Object[]} txs.txFee
-   * @apiSuccess {string} txs.txFee.denom
-   * @apiSuccess {string} txs.txFee.amount
-   * @apiSuccess {string} txs.memo
-   * @apiSuccess {boolean} txs.success
-   * @apiSuccess {string} txs.errorMessage
-   * @apiSuccess {string} txs.chainId
-   */
-  @Get('/msgs')
-  @Validate({
-    query: {
-      account: Joi.string().regex(TERRA_ACCOUNT_REGEX).required().description('User address'),
-      limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async getMsgList(ctx): Promise<void> {
-    success(ctx, await getMsgList(ctx.request.query))
   }
 
   /**

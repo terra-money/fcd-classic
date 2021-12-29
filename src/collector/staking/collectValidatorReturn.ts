@@ -3,7 +3,7 @@ import { getRepository } from 'typeorm'
 
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 
-import * as lcd from 'lib/lcd'
+import { ExtendedValidator, getExtendedValidators } from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ONE_DAY_IN_MS } from 'lib/constant'
 import { getAvgVotingPower, getAvgPrice } from 'service/staking'
@@ -27,7 +27,7 @@ async function getExistingValidatorsMap(timestamp: Date): Promise<{
 
 export async function generateValidatorReturns(
   fromTs: number,
-  validatorsList: LcdValidator[],
+  extValidators: ExtendedValidator[],
   updateExisting = false
 ): Promise<ValidatorReturnInfoEntity[]> {
   const retEntity: ValidatorReturnInfoEntity[] = []
@@ -37,9 +37,10 @@ export async function generateValidatorReturns(
 
   const priceObj = await getAvgPrice(fromTs, fromTs + ONE_DAY_IN_MS)
   const valMap = await getExistingValidatorsMap(timestamp)
-  const votingPower = await lcd.getVotingPower()
 
-  for (const validator of validatorsList) {
+  for (const extValidator of extValidators) {
+    const { lcdValidator: validator, votingPower } = extValidator
+
     if (!updateExisting && valMap[validator.operator_address]) {
       logger.info(`row already exists: ${validator.operator_address}`)
       continue
@@ -98,7 +99,7 @@ export async function collectValidatorReturn() {
     return
   }
 
-  const validatorsList = await lcd.getValidators('bonded')
+  const validatorsList = await getExtendedValidators()
   logger.info(`Got a list of ${validatorsList.length} validators`)
   logger.info(`Pre-calculator started for validators from date ${to.toString()}`)
   // used -10 for just to make sure it doesn't calculate for today

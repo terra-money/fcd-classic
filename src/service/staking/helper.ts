@@ -6,56 +6,16 @@ import config from 'config'
 import { TxEntity, ValidatorInfoEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
-import { SLASHING_PERIOD } from 'lib/constant'
 import { div, plus, minus, times } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 
 import { getDelegationTxs } from './getDelegationTxs'
 
-enum ValidatorStatusType {
-  INACTIVE = 'inactive',
-  ACTIVE = 'active',
-  JAILED = 'jailed',
-  UNBONDING = 'unbonding',
-  UNKNOWN = 'unknown'
-}
-
 interface GetRawDelegationTxsParam {
   operatorAddr: string
   limit?: number
   offset?: number
-}
-
-export function getUptime(signingInfo: LcdValidatorSigningInfo): number {
-  const missedBlocksCounter = get(signingInfo, 'missed_blocks_counter')
-  return 1 - Number(missedBlocksCounter) / SLASHING_PERIOD || 0
-}
-
-export function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatusType {
-  const { status, jailed } = validatorInfo
-
-  if (jailed) {
-    return ValidatorStatusType.JAILED
-  }
-
-  switch (status) {
-    case 0: {
-      return ValidatorStatusType.INACTIVE
-    }
-
-    case 1: {
-      return ValidatorStatusType.UNBONDING
-    }
-
-    case 2: {
-      return ValidatorStatusType.ACTIVE
-    }
-
-    default: {
-      return ValidatorStatusType.UNKNOWN
-    }
-  }
 }
 
 function addDelegateFilterToQuery(qb: WhereExpressionBuilder, operatorAddress: string) {
@@ -146,7 +106,7 @@ export async function getRawDelegationTxs(param: GetRawDelegationTxsParam): Prom
 export async function getCommissions(operatorAddr: string): Promise<Coin[]> {
   try {
     const totalRewards = await lcd.getCommissions(operatorAddr)
-    return totalRewards ? totalRewards.val_commission : []
+    return totalRewards ? totalRewards.val_commission.commission : []
   } catch (e) {
     return []
   }
@@ -183,14 +143,8 @@ export async function getAvgVotingPowerUncached(
   validator: LcdValidator,
   fromTs: number,
   toTs: number,
-  votingPower: lcd.VotingPower
+  votingPowerNow: string
 ): Promise<string | undefined> {
-  const votingPowerNow = votingPower.votingPowerByPubKey[validator.consensus_pubkey]
-
-  if (!votingPowerNow) {
-    return
-  }
-
   const { events } = await getDelegationTxs({ operatorAddr: validator.operator_address })
 
   const fromStr = new Date(fromTs).toISOString()
@@ -209,7 +163,7 @@ export async function getAvgVotingPowerUncached(
       }
 
       return minus(acc, eventAmount)
-    }, times(votingPowerNow, 1000000))
+    }, votingPowerNow)
 
     const tsRange = toTs - fromTs
 
@@ -325,7 +279,6 @@ export const getTotalStakingReturn = memoizeCache(getTotalStakingReturnUncached,
 export function generateValidatorResponse(validator: ValidatorInfoEntity): ValidatorResponse {
   const {
     operatorAddress,
-    consensusPubkey,
     tokens,
     delegatorShares,
     upTime,
@@ -334,6 +287,7 @@ export function generateValidatorResponse(validator: ValidatorInfoEntity): Valid
     identity,
     moniker,
     website,
+    securityContact,
     details,
     profileIcon,
     votingPower,
@@ -350,7 +304,6 @@ export function generateValidatorResponse(validator: ValidatorInfoEntity): Valid
 
   return {
     operatorAddress,
-    consensusPubkey,
     tokens,
     delegatorShares,
     upTime,
@@ -360,6 +313,7 @@ export function generateValidatorResponse(validator: ValidatorInfoEntity): Valid
       identity,
       moniker,
       website,
+      securityContact,
       details,
       profileIcon
     },

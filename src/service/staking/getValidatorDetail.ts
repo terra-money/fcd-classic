@@ -55,7 +55,8 @@ export async function getValidatorDetailUncached(
 
     result.redelegations = redelegations
     result.myDelegation =
-      delegation?.shares && div(times(delegation.shares, validator.tokens), validator.delegatorShares)
+      delegation?.delegation.shares &&
+      div(times(delegation.delegation.shares, validator.tokens), validator.delegatorShares)
 
     // No delegation, no remain reward
     if (result.myDelegation) {

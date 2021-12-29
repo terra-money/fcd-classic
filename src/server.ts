@@ -32,9 +32,9 @@ export async function createServer() {
   const app = await createApp(config.DISABLE_API)
   const server = http.createServer(app.callback())
 
-  server.listen(config.PORT, () => {
+  server.listen(config.SERVER_PORT, () => {
     Mempool.start()
-    logger.info(`${packageJson.description} is listening on port ${config.PORT}`)
+    logger.info(`${packageJson.description} is listening on port ${config.SERVER_PORT}`)
   })
 
   return server

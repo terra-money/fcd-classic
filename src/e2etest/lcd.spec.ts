@@ -10,7 +10,7 @@ const VALID_TERRA_ADDRESS = 'terra1dcegyrekltswvyy0xy69ydgxn9x8x32zdtapd8'
 const UNKNOWN_VALOPER_ADDRESS = 'terravaloper1uwgg244kechjgqdyr9kyxtt7yyj5zqcugvna2d'
 const VALID_VALOPER_ADDRESS = 'terravaloper1dcegyrekltswvyy0xy69ydgxn9x8x32zdy3ua5'
 const VALID_VALTERRA_ADDRESS = 'terra1dcegyrekltswvyy0xy69ydgxn9x8x32zdtapd8'
-const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepqwgwyky5375uk0llhwf0ya5lmwy4up838jevfh3pyzf5s3hd96xjslnexul'
+// const VALID_VALCONSPUB_ADDRESS = 'terravalconspub1zcjduepqwgwyky5375uk0llhwf0ya5lmwy4up838jevfh3pyzf5s3hd96xjslnexul'
 
 const coinObject = {
   denom: expect.any(String),
@@ -55,7 +55,7 @@ const basicProposalObject = {
     }
   },
   id: expect.any(String),
-  proposal_status: expect.any(String),
+  status: expect.any(Number),
   final_tally_result: {
     yes: expect.any(String),
     abstain: expect.any(String),
@@ -90,13 +90,6 @@ describe('LCD', () => {
       pub_key: expect.any(String),
       proposer_priority: expect.any(String),
       voting_power: expect.any(String)
-    })
-  })
-
-  test('getVotingPower', async () => {
-    await expect(lcd.getVotingPower()).resolves.toMatchObject({
-      totalVotingPower: expect.any(String),
-      votingPowerByPubKey: {}
     })
   })
 
@@ -151,13 +144,15 @@ describe('LCD', () => {
 
     expect(delegations).toBeArray()
 
-    const delegation = delegations.find((d) => d.delegator_address === VALID_TERRA_ADDRESS)
+    const delegation = delegations.find((d) => d.delegation.delegator_address === VALID_TERRA_ADDRESS)
 
     expect(delegation).toMatchObject({
       balance: coinObject,
-      delegator_address: expect.any(String),
-      shares: expect.any(String),
-      validator_address: expect.any(String)
+      delegation: {
+        delegator_address: expect.any(String),
+        shares: expect.any(String),
+        validator_address: expect.any(String)
+      }
     })
   })
 
@@ -362,21 +357,6 @@ describe('LCD', () => {
     })
   })
 
-  test('getSigningInfo: invalid', async () => {
-    await expect(lcd.getSigningInfo('invalid')).toReject()
-  })
-
-  test('getSigningInfo: valid', async () => {
-    await expect(lcd.getSigningInfo(VALID_VALCONSPUB_ADDRESS)).resolves.toMatchObject({
-      address: expect.any(String), // terravalcons...
-      index_offset: expect.any(String),
-      jailed_until: expect.any(String),
-      missed_blocks_counter: expect.any(String),
-      start_height: expect.any(String),
-      tombstoned: expect.any(Boolean)
-    })
-  })
-
   test('getAllRewards: invalid', async () => {
     await expect(lcd.getTotalRewards('invalid')).toReject()
   })
@@ -414,7 +394,9 @@ describe('LCD', () => {
     await expect(lcd.getCommissions(VALID_VALOPER_ADDRESS)).resolves.toMatchObject({
       operator_address: VALID_VALTERRA_ADDRESS,
       self_bond_rewards: expect.arrayContaining([coinObject]),
-      val_commission: expect.arrayContaining([coinObject])
+      val_commission: {
+        commision: expect.arrayContaining([coinObject])
+      }
     })
   })
 

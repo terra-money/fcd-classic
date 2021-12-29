@@ -43,7 +43,7 @@ async function getDelegatedValidatorWhoDidNotVoted(
     return []
   }
 
-  const delegatedOperatorList: string[] = delegations.map((d) => d.validator_address)
+  const delegatedOperatorList: string[] = delegations.map(({ delegation: d }) => d.validator_address)
 
   const qb = getRepository(ValidatorInfoEntity)
     .createQueryBuilder('validator')

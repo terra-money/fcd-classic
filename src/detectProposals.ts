@@ -1,7 +1,7 @@
+import * as Bluebird from 'bluebird'
 import * as lcd from 'lib/lcd'
-import { unmarshalTx, Tx } from '@terra-money/amino-js'
 
-function detectProposals(txs: Tx[]) {
+function detectProposals(txs: Transaction.LcdTx[]) {
   txs.forEach((tx) => {
     console.log(JSON.stringify(tx, null, 2))
   })
@@ -10,17 +10,17 @@ function detectProposals(txs: Tx[]) {
 async function main() {
   const { block } = await lcd.getBlock('3012946')
 
-  const txs = block.data.txs.map((tx, idx) => {
+  const msgs = await Bluebird.map(block.data.txs, (tx, idx) => {
     try {
-      return unmarshalTx(Buffer.from(tx, 'base64'))
+      return lcd.decodeTx(tx)
     } catch (err) {
       console.log('index:', idx, tx)
       console.error(err)
-      return {} as Tx
+      return {} as Transaction.LcdTx
     }
   })
 
-  detectProposals(txs)
+  detectProposals(msgs)
 }
 
 main().catch(console.error)

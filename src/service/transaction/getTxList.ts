@@ -1,7 +1,5 @@
 import { getRepository, getManager } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
-import config from 'config'
-import parseTx from './parseTx'
 
 export interface GetTxListParam {
   offset?: number
@@ -10,6 +8,7 @@ export interface GetTxListParam {
   limit: number
   order?: string
   chainId?: string
+  compact?: boolean
 }
 
 interface GetTxsResponse {
@@ -20,12 +19,9 @@ interface GetTxsResponse {
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const qb = await getRepository(BlockEntity)
-    .createQueryBuilder('block')
-    .where('block.height = :height AND block.chainId = :chainId', {
-      height: param.block,
-      chainId: param.chainId || config.CHAIN_ID
-    })
+  const qb = await getRepository(BlockEntity).createQueryBuilder('block').where('block.height = :height', {
+    height: param.block
+  })
 
   if (param.offset) {
     qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
@@ -33,7 +29,8 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRespo
     qb.leftJoinAndSelect('block.txs', 'txs')
   }
 
-  qb.orderBy('txs.id', order).take(param.limit + 1)
+  qb.orderBy('block.timestamp', order)
+  qb.addOrderBy('txs.id', order).take(param.limit + 1)
 
   const blockWithTxs = await qb.getOne()
   const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
@@ -51,6 +48,71 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRespo
     limit: param.limit,
     txs
   }
+}
+
+function hasValueInObject(obj: any, value: string): boolean {
+  if (typeof obj === 'string' && value === obj) {
+    return true
+  } else if (Array.isArray(obj)) {
+    if (obj.some((o2) => hasValueInObject(o2, value))) {
+      return true
+    }
+  } else if (typeof obj === 'object' && obj !== null) {
+    if (Object.keys(obj).some((key) => hasValueInObject(obj[key], value))) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function hasValueInLog(log: Transaction.Log, value: string) {
+  if (!log.events) {
+    return false
+  }
+
+  return log.events.some((event) => event.attributes.some((attr) => value === attr.value))
+}
+
+/**
+ * This function is for reducing size of response data by stripping out irrelevant msgs & logs by specific address
+ */
+function compactTransactionData(data: Transaction.LcdTransaction, address: string) {
+  const newData = {
+    ...data
+  }
+  const msgIndexes: number[] = []
+
+  // Look for address in each messages
+  if (data.tx.value.msg) {
+    data.tx.value.msg.forEach((m, index) => {
+      if (hasValueInObject(m, address)) {
+        msgIndexes.push(index)
+      }
+    })
+  }
+
+  // Look for address in each logs
+  if (data.logs) {
+    data.logs.forEach((l) => {
+      if (hasValueInLog(l, address)) {
+        msgIndexes.push(l.msg_index)
+      }
+    })
+  }
+
+  // Strip out irrelevant msgs & logs
+  if (msgIndexes.length) {
+    newData.tx.value.msg = data.tx.value.msg.filter((_, index) => msgIndexes.indexOf(index) !== -1)
+    newData.logs = data.logs.filter((l) => msgIndexes.indexOf(l.msg_index) !== -1)
+  }
+
+  // Strip out raw_log if the tx has not been failed
+  if (!data.code) {
+    newData.raw_log = ''
+  }
+
+  return newData
 }
 
 export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsResponse> {
@@ -92,7 +154,11 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
     return {
       next,
       limit: param.limit,
-      txs: txs.map((tx) => ({ id: tx.id, chainId: tx.chainId, ...tx.data }))
+      txs: txs.map((tx) => ({
+        id: tx.id,
+        chainId: tx.chainId,
+        ...(param.compact ? compactTransactionData(tx.data, param.account as string) : tx.data)
+      }))
     }
   })
 }
@@ -137,12 +203,6 @@ interface GetTxListResponse {
   txs: Transaction.LcdTransaction[]
 }
 
-interface GetMsgListReturn {
-  next?: number
-  limit: number
-  txs: ParsedTxInfo[]
-}
-
 export async function getTxList(param: GetTxListParam): Promise<GetTxListResponse> {
   let response
 
@@ -155,14 +215,4 @@ export async function getTxList(param: GetTxListParam): Promise<GetTxListRespons
   }
 
   return response
-}
-
-export async function getMsgList(param: GetTxListParam): Promise<GetMsgListReturn> {
-  const { next, limit, txs } = await getTxFromAccount(param)
-
-  return {
-    next,
-    limit,
-    txs: await Promise.all(txs.map((tx) => parseTx(tx, param.account)))
-  }
 }

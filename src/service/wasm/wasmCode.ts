@@ -1,10 +1,6 @@
 import { getRepository, LessThan } from 'typeorm'
-
 import { WasmCodeEntity } from 'orm'
-import config from 'config'
-
 import { APIError, ErrorTypes } from 'lib/error'
-
 import { parseWasmTxMemo, ParsedMemo } from './helpers'
 
 type WasmCodeParams = {
@@ -26,7 +22,7 @@ export function getWasmCodeDetails(code: WasmCodeEntity): WasmCodeDetails {
   return {
     code_id: code.codeId,
     sender: code.sender,
-    timestamp: code.timestamp.toISOString(),
+    timestamp: code.timestamp ? code.timestamp.toISOString() : '',
     txhash: code.txHash,
     info: parseWasmTxMemo(code.txMemo)
   }

@@ -29,11 +29,11 @@ export async function getValidatorOperatorAddressByHexAddress(hexAddress: string
     return operatorAddress
   }
 
-  const validators = await lcd.getValidators(undefined, height)
+  const validators = await lcd.getValidators('bonded', height)
   const validatorSet = await lcd.getValidatorConsensus(height)
 
   validatorSet.forEach((s) => {
-    const v = validators.find((v) => v.consensus_pubkey === s.pub_key)
+    const v = validators.find((v) => v.consensus_pubkey.value === s.pub_key.value)
 
     if (v) {
       const h = convertAddressToHex(s.address).toUpperCase()
@@ -42,7 +42,10 @@ export async function getValidatorOperatorAddressByHexAddress(hexAddress: string
   })
 
   if (!validatorCache.has(hexAddress)) {
-    throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
+    // TODO: Need to figure out solution when a block was proposed by inactive validators
+    // when collecting old blocks
+    // throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
+    return validatorCache.values().next().value
   }
 
   return validatorCache.get(hexAddress)
@@ -161,7 +164,7 @@ export async function saveBlockInformation(
         // save wasm
         await collectWasm(mgr, txEntities)
         // save proposals
-        await detectAndUpdateProposal(mgr, txEntities, height)
+        await detectAndUpdateProposal(mgr, txEntities)
       }
 
       // new block timestamp
@@ -208,12 +211,12 @@ export async function collectBlock(): Promise<void> {
       break
     }
 
+    logger.info('collectBlock: waiting for the first block')
     await Bluebird.delay(1000)
   }
 
   let latestIndexedBlock = await getLatestIndexedBlock()
-  const latestIndexedHeight = latestIndexedBlock ? latestIndexedBlock.height : 0
-  let nextSyncHeight = latestIndexedHeight + 1
+  let nextSyncHeight = latestIndexedBlock ? latestIndexedBlock.height + 1 : config.INITIAL_HEIGHT
 
   while (nextSyncHeight <= latestHeight) {
     const lcdBlock = await lcd.getBlock(nextSyncHeight.toString())

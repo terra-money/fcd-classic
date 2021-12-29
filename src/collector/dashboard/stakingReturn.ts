@@ -24,9 +24,7 @@ interface DailyStakingInfo {
   avgStaking: string // bigint
 }
 
-async function getAvgBondedTokensByDate(
-  daysBefore?: number
-): Promise<{
+async function getAvgBondedTokensByDate(daysBefore?: number): Promise<{
   [date: string]: string
 }> {
   const latestDate = await getLatestDateOfGeneralInfo()
@@ -53,9 +51,7 @@ async function getAvgBondedTokensByDate(
   return bondedTokensObj
 }
 
-async function getRewardsInLunaByDate(
-  daysBefore?: number
-): Promise<{
+async function getRewardsInLunaByDate(daysBefore?: number): Promise<{
   [date: string]: DailyReturnInfo
 }> {
   const rewards = await getRewardsSumByDateDenom(daysBefore)

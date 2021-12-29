@@ -9,29 +9,31 @@ export default class WasmContractEntity {
   @Column()
   codeId: string
 
+  // `admin` from columbus-5
   @Index('wcontract_index_owner')
-  @Column()
+  @Column({ nullable: true })
   owner: string
+
+  // New from columbus-5
+  @Column({ nullable: true })
+  creator: string
 
   @Column({ unique: true })
   contractAddress: string
 
-  @Column()
+  @Column({ nullable: true })
   initMsg: string
 
-  @Column()
+  @Column({ nullable: true })
   txHash: string
 
   @Index('wcontract_index_memo')
-  @Column()
+  @Column({ nullable: true })
   txMemo: string
 
   @Index('wcontract_index_timestamp')
-  @Column()
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date
-
-  @Column({ default: false })
-  migratable: boolean
 
   @Column({ nullable: true })
   migrateMsg: string

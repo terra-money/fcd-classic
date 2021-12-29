@@ -66,15 +66,6 @@ async function getMyDelegations(
     : []
 }
 
-function getDelegationTotal(delegations: DelegationInfo[]): string {
-  return (
-    delegations &&
-    delegations.reduce((acc, curr) => {
-      return curr.amount ? plus(acc, curr.amount) : acc
-    }, '0')
-  )
-}
-
 interface UserValidatorWithDelegationInfo extends ValidatorResponse {
   myDelegation?: string // user delegation amount
   myUndelegation?: UndeligationSchedule[] // user undelegation schedule with amount and info
@@ -113,7 +104,7 @@ interface GetStakingResponse {
 
 export async function getStakingUncached(address: string): Promise<GetStakingResponse> {
   // Fetch data
-  const [validators, delegations, balance, redelegations, prices, allRewards] = await Promise.all([
+  const [validators, delegations, balance, redelegations, prices, totalRewards] = await Promise.all([
     getValidators(),
     getDelegations(address),
     getBalance(address),
@@ -124,14 +115,14 @@ export async function getStakingUncached(address: string): Promise<GetStakingRes
   const validatorObj = keyBy(validators, 'operatorAddress')
 
   // balance
-  const delegationTotal = delegations ? getDelegationTotal(delegations) : '0'
+  const delegationTotal = delegations.reduce((acc, curr) => plus(acc, curr.amount), '0')
   const myUndelegations = balance.unbondings ? getUndelegateSchedule(balance.unbondings, validatorObj) : []
 
   const lunaBalance = find(balance.balance, { denom: 'uluna' })
   const delegatable = lunaBalance ? lunaBalance.delegatable : '0'
 
   // rewards
-  const totalReward = allRewards ? getTotalRewardsAdjustedToLuna(allRewards, prices) : '0'
+  const totalReward = getTotalRewardsAdjustedToLuna(totalRewards, prices)
 
   // my delegations
   const myDelegations = await getMyDelegations(delegations, validatorObj, prices)
@@ -143,7 +134,7 @@ export async function getStakingUncached(address: string): Promise<GetStakingRes
     undelegations: myUndelegations,
     rewards: {
       total: totalReward,
-      denoms: allRewards ? sortDenoms(allRewards) : []
+      denoms: sortDenoms(totalRewards)
     },
     myDelegations,
     availableLuna: delegatable

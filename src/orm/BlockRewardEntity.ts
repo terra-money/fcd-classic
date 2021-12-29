@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index, OneToOne, JoinColumn } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm'
 
 import BlockEntity from './BlockEntity'
 

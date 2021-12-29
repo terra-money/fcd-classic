@@ -17,10 +17,6 @@ export default class ValidatorInfoEntity {
   @Column({ unique: true })
   operatorAddress: string
 
-  @Index('vi_cons_pub_key')
-  @Column()
-  consensusPubkey: string
-
   @Index('vi_account_address')
   @Column()
   accountAddress: string
@@ -35,6 +31,9 @@ export default class ValidatorInfoEntity {
   website: string
 
   @Column({ default: '' })
+  securityContact: string
+
+  @Column({ default: '' })
   details: string
 
   @Column({ default: '' })
@@ -45,7 +44,7 @@ export default class ValidatorInfoEntity {
   status: ValidatorStatus
 
   @Index('vi_jailed')
-  @Column()
+  @Column({ nullable: true, default: false })
   jailed: boolean
 
   @Column()
@@ -99,9 +98,9 @@ export default class ValidatorInfoEntity {
   @UpdateDateColumn()
   updatedAt: Date
 
-  @Column({ type: 'jsonb' })
+  @Column({ nullable: true, type: 'jsonb' })
   public signingInfo: object
 
-  @Column({ type: 'jsonb' })
+  @Column({ nullable: true, type: 'jsonb' })
   public rewardPool: object
 }

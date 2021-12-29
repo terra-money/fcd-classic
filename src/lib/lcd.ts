@@ -1,10 +1,9 @@
 import * as crypto from 'crypto'
+import * as sentry from '@sentry/node'
 import * as rp from 'request-promise'
-import { uniqBy } from 'lodash'
-
 import config from 'config'
-
-import { plus, getIntegerPortion } from 'lib/math'
+import { pick, pickBy } from 'lodash'
+import { plus, times, div, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
 
 const protocol = require(config.LCD_URI.startsWith('https') ? 'https' : 'http')
@@ -20,7 +19,8 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
     method: 'GET',
     rejectUnauthorized: false,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'User-Agent': 'terra-fcd'
     },
     qs: params,
     json: true,
@@ -49,8 +49,77 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
 ///////////////////////////////////////////////
 // Transactions
 ///////////////////////////////////////////////
-export function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
-  return get(`/txs/${hash}`)
+export async function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
+  const { tx_response } = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
+
+  const intermediate = pickBy(
+    pick(tx_response, [
+      'height',
+      'txhash',
+      'logs',
+      'gas_wanted',
+      'gas_used',
+      'codespace',
+      'code',
+      'timestamp',
+      'raw_log'
+    ])
+  ) as Pick<
+    Transaction.LcdTransaction,
+    'height' | 'txhash' | 'logs' | 'gas_wanted' | 'gas_used' | 'codespace' | 'code' | 'timestamp' | 'raw_log'
+  >
+
+  const { auth_info, body, signatures } = tx_response.tx
+
+  return {
+    ...intermediate,
+    tx: {
+      type: 'core/StdTx',
+      value: {
+        fee: {
+          amount: auth_info.fee.amount,
+          gas: auth_info.fee.gas_limit
+        },
+        msg: body.messages.map((m) => {
+          // '/terra.oracle.v1beta1.MsgAggregateExchangeRatePrevote' ->
+          // [ 'terra', 'oracle', 'v1beta1', 'MsgAggregateExchangeRatePrevote' ]
+          const tokens = m['@type'].match(/([a-zA-Z0-9]+)/g)
+          let type
+
+          if (tokens[0] === 'terra' || tokens[0] === 'cosmos') {
+            type = `${tokens[1]}/${tokens[tokens.length - 1]}`
+          } else {
+            type = `${tokens[0]}/${tokens[tokens.length - 1]}`
+          }
+
+          type = type
+            .replace('distribution/MsgSetWithdrawAddress', 'distribution/MsgModifyWithdrawAddress')
+            .replace('distribution/MsgWithdrawDelegatorReward', 'distribution/MsgWithdrawDelegationReward')
+            .replace('authz/MsgGrant', 'msgauth/MsgGrantAuthorization')
+            .replace('authz/MsgRevoke', 'msgauth/MsgRevokeAuthorization')
+            .replace('authz/MsgExec', 'msgauth/MsgExecAuthorized')
+            .replace('ibc/MsgTransfer', 'cosmos-sdk/MsgTransfer')
+
+          return {
+            type,
+            value: pick(
+              m,
+              Object.keys(m).filter((key) => key !== '@type')
+            )
+          }
+        }),
+        signatures: auth_info.signer_infos.map((si, idx) => ({
+          pub_key: {
+            type: 'tendermint/PubKeySecp256k1',
+            value: si.public_key.key
+          },
+          signature: signatures[idx]
+        })),
+        memo: body.memo,
+        timeout_height: body.timeout_height
+      }
+    }
+  }
 }
 
 export function getTxHash(txstring: string): string {
@@ -70,6 +139,23 @@ export function getTxHashesFromBlock(lcdBlock: LcdBlock): string[] {
   return hashes
 }
 
+export function decodeTx(tx: string): Promise<Transaction.LcdTx> {
+  return rp
+    .post(`${config.LCD_URI}/txs/decode`, { json: true, body: { tx } })
+    .then((res) => ({
+      type: 'core/StdTx',
+      value: res.result
+    }))
+    .catch((err) => {
+      sentry.withScope((scope) => {
+        scope.setExtra('tx', tx)
+        sentry.captureException(err)
+      })
+
+      return {}
+    })
+}
+
 export function broadcast(body: { tx: Transaction.Value; mode: string }): Promise<Transaction.LcdPostTransaction> {
   const options: rp.RequestPromiseOptions = {
     method: 'POST',
@@ -86,40 +172,60 @@ export function broadcast(body: { tx: Transaction.Value; mode: string }): Promis
 ///////////////////////////////////////////////
 // Tendermint RPC
 ///////////////////////////////////////////////
-export function getValidatorConsensus(strHeight?: string): Promise<LcdValidatorConsensus[]> {
+export async function getValidatorConsensus(strHeight?: string): Promise<LcdValidatorConsensus[]> {
   const height = calculateHeightParam(strHeight)
+  const {
+    validators,
+    total
+  }: {
+    validators: LcdValidatorConsensus[]
+    total: string
+  } = await get(`/validatorsets/${height || 'latest'}`, { height })
 
-  return Promise.all([
-    get(`/validatorsets/${height || 'latest'}`, { height }).then((res): LcdValidatorConsensus[] => res.validators),
-    get(`/validatorsets/${height || 'latest'}`, { page: '2', height })
-      .then((res): LcdValidatorConsensus[] => res.validators)
-      .catch((): LcdValidatorConsensus[] => []),
-    get(`/validatorsets/${height || 'latest'}`, { page: '3', height })
-      .then((res): LcdValidatorConsensus[] => res.validators)
-      .catch((): LcdValidatorConsensus[] => [])
-  ]).then((results) => uniqBy(results.flat(), 'address'))
-}
+  const result = [validators]
+  let remaining = parseInt(total) - 100
+  let page = 2
 
-export interface VotingPower {
-  totalVotingPower: string
-  votingPowerByPubKey: {
-    [pubKey: string]: string
-  }
-}
+  while (remaining > 0) {
+    const {
+      validators
+    }: {
+      validators: LcdValidatorConsensus[]
+      total: string
+    } = await get(`/validatorsets/${height || 'latest'}`, { page: page.toString(), height })
 
-type VotingPowerByPubKey = { [pubKey: string]: string }
-
-export async function getVotingPower(): Promise<VotingPower> {
-  const validatorConsensus = await getValidatorConsensus()
-  let totalVotingPower = '0'
-
-  const reducer = (acc: VotingPowerByPubKey, { pub_key, voting_power }: LcdValidatorConsensus): VotingPowerByPubKey => {
-    totalVotingPower = plus(totalVotingPower, voting_power)
-    return { ...acc, [pub_key]: voting_power }
+    result.push(validators)
+    page += 1
+    remaining -= 100
   }
 
-  const votingPowerByPubKey = validatorConsensus.reduce(reducer, {})
-  return { totalVotingPower, votingPowerByPubKey }
+  return result.flat()
+}
+
+// ExtendedValidator includes all LcdValidator, VotingPower and Uptime
+export interface ExtendedValidator {
+  lcdValidator: LcdValidator
+  votingPower: string
+  votingPowerWeight: string
+}
+
+export async function getExtendedValidators(
+  status?: 'bonded' | 'unbonded' | 'unbonding'
+): Promise<ExtendedValidator[]> {
+  const [validators, validatorConsensus] = await Promise.all([getValidators(status), getValidatorConsensus()])
+  const totalVotingPower = validatorConsensus.reduce((acc, consVal) => plus(acc, consVal.voting_power), '0')
+
+  return validators.reduce((prev, lcdValidator) => {
+    const consVal = validatorConsensus.find((consVal) => consVal.pub_key.value === lcdValidator.consensus_pubkey.value)
+
+    prev.push({
+      lcdValidator,
+      votingPower: consVal ? times(consVal.voting_power, 1000000) : '0.0',
+      votingPowerWeight: consVal ? div(consVal.voting_power, totalVotingPower) : '0.0'
+    })
+
+    return prev
+  }, [] as ExtendedValidator[])
 }
 
 export function getBlock(height: string): Promise<LcdBlock> {
@@ -149,11 +255,18 @@ function calculateHeightParam(strHeight?: string): string | undefined {
     return undefined
   }
 
-  if (latestHeight && latestHeight - numHeight < config.PRUNING_KEEP_EVERY) {
+  if (
+    latestHeight &&
+    (latestHeight < config.INITIAL_HEIGHT + config.PRUNING_KEEP_EVERY || // Pruning not happened yet
+      latestHeight - numHeight < config.PRUNING_KEEP_EVERY) // Last 100 heights are guarenteed
+  ) {
     return strHeight
   }
 
-  return (numHeight + (config.PRUNING_KEEP_EVERY - (numHeight % config.PRUNING_KEEP_EVERY))).toString()
+  return Math.max(
+    config.INITIAL_HEIGHT,
+    numHeight + (config.PRUNING_KEEP_EVERY - (numHeight % config.PRUNING_KEEP_EVERY))
+  ).toString()
 }
 
 ///////////////////////////////////////////////
@@ -162,6 +275,7 @@ function calculateHeightParam(strHeight?: string): string | undefined {
 export async function getAccount(
   address: string
 ): Promise<StandardAccount | VestingAccount | LazyVestingAccount | ModuleAccount> {
+  // Auth
   const empty = {
     type: 'auth/Account',
     value: {
@@ -233,8 +347,12 @@ export async function getValidator(operatorAddr: string): Promise<LcdValidator |
   return get(`/staking/validators/${operatorAddr}`)
 }
 
-export async function getValidatorDelegations(validatorOperKey: string): Promise<LcdValidatorDelegationItem[]> {
-  return (await get(`/staking/validators/${validatorOperKey}/delegations`)) || []
+export async function getValidatorDelegations(
+  validatorOperKey: string,
+  page = 1,
+  limit = 1000000
+): Promise<LcdValidatorDelegationItem[]> {
+  return (await get(`/staking/validators/${validatorOperKey}/delegations?page=${page}&limit=${limit}`)) || []
 }
 
 export function getStakingPool(strHeight?: string): Promise<LcdStakingPool> {
@@ -264,31 +382,56 @@ export async function getProposalDeposits(proposalId: string): Promise<LcdPropos
   return (await get(`/gov/proposals/${proposalId}/deposits`)) || []
 }
 
+const VoteOptionMap = {
+  VOTE_OPTION_YES: 'Yes',
+  VOTE_OPTION_ABSTAIN: 'Abstain',
+  VOTE_OPTION_NO: 'No',
+  VOTE_OPTION_NO_WITH_VETO: 'NoWithVeto'
+}
+
 export async function getProposalVotes(proposalId: string): Promise<LcdProposalVote[]> {
-  return (await get(`/gov/proposals/${proposalId}/votes?limit=1000000000000`)) || []
+  const { txs } = await get(`/cosmos/tx/v1beta1/txs`, { events: `proposal_vote.proposal_id=${proposalId}` })
+
+  const votes: LcdProposalVote[] = txs.reduce((prev, curr) => {
+    if (!Array.isArray(curr.body.messages)) {
+      return prev
+    }
+
+    curr.body.messages.forEach((msg) => {
+      if (msg['@type'] === '/cosmos.gov.v1beta1.MsgVote') {
+        prev.push({ proposal_id: proposalId, voter: msg.voter, option: VoteOptionMap[msg.option], weight: 1 })
+      } else if (msg['@type'] === '/cosmos.gov.v1beta1.MsgVoteWeighted' && Array.isArray(msg.options)) {
+        msg.options.forEach((opt) => {
+          prev.push({
+            proposal_id: proposalId,
+            voter: msg.voter,
+            option: VoteOptionMap[opt.option],
+            weight: opt.weight
+          })
+        })
+      }
+    })
+
+    return prev
+  }, [])
+
+  return votes
 }
 
 export function getProposalTally(proposalId: string): Promise<LcdProposalTally | undefined> {
   return get(`/gov/proposals/${proposalId}/tally`)
 }
 
-export function getProposalDepositParams(strHeight?: string): Promise<LcdProposalDepositParams> {
-  return get(`/gov/parameters/deposit`, { height: calculateHeightParam(strHeight) })
+export function getProposalDepositParams(): Promise<LcdProposalDepositParams> {
+  return get(`/gov/parameters/deposit`)
 }
 
-export function getProposalVotingParams(strHeight?: string): Promise<LcdProposalVotingParams> {
-  return get(`/gov/parameters/voting`, { height: calculateHeightParam(strHeight) })
+export function getProposalVotingParams(): Promise<LcdProposalVotingParams> {
+  return get(`/gov/parameters/voting`)
 }
 
-export function getProposalTallyingParams(strHeight?: string): Promise<LcdProposalTallyingParams> {
-  return get(`/gov/parameters/tallying`, { height: calculateHeightParam(strHeight) })
-}
-
-///////////////////////////////////////////////
-// Slashing
-///////////////////////////////////////////////
-export function getSigningInfo(validatorPubKey: string): Promise<LcdValidatorSigningInfo> {
-  return get(`/slashing/validators/${validatorPubKey}/signing_info`)
+export function getProposalTallyingParams(): Promise<LcdProposalTallyingParams> {
+  return get(`/gov/parameters/tallying`)
 }
 
 ///////////////////////////////////////////////
@@ -307,7 +450,7 @@ function rewardFilter(reward) {
 
 export async function getTotalRewards(delegatorAddress: string): Promise<Coin[]> {
   const rewards = await get(`/distribution/delegators/${delegatorAddress}/rewards`)
-  return rewards?.total && rewards.total.map(rewardMapper).filter(rewardFilter)
+  return (rewards.total || []).map(rewardMapper).filter(rewardFilter)
 }
 
 export async function getRewards(delegatorAddress: string, validatorOperAddress: string): Promise<Coin[]> {
@@ -327,8 +470,12 @@ export async function getValidatorRewards(validatorOperAddress: string): Promise
   return (await get(`/distribution/validators/${validatorOperAddress}/outstanding_rewards`)).rewards || []
 }
 
-export function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
-  return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
+export async function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
+  if (config.LEGACY_NETWORK) {
+    return get(`/distribution/community_pool`, { height: calculateHeightParam(strHeight) })
+  }
+
+  return (await get(`/cosmos/distribution/v1beta1/community_pool`, { height: calculateHeightParam(strHeight) })).pool
 }
 
 ///////////////////////////////////////////////

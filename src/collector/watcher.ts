@@ -1,7 +1,6 @@
 import * as Bluebird from 'bluebird'
 import { uniq } from 'lodash'
 import * as sentry from '@sentry/node'
-import { unmarshalTx, Tx } from '@terra-money/amino-js'
 import { collectorLogger as logger } from 'lib/logger'
 import RPCWatcher, { RpcResponse } from 'lib/RPCWatcher'
 import * as lcd from 'lib/lcd'
@@ -20,11 +19,11 @@ const NEW_BLOCK_Q = `tm.event='NewBlock'`
 const validatorUpdateSet = new Set<string>()
 const VALIDATOR_REGEX = /terravaloper([a-z0-9]{39})/g
 
-async function detectValidators(txs: Tx[]) {
+async function detectValidators(txs: Transaction.LcdTx[]) {
   // extract validator addresses from string
   const addresses = uniq(
     txs
-      .filter((tx: any) =>
+      .filter((tx) =>
         (tx?.value?.msg ?? []).some((msg) => typeof msg.type === 'string' && !msg.type.includes('oracle/'))
       )
       .map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX))
@@ -39,26 +38,28 @@ async function collectValidators() {
   const addrs = Array.from(validatorUpdateSet.values())
   validatorUpdateSet.clear()
 
-  const votingPower = await lcd.getVotingPower()
+  const extValidators = await lcd.getExtendedValidators('bonded')
   const activePrices = await lcd.getActiveOraclePrices()
 
-  await Bluebird.mapSeries(addrs, (addr) =>
-    lcd
-      .getValidator(addr)
-      .then((lcdValidator) => lcdValidator && saveValidatorDetail({ lcdValidator, activePrices, votingPower }))
-  )
+  await Bluebird.mapSeries(addrs, (addr) => {
+    const extVal = extValidators.find((i) => i.lcdValidator.operator_address === addr)
+
+    if (extVal) {
+      return saveValidatorDetail(extVal, activePrices).catch(() => null)
+    }
+  })
 
   setTimeout(collectValidators, 5000)
 }
 
 async function processNewBlock(data: RpcResponse) {
   const marshalTxs = data.result.data?.value.block?.data.txs as string[]
-  const height = data.result.data?.value.block?.header.height as string
+  // const height = data.result.data?.value.block?.header.height as string
 
   if (marshalTxs) {
     try {
       // decode amino transactions
-      const txs = marshalTxs.map((tx) => unmarshalTx(Buffer.from(tx, 'base64')))
+      const txs = await Bluebird.map(marshalTxs, lcd.decodeTx)
 
       detectValidators(txs)
     } catch (err) {

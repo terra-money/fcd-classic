@@ -2,7 +2,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('richlist')
 export default class RichListEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number
 
   @Column()

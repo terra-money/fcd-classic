@@ -5,13 +5,10 @@ import { ValidatorInfoEntity, ValidatorStatus } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { convertAddress, sortDenoms } from 'lib/common'
-import { div, plus, times } from 'lib/math'
-import { APIError, ErrorTypes } from 'lib/error'
+import { div, plus } from 'lib/math'
 import { SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
-
-const TOKEN_MICRO_UNIT_MULTIPLICAND = '1000000'
 
 // eslint-disable-next-line
 function getBlockUptime(signingInfo: LcdValidatorSigningInfo): number {
@@ -31,13 +28,13 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 
   switch (status) {
-    case 0: {
+    case 1: {
       return ValidatorStatus.INACTIVE
     }
-    case 1: {
+    case 2: {
       return ValidatorStatus.UNBONDING
     }
-    case 2: {
+    case 3: {
       return ValidatorStatus.ACTIVE
     }
     default: {
@@ -46,29 +43,15 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 }
 
-type SaveValidatorParams = {
-  lcdValidator: LcdValidator
-  activePrices: CoinByDenoms
-  votingPower: lcd.VotingPower
-}
-
-export async function saveValidatorDetail({ lcdValidator, activePrices, votingPower }: SaveValidatorParams) {
-  if (!lcdValidator) {
-    throw new Error('lcdValidator is nil')
-  }
-
-  const { operator_address: operatorAddress, consensus_pubkey: consensusPubkey } = lcdValidator
+export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: CoinByDenoms) {
+  const { lcdValidator } = extendedValidator
+  const operatorAddress = lcdValidator.operator_address
+  const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description
   const accountAddr = convertAddress('terra', operatorAddress)
-  const { totalVotingPower, votingPowerByPubKey } = votingPower
 
   const selfDelegation = await lcd.getDelegationForValidator(accountAddr, operatorAddress)
-  const keyBaseId = lcdValidator.description?.identity
-  const profileIcon = keyBaseId && (await getAvatar(keyBaseId))
-
+  const profileIcon = identity && (await getAvatar(identity))
   const missedOracleVote = +(await lcd.getMissedOracleVotes(operatorAddress))
-
-  const signingInfo = await lcd.getSigningInfo(consensusPubkey).catch(() => ({} as LcdValidatorSigningInfo))
-
   const lcdRewardPool = await lcd.getValidatorRewards(operatorAddress).catch(() => [] as Coin[])
 
   let rewardPoolTotal = '0'
@@ -81,34 +64,32 @@ export async function saveValidatorDetail({ lcdValidator, activePrices, votingPo
       })
     : []
 
-  const { details, identity, moniker, website } = lcdValidator.description
   const validatorDetails: DeepPartial<ValidatorInfoEntity> = {
     operatorAddress,
-    consensusPubkey,
     accountAddress: accountAddr,
-    details,
-    identity,
-    moniker,
-    website,
+    details: details || '',
+    identity: identity || '',
+    moniker: moniker || '',
+    website: website || '',
+    securityContact: securityContact || '',
     tokens: lcdValidator.tokens,
     delegatorShares: lcdValidator.delegator_shares,
-    unbondingHeight: +lcdValidator.unbonding_height,
+    unbondingHeight: +lcdValidator.unbonding_height || 0,
     unbondingTime: new Date(lcdValidator.unbonding_time),
     profileIcon: profileIcon ? profileIcon : '',
     status: getValidatorStatus(lcdValidator),
     jailed: lcdValidator.jailed,
     missedOracleVote,
     upTime: getOracleUptime(missedOracleVote),
-    votingPower: times(votingPowerByPubKey[consensusPubkey], TOKEN_MICRO_UNIT_MULTIPLICAND),
-    votingPowerWeight: div(votingPowerByPubKey[consensusPubkey], totalVotingPower),
+    votingPower: extendedValidator.votingPower,
+    votingPowerWeight: extendedValidator.votingPowerWeight,
     commissionRate: lcdValidator.commission.commission_rates.rate,
     maxCommissionRate: lcdValidator.commission.commission_rates.max_rate,
     maxCommissionChangeRate: lcdValidator.commission.commission_rates.max_change_rate,
     rewardPoolTotal,
     commissionChangeDate: new Date(lcdValidator.commission.update_time),
     selfDelegation: selfDelegation?.balance.amount ?? '0.0',
-    selfDelegationWeight: div(selfDelegation?.shares ?? '0.0', lcdValidator.delegator_shares),
-    signingInfo,
+    selfDelegationWeight: div(selfDelegation?.delegation.shares ?? '0.0', lcdValidator.delegator_shares),
     rewardPool: sortDenoms(rewardPool)
   }
 

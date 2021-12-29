@@ -2,7 +2,6 @@ import * as rp from 'request-promise'
 import { compact } from 'lodash'
 import config from 'config'
 import { apiLogger as logger } from './logger'
-import { unmarshalTx } from '@terra-money/amino-js'
 
 async function getRequest(url: string, params?: Record<string, unknown>): Promise<any> {
   const options = {
@@ -52,7 +51,7 @@ export async function getRewards(height: string): Promise<Reward[]> {
     ? // columbus-1 to 3
       blockResult.results.begin_block.events
     : // columbus-4
-      [...blockResult.begin_block_events, ...(blockResult.end_block_events || [])]
+      [...(blockResult.begin_block_events || []), ...(blockResult.end_block_events || [])]
 
   const decodedRewardsAndCommission: Reward[] = compact(
     (events || []).map((event) => {
@@ -76,12 +75,14 @@ export async function getRewards(height: string): Promise<Reward[]> {
   return decodedRewardsAndCommission
 }
 
-export async function getUnconfirmedTxs(params: Record<string, unknown> = { limit: '1000000000000' }, decode = true) {
+export async function getUnconfirmedTxs(
+  params: Record<string, unknown> = { limit: '1000000000000' }
+): Promise<string[]> {
   const unconfirmedTxs = await getRequest(`/unconfirmed_txs`, params)
 
   if (!Array.isArray(unconfirmedTxs.txs)) {
     throw new Error('unconfirmed txs not found')
   }
 
-  return !decode ? unconfirmedTxs.txs : unconfirmedTxs.txs.map((str) => unmarshalTx(Buffer.from(str, 'base64')))
+  return unconfirmedTxs.txs
 }

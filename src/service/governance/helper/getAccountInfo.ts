@@ -16,9 +16,11 @@ interface AccountInfo {
  * @returns {AccountInfo} result - Account Info
  */
 async function getAccountInfoUncached(accountAddress: string): Promise<AccountInfo> {
-  const validator = await getRepository(ValidatorInfoEntity).findOne({
-    accountAddress
-  })
+  const validator =
+    accountAddress &&
+    (await getRepository(ValidatorInfoEntity).findOne({
+      accountAddress
+    }))
 
   return {
     accountAddress,

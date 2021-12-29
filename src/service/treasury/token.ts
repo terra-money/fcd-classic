@@ -1,3 +1,4 @@
+import * as sentry from '@sentry/node'
 import * as rp from 'request-promise'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
@@ -37,19 +38,14 @@ export async function init() {
     json: true
   }).catch(() => ({}))
 
-  let key
-
-  if (config.CHAIN_ID.startsWith('columbus')) {
-    key = 'mainnet'
-  } else if (config.CHAIN_ID.startsWith('tequila')) {
-    key = 'testnet'
-  } else {
-    console.log('no token info for this chain-id')
+  if (!config.TOKEN_NETWORK) {
+    console.warn('TOKEN_NETWORK not defined in environment variable')
     return
   }
 
-  const tokens = tokensRes[key]
-  const pairs = pairsRes[key]
+  const network = config.TOKEN_NETWORK
+  const tokens = tokensRes[network]
+  const pairs = pairsRes[network]
   const whitelist: { [address: string]: Asset } = {}
 
   Object.keys(tokens).forEach((address) => {
@@ -98,16 +94,23 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
       operationName: 'statistic',
       query: `query statistic {
           statistic {
-            mirTotalSupply
-            mirCirculatingSupply
+            mirSupply {
+              circulating
+              total
+            }
           }
         }`,
       variables: {}
     },
     json: true
+  }).catch((err) => {
+    sentry.captureException(err)
+    throw err
   })
 
-  if (!res?.data?.statistic) {
+  const mirSupply = res?.data?.statistic?.mirSupply
+
+  if (!mirSupply) {
     return {
       totalSupply: '',
       circulatingSupply: ''
@@ -115,8 +118,8 @@ async function getMirSupply(): Promise<{ totalSupply: string; circulatingSupply:
   }
 
   return {
-    totalSupply: div(res.data.statistic.mirTotalSupply, 1000000),
-    circulatingSupply: div(res.data.statistic.mirCirculatingSupply, 1000000)
+    totalSupply: div(mirSupply.total, 1000000),
+    circulatingSupply: div(mirSupply.circulating, 1000000)
   }
 }
 

@@ -29,13 +29,22 @@ export async function getCirculatingSupply(input: string): Promise<string> {
     take: 1
   })
 
-  let circulatingSupply = unvested.length === 0 ? totalSupply : minus(totalSupply, unvested[0].amount)
+  // Initialize circualating supply to total supply
+  let circulatingSupply = totalSupply
 
-  if (communityPool) {
-    circulatingSupply = minus(circulatingSupply, communityPool.find((c) => c.denom === denom)?.amount || '0')
+  // Remove unvested amount
+  if (unvested.length) {
+    circulatingSupply = minus(circulatingSupply, unvested[0].amount)
   }
 
+  // Special conditions for Luna
   if (denom === 'uluna') {
+    // Remove Luna in community pool
+    if (communityPool) {
+      circulatingSupply = minus(circulatingSupply, communityPool.find((c) => c.denom === denom)?.amount || '0')
+    }
+
+    // Remove Luna in bank wallets
     if (config.BANK_WALLETS.length !== 0) {
       const total = await Bluebird.reduce(
         config.BANK_WALLETS,

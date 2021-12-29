@@ -6,7 +6,6 @@ interface ContractInfo {
   timestamp: string
   contract_address: string
   txMemo: string
-  migratable: boolean
 }
 
 interface WasmCodeInfo {

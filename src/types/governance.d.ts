@@ -27,7 +27,7 @@ interface Content {
 interface LcdProposal {
   content: Content
   id: string
-  proposal_status: string
+  status: number
   final_tally_result: LcdProposalTallyingParams
   submit_time: string
   deposit_end_time: string
@@ -47,6 +47,7 @@ interface LcdProposalVote {
   proposal_id: string // number
   voter: string // terra address
   option: VoteOption
+  weight: number
 }
 
 interface LcdProposalDeposit {

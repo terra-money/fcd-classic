@@ -12,10 +12,13 @@ export enum ProposalStatus {
   FAILED = 'Failed'
 }
 
+export const STATUS_MAPPING = ['Nil', 'DepositPeriod', 'VotingPeriod', 'Passed', 'Rejected', 'Failed']
+
 function transformStatus(status: string): string {
   if (status === 'VotingPeriod') {
     return 'Voting'
   }
+
   if (status === 'DepositPeriod') {
     return 'Deposit'
   }
@@ -61,7 +64,7 @@ async function getProposalBasicUncached(proposal: ProposalEntity): Promise<Propo
 
   return {
     id: proposalId,
-    proposer: proposal.proposer ? await getAccountInfo(proposal.proposer) : undefined,
+    proposer: await getAccountInfo(proposal.proposer || ''),
     type: transformProposalType(proposal.type),
     status: transformStatus(proposal.status),
     submitTime: proposal.submitTime.toISOString(),

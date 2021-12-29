@@ -25,6 +25,7 @@ declare namespace Transaction {
     msg: Message[]
     signatures: Signature[]
     memo: string
+    timeout_height?: string
   }
 
   interface Message {
@@ -48,15 +49,14 @@ declare namespace Transaction {
   interface LcdTransaction {
     height: string
     txhash: string
+    codespace?: string
+    code?: number
     raw_log: string
-    logs: Log[] // doesn't exist if tx failed
+    logs: Log[]
     gas_wanted: string
     gas_used: string
-    codespace: string
-    code?: number
     tx: LcdTx
-    timestamp: string // unix time at GMT 0
-    events: Event[]
+    timestamp: string // unix time (GMT)
   }
 
   interface LcdTransactions {
