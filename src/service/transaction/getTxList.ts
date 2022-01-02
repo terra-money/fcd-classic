@@ -1,4 +1,4 @@
-import { getRepository, getManager } from 'typeorm'
+import { getConnection } from 'typeorm'
 import { BlockEntity, TxEntity } from 'orm'
 
 export interface GetTxListParam {
@@ -18,16 +18,20 @@ interface GetTxsResponse {
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
-  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const qb = await getRepository(BlockEntity).createQueryBuilder('block').where('block.height = :height', {
-    height: param.block
-  })
+  const qb = getConnection()
+    .createQueryRunner('slave')
+    .manager.createQueryBuilder(BlockEntity, 'block')
+    .where('block.height = :height', {
+      height: param.block
+    })
 
   if (param.offset) {
     qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
   } else {
     qb.leftJoinAndSelect('block.txs', 'txs')
   }
+
+  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   qb.orderBy('block.timestamp', order)
   qb.addOrderBy('txs.id', order).take(param.limit + 1)
@@ -135,38 +139,41 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
 
   const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
 
-  return getManager().transaction(async (mgr) => {
-    // Disable indexscan to force use bitmap scan for query speed
-    await mgr.query('SET enable_indexscan=false')
+  return getConnection()
+    .createQueryRunner('slave')
+    .manager.transaction(async (mgr) => {
+      // Disable indexscan to force use bitmap scan for query speed
+      await mgr.query('SET enable_indexscan=false')
 
-    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
-    const txs = await mgr.query(query, params)
+      const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
+      const txs = await mgr.query(query, params)
 
-    await mgr.query('SET enable_indexscan=true')
+      await mgr.query('SET enable_indexscan=true')
 
-    let next
+      let next
 
-    if (param.limit + 1 === txs.length) {
-      next = txs[param.limit - 1].id
-      txs.length -= 1
-    }
+      if (param.limit + 1 === txs.length) {
+        next = txs[param.limit - 1].id
+        txs.length -= 1
+      }
 
-    return {
-      next,
-      limit: param.limit,
-      txs: txs.map((tx) => ({
-        id: tx.id,
-        chainId: tx.chainId,
-        ...(param.compact ? compactTransactionData(tx.data, param.account as string) : tx.data)
-      }))
-    }
-  })
+      return {
+        next,
+        limit: param.limit,
+        txs: txs.map((tx) => ({
+          id: tx.id,
+          chainId: tx.chainId,
+          ...(param.compact ? compactTransactionData(tx.data, param.account as string) : tx.data)
+        }))
+      }
+    })
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const qb = getRepository(TxEntity)
-    .createQueryBuilder()
+  const qb = getConnection()
+    .createQueryRunner('slave')
+    .manager.createQueryBuilder(TxEntity, 'tx')
     .take(param.limit + 1)
     .orderBy('id', order)
 
