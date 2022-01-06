@@ -18,39 +18,42 @@ interface GetTxsResponse {
 }
 
 export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsResponse> {
-  const qb = getConnection()
-    .createQueryRunner('slave')
-    .manager.createQueryBuilder(BlockEntity, 'block')
-    .where('block.height = :height', {
+  const queryRunner = getConnection().createQueryRunner('slave')
+
+  try {
+    const qb = queryRunner.manager.createQueryBuilder(BlockEntity, 'block').where('block.height = :height', {
       height: param.block
     })
 
-  if (param.offset) {
-    qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
-  } else {
-    qb.leftJoinAndSelect('block.txs', 'txs')
-  }
+    if (param.offset) {
+      qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
+    } else {
+      qb.leftJoinAndSelect('block.txs', 'txs')
+    }
 
-  const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+    const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
-  qb.orderBy('block.timestamp', order)
-  qb.addOrderBy('txs.id', order).take(param.limit + 1)
+    qb.orderBy('block.timestamp', order)
+    qb.addOrderBy('txs.id', order).take(param.limit + 1)
 
-  const blockWithTxs = await qb.getOne()
-  const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
+    const blockWithTxs = await qb.getOne()
+    const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
 
-  let next
+    let next
 
-  // we have next result
-  if (param.limit + 1 === txs.length) {
-    next = txs[param.limit - 1].id
-    txs.length -= 1
-  }
+    // we have next result
+    if (param.limit + 1 === txs.length) {
+      next = txs[param.limit - 1].id
+      txs.length -= 1
+    }
 
-  return {
-    next,
-    limit: param.limit,
-    txs
+    return {
+      next,
+      limit: param.limit,
+      txs
+    }
+  } finally {
+    queryRunner.release()
   }
 }
 
@@ -138,10 +141,10 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
   }
 
   const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
+  const queryRunner = getConnection().createQueryRunner('slave')
 
-  return getConnection()
-    .createQueryRunner('slave')
-    .manager.transaction(async (mgr) => {
+  return queryRunner.manager
+    .transaction(async (mgr) => {
       // Disable indexscan to force use bitmap scan for query speed
       await mgr.query('SET enable_indexscan=false')
 
@@ -167,40 +170,48 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
         }))
       }
     })
+    .finally(() => {
+      queryRunner.release()
+    })
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
   const order = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
-  const qb = getConnection()
-    .createQueryRunner('slave')
-    .manager.createQueryBuilder(TxEntity, 'tx')
-    .take(param.limit + 1)
-    .orderBy('id', order)
+  const queryRunner = getConnection().createQueryRunner('slave')
 
-  if (param.chainId) {
-    qb.where({
-      chainId: param.chainId
-    })
-  }
+  try {
+    const qb = queryRunner.manager
+      .createQueryBuilder(TxEntity, 'tx')
+      .take(param.limit + 1)
+      .orderBy('id', order)
 
-  if (param.offset) {
-    qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
-  }
+    if (param.chainId) {
+      qb.where({
+        chainId: param.chainId
+      })
+    }
 
-  const txs = await qb.getMany()
+    if (param.offset) {
+      qb.andWhere(`id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+    }
 
-  let next
+    const txs = await qb.getMany()
 
-  // we have next result
-  if (param.limit + 1 === txs.length) {
-    next = txs[param.limit - 1].id
-    txs.length -= 1
-  }
+    let next
 
-  return {
-    next,
-    limit: param.limit,
-    txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
+    // we have next result
+    if (param.limit + 1 === txs.length) {
+      next = txs[param.limit - 1].id
+      txs.length -= 1
+    }
+
+    return {
+      next,
+      limit: param.limit,
+      txs: txs.map((tx) => ({ id: tx.id, ...tx.data }))
+    }
+  } finally {
+    queryRunner.release()
   }
 }
 
