@@ -44,12 +44,9 @@ function getVotersVotingPowerArr(
     const validator = validatorsVotingPower.find((v) => v.operatorAddress === validatorAddress)
     const delegator = validatorsVotingPower.find((v) => v.accountAddress === delegatorAddress)
 
-    if (!validator) {
-      errorReport(new Error(`ProposalVote: cannot find validator ${validatorAddress}`))
-      return
+    if (validator) {
+      validator.votingPower = minus(validator.votingPower, shares)
     }
-
-    validator.votingPower = minus(validator.votingPower, shares)
 
     if (delegator) {
       delegator.votingPower = plus(delegator.votingPower, shares)
