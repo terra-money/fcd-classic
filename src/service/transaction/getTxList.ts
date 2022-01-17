@@ -140,39 +140,38 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
     subQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
   }
 
-  const orderAndPageClause = ` ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
+  subQuery += `ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`
+
   const queryRunner = getConnection().createQueryRunner('slave')
 
-  return queryRunner.manager
-    .transaction(async (mgr) => {
-      // Disable indexscan to force use bitmap scan for query speed
-      await mgr.query('SET enable_indexscan=false')
+  try {
+    // Disable indexscan to force use bitmap scan for query speed
+    await queryRunner.query('SET enable_indexscan=false')
+    const accountTxs = await queryRunner.query(subQuery, params)
+    let next
 
-      const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${subQuery}${orderAndPageClause}) ORDER BY id DESC`
-      const txs = await mgr.query(query, params)
+    if (param.limit + 1 === accountTxs.length) {
+      next = accountTxs[param.limit - 1].tx_id
+      accountTxs.length -= 1
+    }
 
-      await mgr.query('SET enable_indexscan=true')
+    const ids = accountTxs.map((t) => t.tx_id).toString()
+    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${ids}) ORDER BY id DESC`
+    const txs = await queryRunner.query(query)
 
-      let next
-
-      if (param.limit + 1 === txs.length) {
-        next = txs[param.limit - 1].id
-        txs.length -= 1
-      }
-
-      return {
-        next,
-        limit: param.limit,
-        txs: txs.map((tx) => ({
-          id: tx.id,
-          chainId: tx.chainId,
-          ...(param.compact ? compactTransactionData(tx.data, param.account as string) : tx.data)
-        }))
-      }
-    })
-    .finally(() => {
-      queryRunner.release()
-    })
+    return {
+      next,
+      limit: param.limit,
+      txs: txs.map((tx) => ({
+        id: tx.id,
+        chainId: tx.chainId,
+        ...(param.compact ? compactTransactionData(tx.data, param.account as string) : tx.data)
+      }))
+    }
+  } finally {
+    await queryRunner.query('SET enable_indexscan=true')
+    queryRunner.release()
+  }
 }
 
 async function getTxs(param: GetTxListParam): Promise<GetTxsResponse> {
