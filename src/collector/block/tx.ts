@@ -164,12 +164,6 @@ export async function generateLcdTransactionToTxEntity(
 ): Promise<TxEntity> {
   // Get the tx from LCD server
   const tx = await lcd.getTx(txhash)
-
-  // TODO: We need a better way to handle when tx could not found on the node we are querying
-  if (!tx) {
-    throw new Error('transaction not found on node')
-  }
-
   let modifiedDoc: Transaction.LcdTransaction
 
   try {

@@ -50,10 +50,14 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
 // Transactions
 ///////////////////////////////////////////////
 export async function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
-  const { tx_response } = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
+  const res = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
+
+  if (!res || !res.tx_response) {
+    throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', `transaction not found on node (hash: ${hash})`)
+  }
 
   const intermediate = pickBy(
-    pick(tx_response, [
+    pick(res.tx_response, [
       'height',
       'txhash',
       'logs',
@@ -69,7 +73,7 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
     'height' | 'txhash' | 'logs' | 'gas_wanted' | 'gas_used' | 'codespace' | 'code' | 'timestamp' | 'raw_log'
   >
 
-  const { auth_info, body, signatures } = tx_response.tx
+  const { auth_info, body, signatures } = res.tx_response.tx
 
   return {
     ...intermediate,
