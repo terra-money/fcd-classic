@@ -25,20 +25,24 @@ export async function getTxFromBlock(param: GetTxListParam): Promise<GetTxsRespo
       height: param.block
     })
 
-    if (param.offset) {
-      qb.leftJoinAndSelect('block.txs', 'txs', 'txs.id < :offset', { offset: param.offset })
-    } else {
-      qb.leftJoinAndSelect('block.txs', 'txs')
+    const block = await qb.getOne()
+
+    if (!block) {
+      return { limit: param.limit, txs: [] }
     }
 
-    const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
+    const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'
+    const txqb = queryRunner.manager
+      .createQueryBuilder(TxEntity, 'tx')
+      .where('tx.block_id = :blockId', { blockId: block.id })
+      .orderBy('tx.id', order)
+      .take(param.limit + 1)
 
-    qb.orderBy('block.timestamp', order)
-    qb.addOrderBy('txs.id', order).take(param.limit + 1)
+    if (param.offset) {
+      txqb.andWhere(`tx.id ${order === 'ASC' ? '>' : '<'} :offset`, { offset: param.offset })
+    }
 
-    const blockWithTxs = await qb.getOne()
-    const txs = blockWithTxs ? blockWithTxs.txs.map((item) => ({ id: item.id, ...item.data })) : []
-
+    const txs = (await txqb.getMany()).map((tx) => ({ id: tx.id, ...tx.data }))
     let next
 
     // we have next result
