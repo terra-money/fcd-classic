@@ -94,7 +94,7 @@ export default class TransactionController extends KoaController {
    * @apiParam {string} [chainId] Chain ID of Blockchain (default: chain id of mainnet)
    * @apiParam {number} [offset] Use next property from previous result for pagination
    * @apiParam {number} [limit=10,100] Size of page
-   * @apiParam {string=asc,desc} [order] Sort order. (default: asc)
+   * @apiParam {string=asc,desc} [order] Sort order. (default: asc if block param is given, otherwise desc)
    *
    * @apiSuccess {number} limit Size of page
    * @apiSuccess {number} next Offset of next page
@@ -166,7 +166,7 @@ export default class TransactionController extends KoaController {
       limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
       offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset'),
       compact: Joi.boolean().description('Compact mode'),
-      order: Joi.string().default('ASC').valid('ASC', 'DESC').insensitive().description('Sort Order')
+      order: Joi.string().allow('').valid('ASC', 'DESC').insensitive().description('Sort Order')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
