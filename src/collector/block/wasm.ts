@@ -114,7 +114,7 @@ export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
       }
     })
 
-    await Bluebird.map(generateWasmContracts(tx), async (contract) => {
+    await Bluebird.mapSeries(generateWasmContracts(tx), async (contract) => {
       const existingEntity = await mgr.findOne(WasmContractEntity, { contractAddress: contract.contractAddress })
 
       if (existingEntity) {
