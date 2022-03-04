@@ -114,14 +114,18 @@ export async function collectWasm(mgr: EntityManager, txEntities: TxEntity[]) {
       }
     })
 
+    // a contract may be instantiated & executed within the same block
+    // let the contract "known" first, then just update
+    const intraBlockContractFound: Record<string, boolean> = {}
     await Bluebird.mapSeries(generateWasmContracts(tx), async (contract) => {
       const existingEntity = await mgr.findOne(WasmContractEntity, { contractAddress: contract.contractAddress })
 
-      if (existingEntity) {
+      if (existingEntity || intraBlockContractFound[contract.contractAddress]) {
         logger.info(`collectWasm: update contract ${contract.contractAddress}`)
         return mgr.update(WasmContractEntity, existingEntity.id, contract)
       } else {
         logger.info(`collectWasm: new contract ${contract.contractAddress}`)
+        intraBlockContractFound[contract.contractAddress] = true
         return mgr.save(WasmContractEntity, contract)
       }
     })
