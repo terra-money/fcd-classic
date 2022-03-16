@@ -12,7 +12,6 @@ import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
 
 import { collectTxs } from './tx'
-import { collectWasm } from './wasm'
 import { collectReward } from './reward'
 // import { collectSwap } from './swap'
 import { collectNetwork } from './network'
@@ -161,8 +160,6 @@ export async function saveBlockInformation(
       if (txHashes.length) {
         // save transactions
         const txEntities = await collectTxs(mgr, txHashes, height, newBlockEntity)
-        // save wasm
-        await collectWasm(mgr, txEntities)
         // save proposals
         await detectAndUpdateProposal(mgr, txEntities)
       }
