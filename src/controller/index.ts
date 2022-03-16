@@ -8,7 +8,6 @@ import MarketController from './MarketController'
 import StakingController from './StakingController'
 import GovernanceController from './GovernanceController'
 import TreasuryController from './TreasuryController'
-import WasmController from './WasmController'
 
 const controllers = [
   DashboardController,
@@ -17,8 +16,7 @@ const controllers = [
   MarketController,
   StakingController,
   GovernanceController,
-  TreasuryController,
-  WasmController
+  TreasuryController
 ]
   .map((prototype) => {
     const controller = new prototype()

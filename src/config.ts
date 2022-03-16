@@ -71,11 +71,7 @@ const config = {
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
     : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'eur', 'eut'],
-  EXCLUDED_ROUTES: EXCLUDED_ROUTES
-    ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp))
-    : [
-        /* /\/wasm\// */
-      ],
+  EXCLUDED_ROUTES: EXCLUDED_ROUTES ? (JSON.parse(EXCLUDED_ROUTES) as string[]).map((regExp) => new RegExp(regExp)) : [],
   MIN_GAS_PRICES: MIN_GAS_PRICES
     ? (JSON.parse(MIN_GAS_PRICES) as CoinByDenoms)
     : ({

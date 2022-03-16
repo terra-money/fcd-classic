@@ -4,7 +4,6 @@ import * as Bluebird from 'bluebird'
 import * as lcd from 'lib/lcd'
 import { plus, minus } from 'lib/math'
 import { convertAddress } from 'lib/common'
-import { errorReport } from 'lib/errorReporting'
 import { STATUS_MAPPING } from './proposalBasic'
 
 export type ValidatorVotingPower = {

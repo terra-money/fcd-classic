@@ -51,12 +51,6 @@ export * from './ProposalEntity'
 import DashboardEntity from './DashboardEntity'
 export * from './DashboardEntity'
 
-import WasmCodeEntity from './WasmCodeEntity'
-export * from './WasmCodeEntity'
-
-import WasmContractEntity from './WasmContractEntity'
-export * from './WasmContractEntity'
-
 export {
   BlockEntity,
   TxEntity,
@@ -72,9 +66,7 @@ export {
   ValidatorReturnInfoEntity,
   ValidatorInfoEntity,
   ProposalEntity,
-  DashboardEntity,
-  WasmCodeEntity,
-  WasmContractEntity
+  DashboardEntity
 }
 
 export const staticOptions = {
@@ -95,9 +87,7 @@ export const staticOptions = {
     ValidatorReturnInfoEntity,
     ValidatorInfoEntity,
     ProposalEntity,
-    DashboardEntity,
-    WasmCodeEntity,
-    WasmContractEntity
+    DashboardEntity
   ]
 }
 
