@@ -117,7 +117,7 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
             type: 'tendermint/PubKeySecp256k1',
             value: si?.public_key.key || ''
           },
-          signature: signatures[idx]
+          signature: signatures[idx] || ''
         })),
         memo: body.memo,
         timeout_height: body.timeout_height
