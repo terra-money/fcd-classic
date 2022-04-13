@@ -159,9 +159,13 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
       accountTxs.length -= 1
     }
 
-    const ids = accountTxs.map((t) => t.tx_id).toString()
-    const query = `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${ids}) ORDER BY id DESC`
-    const txs = await queryRunner.query(query)
+    const txs = accountTxs.length
+      ? await queryRunner.query(
+          `SELECT id, data, chain_id AS "chainId" FROM tx WHERE id IN (${accountTxs
+            .map((t) => t.tx_id)
+            .toString()}) ORDER BY id DESC`
+        )
+      : []
 
     return {
       next,
