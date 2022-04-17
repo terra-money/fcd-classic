@@ -1,4 +1,4 @@
-import { getRepository, DeepPartial, EntityManager } from 'typeorm'
+import { getRepository, EntityManager } from 'typeorm'
 import { GeneralInfoEntity } from 'orm'
 import { div } from 'lib/math'
 import * as lcd from 'lib/lcd'
@@ -28,7 +28,7 @@ export async function collectGeneral(mgr: EntityManager, timestamp: number, strH
     ),
     lcd
       .getTaxCaps(strHeight)
-      .then((taxCaps) => taxCaps.map((taxCap) => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
+      .then((taxCaps) => taxCaps.map((taxCap): DenomTaxCap => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
     Promise.all([lcd.getStakingPool(strHeight), lcd.getAllActiveIssuance(strHeight)]).then((results) => {
       const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
       return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
@@ -36,7 +36,7 @@ export async function collectGeneral(mgr: EntityManager, timestamp: number, strH
   ])
   const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
 
-  const genInfo: DeepPartial<GeneralInfoEntity> = {
+  const genInfo: Partial<GeneralInfoEntity> = {
     datetime,
     taxRate: taxRate ? Number(taxRate) : NaN,
     stakingRatio: stakingRatio ? Number(stakingRatio) : NaN,
