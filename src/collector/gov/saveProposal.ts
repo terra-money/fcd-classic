@@ -41,12 +41,26 @@ export async function saveProposalDetails(
     throw new Error(`Failed to get proposal ${proposal.id} vote summary`)
   }
 
+  let content: Content
+
+  // Columbus-5 compatibility for unknown types
+  if ('type' in proposal.content) {
+    content = proposal.content
+  } else {
+    const pp = await lcd.getProposalProto('775')
+
+    content = {
+      type: lcd.convertProtoType(pp.content['@type']),
+      value: pp.content
+    }
+  }
+
   const proposalEntityObject: DeepPartial<ProposalEntity> = {
     id: cachedProposal ? cachedProposal.id : 0,
     proposalId: proposal.id,
     chainId: config.CHAIN_ID,
-    title: proposal.content.value.title,
-    type: proposal.content.type,
+    title: content.value.title,
+    type: content.type,
     status: STATUS_MAPPING[proposal.status],
     submitTime: proposal.submit_time,
     depositEndTime: proposal.deposit_end_time,
@@ -54,7 +68,7 @@ export async function saveProposalDetails(
     votingEndTime: proposal.voting_end_time,
     totalVote: voteSummary.total,
     stakedLuna: voteSummary.stakedLuna,
-    content: proposal.content,
+    content,
     voteDistribution: voteSummary.distribution,
     voteCount: voteSummary.count,
     voters: voteSummary.voters,
