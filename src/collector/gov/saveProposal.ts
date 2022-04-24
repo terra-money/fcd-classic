@@ -47,7 +47,7 @@ export async function saveProposalDetails(
   if ('type' in proposal.content) {
     content = proposal.content
   } else {
-    const pp = await lcd.getProposalProto('775')
+    const pp = await lcd.getProposalProto(proposal.id)
 
     content = {
       type: lcd.convertProtoType(pp.content['@type']),
