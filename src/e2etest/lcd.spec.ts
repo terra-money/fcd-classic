@@ -245,6 +245,7 @@ describe('LCD', () => {
 
       proposal = proposals.find(
         (p) =>
+          'type' in p.content &&
           p.content.type === 'params/ParameterChangeProposal' &&
           p.content.value.changes &&
           p.content.value.changes[0].subspace === 'staking'

@@ -114,7 +114,7 @@ interface VoteSummary {
   distribution: VoteDistribution // vote distribution
   count: VoteCount // vote count
   total: string // total amount of luna voted
-  votingEndTime: string // proposal vote ending time in unix
+  votingEndTime: Date // proposal vote ending time in unix
   stakedLuna: string // total staked luna amount
   voters?: { [key: string]: VoteOption }
 }
