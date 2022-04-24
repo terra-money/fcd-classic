@@ -1,4 +1,4 @@
-import { subDays, endOfDay } from 'date-fns'
+import { parseISO, subDays, endOfDay } from 'date-fns'
 import { getConnection } from 'typeorm'
 
 import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
@@ -50,7 +50,9 @@ export async function getDailyActiveAccount(
 
 export async function getAccountCountByDay(daysBefore?: number): Promise<{ [date: string]: DailyAccountStat }> {
   const dailyActiveAccount = await getDailyActiveAccount(daysBefore)
-  const totalAccount = await Promise.all(dailyActiveAccount.map((item) => getTotalAccount(endOfDay(item.date))))
+  const totalAccount = await Promise.all(
+    dailyActiveAccount.map((item) => getTotalAccount(endOfDay(parseISO(item.date))))
+  )
   const totalAccountMap = totalAccount.reduce((acc, item) => {
     acc[item.date] = item.total_account_count
     return acc

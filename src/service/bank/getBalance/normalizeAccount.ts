@@ -3,7 +3,8 @@ enum AccountType {
   BASE_COL3 = 'core/Account', // columbus-3
   VESTING = 'core/GradedVestingAccount', // columbus-1
   LAZY_VESTING = 'core/LazyGradedVestingAccount', // columbus-2
-  MODULE = 'supply/ModuleAccount' // columbus -3
+  MODULE_COL4 = 'supply/ModuleAccount', // columbus-4
+  MODULE = 'core/ModuleAccount' // columbus-5
 }
 
 type Account =
@@ -96,7 +97,7 @@ const normalizeAccount = (account: Account): NormalizedAccount => {
     throw new Error(`unknown LazyGradedVestingAccount, value: ${JSON.stringify(account.value)}`)
   }
 
-  if (account.type === AccountType.MODULE) {
+  if (account.type === AccountType.MODULE || account.type === AccountType.MODULE_COL4) {
     // LCD response in columbus-2 and 3 and columbus-4 are different.
     if ('BaseAccount' in account.value) {
       const value = (account as Columbus3ModuleAccount).value

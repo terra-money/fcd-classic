@@ -5,7 +5,7 @@ import { getPriceHistory } from 'service/dashboard'
 import { getPriceObjKey } from './helpers'
 import { getRewardsSumByDateDenom } from './rewardsInfo'
 
-// key: date in format YYYY-MM-DD
+// key: date in format yyyy-MM-dd
 // value: big int string format
 interface RewardByDateMap {
   [date: string]: string

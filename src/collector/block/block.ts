@@ -77,7 +77,7 @@ async function generateBlockEntity(
   const blockEntity: DeepPartial<BlockEntity> = {
     chainId,
     height: +height,
-    timestamp,
+    timestamp: new Date(timestamp),
     reward: blockReward,
     proposer: await getValidatorOperatorAddressByHexAddress(proposer_address, height)
   }

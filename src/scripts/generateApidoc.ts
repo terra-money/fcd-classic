@@ -26,15 +26,6 @@ const packageInfo = {
   url: `${config.FCD_URI}/v1` || 'https://fcd.terra.dev/v1'
 }
 
-const argv = yargs.options({
-  o: {
-    type: 'string',
-    alias: 'output',
-    default: 'static',
-    description: 'Output file name'
-  }
-}).argv
-
 type UrlItem = {
   type: string
   url: string
@@ -54,7 +45,16 @@ function filterExcludeRoutes(urls: UrlItem[]) {
   })
 }
 
-(function generateApiDoc() {
+(async function generateApiDoc() {
+  const argv = await yargs.options({
+    o: {
+      type: 'string',
+      alias: 'output',
+      default: 'static',
+      description: 'Output file name'
+    }
+  }).argv
+
   apidoc.setLogger(logger)
   apidoc.setPackageInfos(packageInfo)
 

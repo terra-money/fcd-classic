@@ -1,6 +1,6 @@
 interface DateRange {
-  to: string // date format YYYY-MM-DD
-  from: string // date format YYYY-MM-DD
+  to: string // date format yyyy-MM-dd
+  from: string // date format yyyy-MM-dd
 }
 
 interface BlockReward {
