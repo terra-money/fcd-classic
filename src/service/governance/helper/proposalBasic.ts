@@ -57,7 +57,7 @@ async function getProposalBasicUncached(proposal: ProposalEntity): Promise<Propo
     distribution: voteDistribution,
     count: voteCount,
     total: totalVote,
-    votingEndTime: votingEndTime.toISOString(),
+    votingEndTime,
     stakedLuna,
     voters
   }

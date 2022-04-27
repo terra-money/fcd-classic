@@ -61,7 +61,7 @@ async function main() {
         return network
       })
       await Promise.all(docs.map(upsert))
-      console.log(`Set network completed. ${format(datetime, 'YYYY-MM-DD HH:mm:ss')}`)
+      console.log(`Set network completed. ${format(datetime, 'yyyy-MM-dd HH:mm:ss')}`)
       datetime += 60000
     }
   }

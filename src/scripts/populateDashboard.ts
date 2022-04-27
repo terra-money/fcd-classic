@@ -1,5 +1,5 @@
 import { getRepository, getConnection } from 'typeorm'
-import { startOfDay, startOfToday } from 'date-fns'
+import { parseISO, startOfDay, startOfToday } from 'date-fns'
 
 import { getQueryDateTime, getDateFromDateTime } from 'lib/time'
 
@@ -67,7 +67,7 @@ async function populateDashboard() {
   const accountGrowth = await getAccountCountHistory()
 
   for (const dateKey of Object.keys(accountGrowth)) {
-    const date = startOfDay(dateKey)
+    const date = startOfDay(parseISO(dateKey))
     const dashboard = await getDashboard(date)
     if (dashboard) {
       console.log('updating ac growth date ', dateKey)
@@ -89,7 +89,7 @@ async function populateDashboard() {
   const taxRewards = await getBlockRewardsByDay()
 
   for (const dateKey of Object.keys(taxRewards)) {
-    const date = startOfDay(dateKey)
+    const date = startOfDay(parseISO(dateKey))
     const dashboard = await getDashboard(date)
     if (dashboard) {
       console.log('updating tax reward of date ', dateKey)
@@ -109,7 +109,7 @@ async function populateDashboard() {
   // save tx volume
   const txVolumes = await getTxVolumeByDay()
   for (const dateKey of Object.keys(txVolumes)) {
-    const date = startOfDay(dateKey)
+    const date = startOfDay(parseISO(dateKey))
     const dashboard = await getDashboard(date)
     if (dashboard) {
       console.log('updating tx volume of date ', dateKey)
@@ -128,7 +128,7 @@ async function populateDashboard() {
 
   const stakingReturns = await getStakingReturnByDay()
   for (const dateKey of Object.keys(stakingReturns)) {
-    const date = startOfDay(dateKey)
+    const date = startOfDay(parseISO(dateKey))
     const dashboard = await getDashboard(date)
     if (dashboard) {
       console.log('updating staking of date ', dateKey)

@@ -25,15 +25,27 @@ interface Content {
 }
 
 interface LcdProposal {
-  content: Content
   id: string
+  content: ProposalContentValue | Content
   status: number
   final_tally_result: LcdProposalTallyingParams
-  submit_time: string
+  submit_time: Date
   deposit_end_time: string
   total_deposit: Coin[]
-  voting_start_time: string
-  voting_end_time: string
+  voting_start_time: Date
+  voting_end_time: Date
+}
+
+interface LcdProposalProto {
+  proposal_id: string
+  content: { '@type' } & ProposalContentValue
+  status: string
+  final_tally_result: LcdProposalTally
+  submit_time: Date
+  deposit_end_time: string
+  total_deposit: Coin[]
+  voting_start_time: Date
+  voting_end_time: Date
 }
 
 enum VoteOption {
@@ -102,7 +114,7 @@ interface VoteSummary {
   distribution: VoteDistribution // vote distribution
   count: VoteCount // vote count
   total: string // total amount of luna voted
-  votingEndTime: string // proposal vote ending time in unix
+  votingEndTime: Date // proposal vote ending time in unix
   stakedLuna: string // total staked luna amount
   voters?: { [key: string]: VoteOption }
 }

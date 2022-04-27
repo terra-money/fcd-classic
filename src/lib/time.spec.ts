@@ -21,15 +21,15 @@ describe('time', () => {
   })
 
   test('getQueryDateTime', () => {
-    expect(getQueryDateTime(Date.now()).toString()).toMatch(format(Date.now(), 'YYYY-MM-DD HH:mm:ss'))
+    expect(getQueryDateTime(Date.now()).toString()).toMatch(format(Date.now(), 'yyyy-MM-dd HH:mm:ss'))
   })
 
   test('getQueryDateRangeFrom(1)', () => {
     const today = startOfToday()
 
     expect(getQueryDateRangeFrom(1)).toMatchObject({
-      to: format(today, 'YYYY-MM-DD'),
-      from: format(subDays(today, 1), 'YYYY-MM-DD')
+      to: format(today, 'yyyy-MM-dd'),
+      from: format(subDays(today, 1), 'yyyy-MM-dd')
     })
   })
 

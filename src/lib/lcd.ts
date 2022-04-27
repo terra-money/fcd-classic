@@ -49,6 +49,34 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
 ///////////////////////////////////////////////
 // Transactions
 ///////////////////////////////////////////////
+export function convertProtoType(protoType: string): string {
+  // '/terra.oracle.v1beta1.MsgAggregateExchangeRatePrevote' ->
+  // [ 'terra', 'oracle', 'v1beta1', 'MsgAggregateExchangeRatePrevote' ]
+  const tokens = protoType.match(/([a-zA-Z0-9]+)/g)
+
+  if (!tokens) {
+    return protoType
+  }
+
+  let type: string
+
+  if (tokens[0] === 'terra' || tokens[0] === 'cosmos') {
+    type = `${tokens[1]}/${tokens[tokens.length - 1]}`
+  } else {
+    type = `${tokens[0]}/${tokens[tokens.length - 1]}`
+  }
+
+  type = type
+    .replace('distribution/MsgSetWithdrawAddress', 'distribution/MsgModifyWithdrawAddress')
+    .replace('distribution/MsgWithdrawDelegatorReward', 'distribution/MsgWithdrawDelegationReward')
+    .replace('authz/MsgGrant', 'msgauth/MsgGrantAuthorization')
+    .replace('authz/MsgRevoke', 'msgauth/MsgRevokeAuthorization')
+    .replace('authz/MsgExec', 'msgauth/MsgExecAuthorized')
+    .replace('ibc/MsgTransfer', 'cosmos-sdk/MsgTransfer')
+
+  return type
+}
+
 export async function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
   const res = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
 
@@ -85,24 +113,7 @@ export async function getTx(hash: string): Promise<Transaction.LcdTransaction | 
           gas: auth_info.fee.gas_limit
         },
         msg: body.messages.map((m) => {
-          // '/terra.oracle.v1beta1.MsgAggregateExchangeRatePrevote' ->
-          // [ 'terra', 'oracle', 'v1beta1', 'MsgAggregateExchangeRatePrevote' ]
-          const tokens = m['@type'].match(/([a-zA-Z0-9]+)/g)
-          let type
-
-          if (tokens[0] === 'terra' || tokens[0] === 'cosmos') {
-            type = `${tokens[1]}/${tokens[tokens.length - 1]}`
-          } else {
-            type = `${tokens[0]}/${tokens[tokens.length - 1]}`
-          }
-
-          type = type
-            .replace('distribution/MsgSetWithdrawAddress', 'distribution/MsgModifyWithdrawAddress')
-            .replace('distribution/MsgWithdrawDelegatorReward', 'distribution/MsgWithdrawDelegationReward')
-            .replace('authz/MsgGrant', 'msgauth/MsgGrantAuthorization')
-            .replace('authz/MsgRevoke', 'msgauth/MsgRevokeAuthorization')
-            .replace('authz/MsgExec', 'msgauth/MsgExecAuthorized')
-            .replace('ibc/MsgTransfer', 'cosmos-sdk/MsgTransfer')
+          const type = convertProtoType(m['@type'])
 
           return {
             type,
@@ -378,12 +389,17 @@ export function getProposal(proposalId: string): Promise<LcdProposal> {
   return get(`/gov/proposals/${proposalId}`)
 }
 
+export async function getProposalProto(proposalId: string): Promise<LcdProposalProto> {
+  return (await get(`/cosmos/gov/v1beta1/proposals/${proposalId}`)).proposal
+}
+
 export function getProposalProposer(proposalId: string): Promise<LcdProposalProposer | undefined> {
   return get(`/gov/proposals/${proposalId}/proposer`)
 }
 
 export async function getProposalDeposits(proposalId: string): Promise<LcdProposalDeposit[]> {
-  return (await get(`/gov/proposals/${proposalId}/deposits`)) || []
+  const { deposits } = await get(`/cosmos/gov/v1beta1/proposals/${proposalId}/deposits`)
+  return deposits
 }
 
 const VoteOptionMap = {

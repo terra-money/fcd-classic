@@ -50,21 +50,6 @@ export interface Swagger {
   basePath?: string
 }
 
-const argv = yargs.options({
-  o: {
-    type: 'string',
-    alias: 'output',
-    default: 'combined-swagger.json',
-    description: 'Output file name'
-  },
-  apigateway: {
-    type: 'boolean',
-    alias: 'apiGateway',
-    default: false,
-    description: 'should generate for api gateway'
-  }
-}).argv
-
 function mergeParams(commonParams: Param[] = [], individualParams: Param[] = []): Param[] {
   return [...commonParams, ...individualParams]
 }
@@ -167,6 +152,21 @@ export async function getMergedSwagger() {
 }
 
 async function mergeSwagger() {
+  const argv = await yargs.options({
+    o: {
+      type: 'string',
+      alias: 'output',
+      default: 'combined-swagger.json',
+      description: 'Output file name'
+    },
+    apigateway: {
+      type: 'boolean',
+      alias: 'apiGateway',
+      default: false,
+      description: 'should generate for api gateway'
+    }
+  }).argv
+
   const dest = path.join(__dirname, '..', '..', 'static')
 
   let combinedSwagger = await getMergedSwagger()

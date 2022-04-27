@@ -10,14 +10,14 @@ export function daysBeforeTs(daysBefore = 1): { fromTs: number; toTs: number } {
 }
 
 export function getQueryDateTime(timestamp: number | Date): string {
-  return format(timestamp, 'YYYY-MM-DD HH:mm:ss')
+  return format(timestamp, 'yyyy-MM-dd HH:mm:ss')
 }
 
 export function getQueryDateRangeFrom(daysBefore: number): DateRange {
   const today = startOfToday()
   return {
-    from: format(subDays(today, daysBefore).getTime() || 0, 'YYYY-MM-DD'),
-    to: format(today, 'YYYY-MM-DD')
+    from: format(subDays(today, daysBefore).getTime() || 0, 'yyyy-MM-dd'),
+    to: format(today, 'yyyy-MM-dd')
   }
 }
 
@@ -36,7 +36,7 @@ export function dateFromDateString(dateString: string) {
 }
 
 export function getDateFromDateTime(date: Date): string {
-  return format(date, 'YYYY-MM-DD')
+  return format(date, 'yyyy-MM-dd')
 }
 
 export function getStartOfPreviousMinuteTs(timestamp: number): number {

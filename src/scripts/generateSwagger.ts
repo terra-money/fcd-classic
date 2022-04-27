@@ -4,23 +4,22 @@ import { convertSwaggerForApiGateway } from 'apidoc-swagger'
 import * as path from 'path'
 
 import { getFcdSwaggerObject } from './mergeSwaggerFile'
+;(async function generateSwagger() {
+  const argv = await yargs.options({
+    o: {
+      type: 'string',
+      alias: 'output',
+      default: 'swagger.json',
+      description: 'Output file name'
+    },
+    apigateway: {
+      type: 'boolean',
+      alias: 'apiGateway',
+      default: false,
+      description: 'should generate for api gateway'
+    }
+  }).argv
 
-const argv = yargs.options({
-  o: {
-    type: 'string',
-    alias: 'output',
-    default: 'swagger.json',
-    description: 'Output file name'
-  },
-  apigateway: {
-    type: 'boolean',
-    alias: 'apiGateway',
-    default: false,
-    description: 'should generate for api gateway'
-  }
-}).argv
-
-;(function generateSwagger() {
   let swagger = getFcdSwaggerObject()
 
   const dest = path.join(__dirname, '..', '..', 'static')
