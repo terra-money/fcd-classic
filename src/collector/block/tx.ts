@@ -204,7 +204,12 @@ async function generateTxEntities(txHashes: string[], height: string, block: Blo
   // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
-  return Bluebird.map(txHashes, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
+  // txs with the same tx hash may appear more than once in the same block duration
+  // take unique of txHashes
+  // TODO: do this without using Set
+  const txHashesUnique = [...new Set(txHashes)]
+
+  return Bluebird.map(txHashesUnique, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
 }
 
 export async function collectTxs(
