@@ -1,5 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { get, min, compact, chunk, mapValues, keyBy } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
@@ -204,7 +204,10 @@ async function generateTxEntities(txHashes: string[], height: string, block: Blo
   // pulling all txs from hash
   const taxInfo = await getTaxRateAndCap(height)
 
-  return Bluebird.map(txHashes, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
+  // txs with the same tx hash may appear more than once in the same block duration
+  // TODO: do this without using Set
+  const txHashesUnique = [...new Set(txHashes)]
+  return Bluebird.map(txHashesUnique, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
 }
 
 export async function collectTxs(
@@ -214,6 +217,22 @@ export async function collectTxs(
   block: BlockEntity
 ): Promise<TxEntity[]> {
   const txEntities = await generateTxEntities(txHashes, height, block)
+
+  // Skip transactions that have already been successful
+  const existingTxs = await mgr.find(TxEntity, { where: { hash: In(txEntities.map((t) => t.hash.toLowerCase())) } })
+
+  existingTxs.forEach((e) => {
+    if (!e.data.code) {
+      const idx = txEntities.findIndex((t) => t.hash === e.hash)
+
+      if (idx < 0) {
+        throw new Error('impossible')
+      }
+
+      logger.info(`collectTxs: existing successful tx found: ${e.hash}`)
+      txEntities.splice(idx, 1)
+    }
+  })
 
   // Save TxEntity
   // NOTE: Do not use printSql, getSql, or getQuery function.

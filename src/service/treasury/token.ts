@@ -5,6 +5,7 @@ import { div } from 'lib/math'
 import config from 'config'
 import * as anchor from 'service/treasury/anchor'
 import * as pylon from 'service/treasury/pylon'
+import * as pairsRes from './pairs.dex'
 
 interface Asset {
   symbol: string
@@ -31,10 +32,6 @@ export const TOKEN_SYMBOLS: string[] = []
 
 export async function init() {
   const tokensRes = await rp(`https://assets.terra.money/cw20/tokens.json`, {
-    json: true
-  }).catch(() => ({}))
-
-  const pairsRes = await rp(`https://assets.terra.money/cw20/pairs.json`, {
     json: true
   }).catch(() => ({}))
 
