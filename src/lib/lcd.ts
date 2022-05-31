@@ -22,7 +22,7 @@ async function get(url: string, params?: { [key: string]: string | undefined }):
       'Content-Type': 'application/json',
       'User-Agent': 'terra-fcd'
     },
-    qs: params,
+    qs: { ...params, 'pagination.limit': '1000' },
     json: true,
     agent
   }
