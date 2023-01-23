@@ -43,7 +43,7 @@ jobs:
 #          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Build, tag, and push docker image to AWS ECR
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           push: true
           tags: |
