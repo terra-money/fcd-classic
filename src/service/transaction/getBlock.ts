@@ -1,4 +1,4 @@
-import { getRepository } from 'typeorm'
+import { getRepository, SelectQueryBuilder } from 'typeorm'
 import { BlockEntity, ValidatorInfoEntity } from 'orm'
 import { omit } from 'lodash'
 
@@ -14,14 +14,24 @@ type GetBlockResponse =
   | null
 
 export async function getBlock(height: number): Promise<GetBlockResponse> {
-  const qb = await getRepository(BlockEntity)
-    .createQueryBuilder('block')
-    .where('block.height = :height', {
-      height
-    })
-    .leftJoinAndSelect('block.txs', 'txs')
-    .orderBy('block.id', 'DESC')
-    .addOrderBy('txs.id')
+  let qb: SelectQueryBuilder<BlockEntity>
+
+  if (height == 0) {
+    qb = await getRepository(BlockEntity)
+      .createQueryBuilder('block')
+      .leftJoinAndSelect('block.txs', 'txs')
+      .orderBy('block.id', 'DESC')
+      .limit(1)
+  } else {
+    qb = await getRepository(BlockEntity)
+      .createQueryBuilder('block')
+      .where('block.height = :height', {
+        height
+      })
+      .leftJoinAndSelect('block.txs', 'txs')
+      .orderBy('block.id', 'DESC')
+      .addOrderBy('txs.id')
+  }
 
   const block = await qb.getOne()
 
