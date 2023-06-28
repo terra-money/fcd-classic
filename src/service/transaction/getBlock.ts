@@ -1,10 +1,12 @@
-import { getRepository } from 'typeorm'
-import { BlockEntity, ValidatorInfoEntity } from 'orm'
+import { getRepository, SelectQueryBuilder } from 'typeorm'
+import { BlockEntity } from 'orm'
 import { omit } from 'lodash'
+import { getValidator } from 'lib/lcd'
+import { APIError, ErrorTypes } from 'lib/error'
 
 type GetBlockResponse =
   | (Pick<BlockEntity, 'chainId' | 'height' | 'timestamp'> & {
-      proposer: {
+      proposer?: {
         moniker: string
         identity: string
         operatorAddress: string
@@ -14,28 +16,36 @@ type GetBlockResponse =
   | null
 
 export async function getBlock(height: number): Promise<GetBlockResponse> {
-  const qb = await getRepository(BlockEntity)
-    .createQueryBuilder('block')
-    .where('block.height = :height', {
-      height
-    })
-    .leftJoinAndSelect('block.txs', 'txs')
-    .orderBy('block.id', 'DESC')
-    .addOrderBy('txs.id')
+  let qb: SelectQueryBuilder<BlockEntity>
+  if (height == 0) {
+    qb = await getRepository(BlockEntity)
+      .createQueryBuilder('block')
+      .leftJoinAndSelect('block.txs', 'txs')
+      .orderBy('block.id', 'DESC')
+      .limit(1)
+  } else {
+    qb = await getRepository(BlockEntity)
+      .createQueryBuilder('block')
+      .where('block.height = :height', {
+        height
+      })
+      .leftJoinAndSelect('block.txs', 'txs')
+      .orderBy('txs.id')
+  }
 
   const block = await qb.getOne()
 
   if (!block) {
-    return null
+    throw new APIError(ErrorTypes.NOT_FOUND_ERROR)
   }
 
-  const val = await getRepository(ValidatorInfoEntity).findOne({ operatorAddress: block.proposer })
+  const val = await getValidator(block.proposer)
 
   return {
     ...omit(block, ['id', 'reward', 'txs', 'proposer']),
-    proposer: {
-      moniker: val ? val.moniker : '',
-      identity: val ? val.identity : '',
+    proposer: val && {
+      moniker: val.description.moniker || '',
+      identity: val.description.identity || '',
       operatorAddress: block.proposer
     },
     txs: block.txs.map((item) => ({ id: item.id, ...item.data }))

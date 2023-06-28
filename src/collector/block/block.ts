@@ -2,52 +2,47 @@ import * as sentry from '@sentry/node'
 import { getMinutes } from 'date-fns'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
 import * as Bluebird from 'bluebird'
+import { bech32 } from 'bech32'
 
 import config from 'config'
 import { BlockEntity, BlockRewardEntity } from 'orm'
-import { splitDenomAndAmount, convertAddressToHex } from 'lib/common'
+import { splitDenomAndAmount } from 'lib/common'
 import { plus } from 'lib/math'
 import { collectorLogger as logger } from 'lib/logger'
 import * as lcd from 'lib/lcd'
 import * as rpc from 'lib/rpc'
+import { getTxHashesFromBlock } from 'lib/tx'
 
 import { collectTxs } from './tx'
 import { collectReward } from './reward'
-// import { collectSwap } from './swap'
 import { collectNetwork } from './network'
 import { collectPrice } from './price'
 import { collectGeneral } from './general'
-import { detectAndUpdateProposal } from 'collector/gov'
 
 const validatorCache = new Map()
 
-export async function getValidatorOperatorAddressByHexAddress(hexAddress: string, height: string) {
-  const operatorAddress = validatorCache.get(hexAddress)
+export async function getValidatorOperatorAddressByConsensusAddress(b64: string, height: string) {
+  const operatorAddress = validatorCache.get(b64)
 
   if (operatorAddress) {
     return operatorAddress
   }
 
-  const validators = await lcd.getValidators('bonded', height)
-  const validatorSet = await lcd.getValidatorConsensus(height)
+  const valsAndCons = await lcd.getValidatorsAndConsensus('BOND_STATUS_BONDED', height)
 
-  validatorSet.forEach((s) => {
-    const v = validators.find((v) => v.consensus_pubkey.value === s.pub_key.value)
+  valsAndCons.forEach((v) => {
+    if (v.lcdConsensus && v.lcdConsensus.address) {
+      const b64i = Buffer.from(bech32.fromWords(bech32.decode(v.lcdConsensus.address).words)).toString('base64')
 
-    if (v) {
-      const h = convertAddressToHex(s.address).toUpperCase()
-      validatorCache.set(h, v.operator_address)
+      validatorCache.set(b64i, v.lcdValidator.operator_address)
     }
   })
 
-  if (!validatorCache.has(hexAddress)) {
-    // TODO: Need to figure out solution when a block was proposed by inactive validators
-    // when collecting old blocks
-    // throw new Error(`could not find validator by ${hexAddress} at height ${height}`)
-    return validatorCache.values().next().value
+  if (!validatorCache.has(b64)) {
+    throw new Error(`cannot find ${b64} address at height ${height}`)
   }
 
-  return validatorCache.get(hexAddress)
+  return validatorCache.get(b64)
 }
 
 async function getLatestIndexedBlock(): Promise<BlockEntity | undefined> {
@@ -79,7 +74,7 @@ async function generateBlockEntity(
     height: +height,
     timestamp: new Date(timestamp),
     reward: blockReward,
-    proposer: await getValidatorOperatorAddressByHexAddress(proposer_address, height)
+    proposer: await getValidatorOperatorAddressByConsensusAddress(proposer_address, height)
   }
 
   return blockEntity
@@ -155,13 +150,11 @@ export async function saveBlockInformation(
         .getRepository(BlockEntity)
         .save(await generateBlockEntity(lcdBlock, newBlockReward))
       // get block tx hashes
-      const txHashes = lcd.getTxHashesFromBlock(lcdBlock)
+      const txHashes = getTxHashesFromBlock(lcdBlock)
 
       if (txHashes.length) {
         // save transactions
-        const txEntities = await collectTxs(mgr, txHashes, height, newBlockEntity)
-        // save proposals
-        await detectAndUpdateProposal(mgr, txEntities)
+        await collectTxs(mgr, txHashes, newBlockEntity)
       }
 
       // new block timestamp

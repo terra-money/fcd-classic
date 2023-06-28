@@ -2,10 +2,10 @@ import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 
-const ACCOUNT = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
-const VALIDATOR_DELEGATED = 'terravaloper1vk20anceu6h9s00d27pjlvslz3avetkvnwmr35'
-const VALIDATOR_NOT_DELEGATED = 'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
-const VALIDATOR_CLAIMED = 'terravaloper1krj7amhhagjnyg2tkkuh6l0550y733jnjnnlzy'
+const ACCOUNT = 'terra12t890qauaz42ltzzx3rxj7gu74jvwmzw9659zn'
+const VALIDATOR_DELEGATED = 'terravaloper1uymwfafhq8fruvcjq8k67a29nqzrxnv9m6m427'
+const VALIDATOR_NOT_DELEGATED = 'terravaloper1qk46lk4kt4f90y4quv9mds0q26khhwdsjme29h'
+const VALIDATOR_CLAIMED = 'terravaloper1mpmn2y9qw4dn6z2q3a7hy4c3wjztmvu7wz4r4u'
 
 const coinObject = {
   denom: expect.any(String),
@@ -20,7 +20,6 @@ const validatorObject = {
     maxChangeRate: expect.any(String),
     updateTime: expect.any(String)
   },
-  consensusPubkey: expect.any(String),
   delegatorShares: expect.any(String),
   description: {
     identity: expect.any(String),
@@ -29,7 +28,6 @@ const validatorObject = {
     details: expect.any(String),
     profileIcon: expect.any(String)
   },
-  isNewValidator: expect.any(Boolean),
   operatorAddress: expect.any(String),
   rewardsPool: {
     total: expect.any(String),
@@ -39,7 +37,6 @@ const validatorObject = {
     amount: expect.any(String),
     weight: expect.any(String)
   },
-  stakingReturn: expect.any(String),
   status: expect.any(String),
   tokens: expect.any(String),
   upTime: expect.any(Number),
@@ -70,8 +67,8 @@ describe('Staking', () => {
     await terminateAPITest({ connection })
   })
 
-  test('get staking info', async () => {
-    const { body } = await agent.get(`/v1/staking/${ACCOUNT}`).expect(200)
+  test('staking info for account', async () => {
+    const { body } = await agent.get(`/v1/staking/account/${ACCOUNT}`).expect(200)
 
     expect(body).toMatchObject({
       delegationTotal: expect.any(String),
@@ -82,19 +79,12 @@ describe('Staking', () => {
       undelegations: expect.toBeArray()
     })
 
-    expect(body.validators).toIncludeAnyMembers([
-      {
-        ...validatorObject,
-        myDelegation: expect.any(String),
-        myUndelegation: expect.toBeArray()
-      }
-    ])
     expect(body.myDelegations).toIncludeAnyMembers([delegationObject])
   })
 
   test('get validators', async () => {
     const { body } = await agent.get(`/v1/staking/validators`).expect(200)
-    expect(body).toIncludeAnyMembers([validatorObject])
+    expect(body[0]).toMatchObject(validatorObject)
   })
 
   test('get delegated validators', async () => {
@@ -107,26 +97,10 @@ describe('Staking', () => {
     await agent.get(`/v1/staking/validators/${ACCOUNT}?account=${ACCOUNT}`).expect(400)
   })
 
-  test('get validator not delegated ', async () => {
+  test('get validator not delegated', async () => {
     const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_NOT_DELEGATED}?account=${ACCOUNT}`).expect(200)
 
     expect(body).toMatchObject(validatorObject)
-  })
-
-  test(`get validator's delegations`, async () => {
-    const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_DELEGATED}/delegations`).expect(200)
-
-    expect(body).toMatchObject({
-      limit: expect.any(Number),
-      events: expect.arrayContaining([
-        {
-          height: expect.any(String),
-          type: expect.any(String),
-          amount: coinObject,
-          timestamp: expect.any(String)
-        }
-      ])
-    })
   })
 
   test(`get validator's claims`, async () => {
@@ -136,7 +110,8 @@ describe('Staking', () => {
       limit: expect.any(Number),
       claims: expect.arrayContaining([
         {
-          tx: expect.any(String),
+          chainId: expect.any(String),
+          txhash: expect.any(String),
           type: expect.any(String),
           amounts: expect.arrayContaining([coinObject]),
           timestamp: expect.any(String)
@@ -145,33 +120,11 @@ describe('Staking', () => {
     })
   })
 
-  test(`get validator's delegators`, async () => {
-    const { body } = await agent.get(`/v1/staking/validators/${VALIDATOR_DELEGATED}/delegators?limit=50`).expect(200)
-
-    expect(body).toMatchObject({
-      limit: expect.any(Number),
-      delegators: expect.arrayContaining([
-        {
-          address: expect.any(String),
-          amount: expect.any(String),
-          weight: expect.any(String)
-        }
-      ])
-    })
-  })
-
-  test('staking return', async () => {
+  test('return of all', async () => {
     await agent.get('/v1/staking/return').expect(200)
   })
 
-  test('staking return of validator', async () => {
+  test('return of one', async () => {
     await agent.get(`/v1/staking/return/${VALIDATOR_DELEGATED}`).expect(200)
-  })
-
-  test('Staking for all validators', async () => {
-    const { body } = await agent.get('/v1/staking').expect(200)
-
-    expect(body.validators).not.toBeArrayOfSize(0)
-    expect(body.validators[0]).toMatchObject(validatorObject)
   })
 })

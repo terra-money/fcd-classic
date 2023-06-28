@@ -7,7 +7,10 @@ import { getRepository } from 'typeorm'
 import { saveValidatorDetail } from './validatorDetails'
 
 export async function collectValidator() {
-  const [extValidators, activePrices] = await Promise.all([lcd.getExtendedValidators(), lcd.getActiveOraclePrices()])
+  const [extValidators, activePrices] = await Promise.all([
+    lcd.getValidatorsAndConsensus(),
+    lcd.getActiveOraclePrices()
+  ])
 
   logger.info(`collectValidator: total ${extValidators.length} validators`)
 

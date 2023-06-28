@@ -2,8 +2,8 @@ import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
 
-const NORMAL_ACCOUNT = 'terra1940nsxkz62snd3azk3a9j79m4qd3qvwnrf2xvj'
-const VESTING_ACCOUNT = 'terra1qz27yu74kvv0xvxqlzhggdfkzkn2gg7fmez3we'
+const NORMAL_ACCOUNT = 'terra12t890qauaz42ltzzx3rxj7gu74jvwmzw9659zn'
+const VESTING_ACCOUNT = 'terra1dp0taj85ruc299rkdvzp4z5pfg6z6swaed74e6'
 
 describe('Account', () => {
   let agent: SuperTest<Test>
@@ -138,6 +138,16 @@ describe('Account', () => {
       }
     ]
 
-    expect(body.vesting).toIncludeAllMembers(vestingAnswer)
+    expect(body.vesting).toContainEqual({
+      denom: 'usdr',
+      schedules: expect.toContainValue({
+        amount: expect.any(String),
+        endTime: expect.any(Number),
+        freedRate: expect.any(Number),
+        ratio: expect.any(Number),
+        startTime: expect.any(Number)
+      }),
+      total: expect.any(String)
+    })
   })
 })

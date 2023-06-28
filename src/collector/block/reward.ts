@@ -13,23 +13,21 @@ import { getDateRangeOfLastMinute, getQueryDateTime, getStartOfPreviousMinuteTs 
 
 import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
 
-function getGas(tx): DenomMap {
-  const gasInfo = get(tx, 'data.tx.value.fee.amount')
+function extractGasFee(tx: TxEntity): DenomMap {
+  const amount = get(tx, 'data.tx.value.fee.amount')
 
-  return gasInfo
-    ? gasInfo.reduce((acc, item) => {
-        acc[item.denom] = acc[item.denom] ? plus(acc[item.denom], item.amount) : item.amount
-        return acc
-      }, {})
-    : {}
+  return (amount || []).reduce((acc, item) => {
+    acc[item.denom] = acc[item.denom] ? plus(acc[item.denom], item.amount) : item.amount
+    return acc
+  }, {})
 }
 
-type TxFee = {
+type ExtraFee = {
   swapfee?: DenomMap
   tax?: DenomMap
 }
 
-function getFee(tx): TxFee {
+function extractExtraFee(tx): ExtraFee {
   const logs = get(tx, 'data.logs')
   return logs
     ? logs.reduce(
@@ -72,9 +70,9 @@ async function getFees(timestamp: number): Promise<{
 
   return txs.reduce(
     (acc, tx) => {
-      const gas = getGas(tx)
-      const fee = getFee(tx)
-      return mergeWith(acc, { ...fee, gas }, rewardMerger)
+      const gas = extractGasFee(tx)
+      const swapFeeAndTax = extractExtraFee(tx)
+      return mergeWith(acc, { ...swapFeeAndTax, gas }, rewardMerger)
     },
     { swapfee: {}, tax: {}, gas: {} }
   )

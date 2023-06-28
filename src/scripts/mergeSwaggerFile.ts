@@ -1,4 +1,4 @@
-import * as rp from 'request-promise'
+import { request } from 'undici'
 import * as yaml from 'js-yaml'
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { createApidocSwagger, convertSwaggerForApiGateway } from 'apidoc-swagger'
@@ -80,7 +80,7 @@ async function getLcdSwaggerObject(): Promise<Swagger> {
     }
   }
 
-  const doc = yaml.load(await rp(LCD_SWAGGER_URL, options))
+  const doc = yaml.load(await request(LCD_SWAGGER_URL, options).then((res) => res.body.text()))
   return filterExcludedRoutes(normalizeSwagger(doc))
 }
 

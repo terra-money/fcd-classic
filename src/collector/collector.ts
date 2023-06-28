@@ -4,12 +4,11 @@ import { get } from 'lodash'
 import { default as parseDuration } from 'parse-duration'
 
 import { collectorLogger as logger } from 'lib/logger'
-import { initializeSentry } from 'lib/errorReporting'
+import { init as initializeSentry } from 'lib/errorReport'
 import { init as initToken } from 'service/treasury/token'
 
 import { collectBlock } from './block'
 import { collectValidatorReturn, collectValidator } from './staking'
-import { collectProposals } from './gov'
 import { collectDashboard } from './dashboard'
 import { startWatcher, startPolling } from './watcher'
 import { collectRichList } from './richlist'
@@ -29,7 +28,6 @@ process.on('unhandledRejection', (err) => {
 const tenMinute = parseDuration('10m')
 const twentyMinute = parseDuration('20m')
 
-const proposalCollector = new Semaphore('ProposalCollector', collectProposals, logger)
 const validatorCollector = new Semaphore('ValidatorCollector', collectValidator, logger, tenMinute)
 const returnCalculator = new Semaphore('ReturnCalculator', collectValidatorReturn, logger, twentyMinute)
 const dashboardCollector = new Semaphore('DashboardCollector', collectDashboard, logger, twentyMinute)
@@ -37,11 +35,6 @@ const richListCollector = new Semaphore('RichListCollector', collectRichList, lo
 const vestingCollector = new Semaphore('VestingCollector', collectUnvested, logger, twentyMinute)
 
 const jobs = [
-  // Per minute
-  {
-    method: proposalCollector.run.bind(proposalCollector),
-    cron: '30 * * * * *'
-  },
   // Per Hour
   {
     method: validatorCollector.run.bind(validatorCollector),

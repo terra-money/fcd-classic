@@ -35,9 +35,8 @@ export function convertSchedules(array?: VestingSchedules[]): ConvertedSchedules
 
 const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTimestamp: number): Balance[] => {
   /* normailze */
-  const { value, vesting_schedules } = account
+  const { coins, vesting_schedules } = account
   const { original_vesting, delegated_vesting } = account
-  const { coins } = value
 
   /* map */
   const originalVestingMap = convertCoins(original_vesting)

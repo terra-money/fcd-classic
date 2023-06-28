@@ -18,7 +18,7 @@ export function getQueryDatetimes(interval: string, count: number): Date[] {
   return [...Array(count).keys()].map((multiple) => new Date(lastestTimestamp - multiple * msc - MIN_DURATION))
 }
 
-export async function getOnedayBefore(): Promise<CoinByDenoms> {
+export async function getOnedayBefore(): Promise<DenomMap> {
   const now = new Date()
   const activeDenomsLength = config.ACTIVE_DENOMS.length - 1 /* -1 because luna */
   const oneDayBefore = getTargetDatetime(now, '1d') - MIN_DURATION
@@ -39,12 +39,12 @@ export async function getOnedayBefore(): Promise<CoinByDenoms> {
   }, {})
 }
 
-export function getSwapRate(prices: CoinByDenoms, base: string): CoinByDenoms {
+export function getSwapRate(prices: DenomMap, base: string): DenomMap {
   if (base === 'uluna') {
     return prices
   }
 
-  const lunaSwapRate = prices[base] ? div(1, prices[base]) : undefined
+  const lunaSwapRate = prices[base] ? div(1, prices[base]) : '0.00000000'
 
   return Object.keys(prices).reduce(
     (acc, curr) => {

@@ -17,23 +17,47 @@ declare namespace Transaction {
     }[]
   }
 
-  interface Value {
-    fee: {
-      amount: Coin[]
-      gas: string
-    }
-    msg: Message[]
-    signatures: Signature[]
+  type Message = { [key: string]: any }
+
+  interface Body {
+    messages: Message[]
     memo: string
     timeout_height?: string
   }
 
-  interface Message {
+  interface Fee {
+    amount: Coin[]
+    gas_limit: string
+    payer: string
+    granter: string
+  }
+
+  interface SignerInfo {
+    public_key: {
+      '@type': string
+      key: string
+    }
+    // ignore mode_info:
+    sequence: string
+  }
+
+  interface AuthInfo {
+    signer_infos: SignerInfo[]
+    fee: Fee
+  }
+
+  interface LcdTx {
+    body: Body
+    auth_info: AuthInfo
+    signatures: string[]
+  }
+
+  interface AminoMesssage {
     type: string
     value: { [key: string]: any }
   }
 
-  interface Signature {
+  interface AminoSignature {
     pub_key: {
       type: string
       value: string
@@ -41,9 +65,18 @@ declare namespace Transaction {
     signature: string
   }
 
-  interface LcdTx {
+  interface AminoTx {
     type: string
-    value: Value
+    value: {
+      fee: {
+        amount: Coin[]
+        gas: string
+      }
+      msg: AminoMesssage[]
+      signatures: AminoSignature[]
+      memo: string
+      timeout_height?: string
+    }
   }
 
   interface LcdTransaction {
@@ -55,7 +88,7 @@ declare namespace Transaction {
     logs: Log[]
     gas_wanted: string
     gas_used: string
-    tx: LcdTx
+    tx: AminoTx
     timestamp: string // unix time (GMT)
   }
 
@@ -66,14 +99,6 @@ declare namespace Transaction {
     page_total: string
     limit: string
     txs: LcdTransaction[]
-  }
-
-  interface LcdPostTransaction {
-    height: string
-    txhash: string
-    code?: number
-    raw_log?: string
-    logs?: Log[]
   }
 }
 

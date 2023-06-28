@@ -1,73 +1,55 @@
-interface AccountValue {
+type AllAccount =
+  | BaseAccount
+  | ContinuousVestingAccount
+  | DelayedVestingAccount
+  | PeriodicVestingAccount
+  | LazyGradedVestingAccount
+  | ModuleAccount
+
+interface BaseAccount {
+  '@type': '/cosmos.auth.v1beta1.BaseAccount'
   address: string
-  coins: Coins
-  public_key: { type: string; value: string }
+  pub_key: { '@type': string; key: string } | null
   account_number: string
   sequence: string
 }
 
-interface StandardAccount {
-  type: string
-  value: AccountValue
+interface BaseVestingAccount {
+  base_account: BaseAccount
+  original_vesting: Coins
+  delegated_free: Coins
+  delegated_vesting: Coins
+  end_time: string
 }
 
-interface VestingAccount {
-  type: string
-  value: {
-    BaseVestingAccount: {
-      BaseAccount: AccountValue
-      original_vesting: Coins
-      delegated_free: Coins
-      delegated_vesting: Coins
-      end_time: string
-    }
-    vesting_schedules: {
-      denom: string
-      schedules: {
-        cliff: string
-        ratio: string
-      }[]
-    }[]
-  }
+interface ContinuousVestingAccount {
+  '@type': '/cosmos.vesting.v1beta1.ContinuousVestingAccount'
+  base_vesting_account: BaseVestingAccount
+  start_time: string
 }
 
-interface Columbus3LazyVestingAccount {
-  type: string
-  value: {
-    BaseVestingAccount: {
-      BaseAccount: AccountValue
-      original_vesting: Coins
-      delegated_free: Coins
-      delegated_vesting: Coins
-      end_time: string
-    }
-    vesting_schedules: VestingSchedules[]
-  }
+interface DelayedVestingAccount {
+  '@type': '/cosmos.vesting.v1beta1.DelayedVestingAccount'
+  base_vesting_account: BaseVestingAccount
 }
 
-interface Columbus4LazyVestingAccount {
-  type: string
-  value: AccountValue & {
-    original_vesting: Coins
-    delegated_free: Coins
-    delegated_vesting: Coins
-    end_time: string
-    vesting_schedules: VestingSchedules[]
-  }
+interface VestingPeriod {
+  length: string // unit: seconds
+  amount: Coins
 }
 
-interface LazyVestingAccount {
-  type: string
-  value: {
-    coins: Coins
-    base_vesting_account: {
-      base_account: AccountValue
-      original_vesting: Coins
-      delegated_free: Coins
-      delegated_vesting: Coins
-    }
-    vesting_schedules: VestingSchedules[]
-  }
+interface PeriodicVestingAccount {
+  '@type': '/cosmos.vesting.v1beta1.PeriodicVestingAccount'
+  base_vesting_account: BaseVestingAccount
+  start_time: string
+  // linear vesting from start_time to period.length (seconds)
+  vesting_periods: VestingPeriod[]
+}
+
+interface LazyGradedVestingAccount {
+  '@type': '/terra.vesting.v1beta1.LazyGradedVestingAccount'
+  base_vesting_account: BaseVestingAccount
+  vesting_schedules: VestingSchedules[]
 }
 
 interface VestingSchedules {
@@ -81,25 +63,19 @@ interface Schedule {
   ratio: string
 }
 
-interface Columbus3ModuleAccount {
-  type: string
-  value: {
-    BaseAccount: AccountValue
-    name: string
-    permissions: string[]
-  }
-}
-
 interface ModuleAccount {
-  type: string
-  value: AccountValue & {
-    name: string
-    permissions: string[]
-  }
+  '@type': '/cosmos.auth.v1beta1.ModuleAccount'
+  base_account: BaseAccount
+  name: string
+  permissions: string[]
 }
 
 interface NormalizedAccount {
-  value: AccountValue
+  address: string
+  account_number: string
+  sequence: string
+  // For base accounts
+  coins?: Coins
   // For vesting accounts
   original_vesting?: Coins
   delegated_free?: Coins
@@ -108,36 +84,4 @@ interface NormalizedAccount {
   // For module accounts
   name?: string
   permissions?: string[]
-}
-
-interface CountInfoByDate {
-  datetime: number // datetime in unix
-  value: number
-}
-
-interface AccountCountInfo {
-  datetime: number
-  activeAccountCount: number
-  totalAccountCount: number
-}
-
-interface AccountGrowthReturn {
-  periodic: AccountCountInfo[]
-  cumulative: AccountCountInfo[]
-}
-
-interface AccountStatReturn {
-  total: number
-  periodic: CountInfoByDate[]
-  cumulative?: CountInfoByDate[]
-}
-
-interface BlockRewardSumInfo {
-  datetime: number // datetiem in unix
-  blockReward: string // big interger
-}
-
-interface BlockRewardsReturn {
-  periodic: BlockRewardSumInfo[]
-  cumulative: BlockRewardSumInfo[]
 }

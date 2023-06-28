@@ -24,7 +24,7 @@ function extractAddressFromMsg(msg: Transaction.Message): string[] {
     }
   }
 
-  extractAddressesFromValue(msg.value)
+  extractAddressesFromValue(msg)
   return addrs
 }
 

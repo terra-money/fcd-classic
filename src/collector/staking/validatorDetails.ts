@@ -28,13 +28,13 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 
   switch (status) {
-    case 1: {
+    case 'BOND_STATUS_UNBONDED': {
       return ValidatorStatus.INACTIVE
     }
-    case 2: {
+    case 'BOND_STATUS_UNBONDING': {
       return ValidatorStatus.UNBONDING
     }
-    case 3: {
+    case 'BOND_STATUS_BONDED': {
       return ValidatorStatus.ACTIVE
     }
     default: {
@@ -43,7 +43,7 @@ function getValidatorStatus(validatorInfo: LcdValidator): ValidatorStatus {
   }
 }
 
-export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: CoinByDenoms) {
+export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidator, activePrices: DenomMap) {
   const { lcdValidator } = extendedValidator
   const operatorAddress = lcdValidator.operator_address
   const { details, identity, moniker, website, security_contact: securityContact } = lcdValidator.description

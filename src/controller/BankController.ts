@@ -4,7 +4,7 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX } from 'lib/constant'
 
-import { getBalance } from 'service/bank'
+import { getBalances } from 'service/bank'
 
 const Joi = Validator.Joi
 
@@ -54,7 +54,7 @@ export default class BankController extends KoaController {
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
-  async getAccountDetails(ctx) {
-    success(ctx, await getBalance(ctx.params.account))
+  async getBalances(ctx) {
+    success(ctx, await getBalances(ctx.params.account))
   }
 }

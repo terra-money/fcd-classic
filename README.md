@@ -15,13 +15,8 @@
 
 ## Prerequisites
 
-1. `Node.js` version 14 or later
-1. `PostgreSQL` version 12 or later
-
-### Terra Core
-
-1. Setup a LCD
-1. Configure firewall ([Reference](https://docs.terra.money/How-to/Run-a-full-Terra-node/Set-up-production-environment.html#configure-the-firewall))
+1. `Node.js` v16.x or later
+1. `PostgreSQL` v12.x or later
 
 ## Project setup
 
@@ -44,7 +39,7 @@ FCD requires PostgreSQL as a backend database and [TypeORM](https://github.com/t
 #### Create a new database for FCD
 
 ```psql
-postgres=> CREATE DATABASED fcd OWNER terra;
+postgres=> CREATE DATABASE fcd OWNER terra;
 ```
 
 #### Synchronize Database Scheme

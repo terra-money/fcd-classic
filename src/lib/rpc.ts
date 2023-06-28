@@ -1,22 +1,41 @@
-import * as rp from 'request-promise'
+import { request, Agent } from 'undici'
 import { compact } from 'lodash'
 import config from 'config'
 import { apiLogger as logger } from './logger'
 
-async function getRequest(url: string, params?: Record<string, unknown>): Promise<any> {
+const agent = new Agent({
+  connect: {
+    rejectUnauthorized: false
+  }
+})
+
+async function getRequest(path: string, params?: Record<string, string>): Promise<any> {
   const options = {
-    method: 'GET',
-    rejectUnauthorized: false,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'User-Agent': 'terra-fcd'
     },
-    qs: params,
-    json: true
+    dispatcher: agent
   }
 
-  const response = await rp(`${config.RPC_URI}${url}`, options).catch((e) => {
-    logger.error(`RPC request to ${url} failed by ${e}`)
-  })
+  let url = `${config.RPC_URI}${path}`
+  params && Object.keys(params).forEach((key) => params[key] === undefined && delete params[key])
+  const qs = new URLSearchParams(params as any).toString()
+  if (qs.length) {
+    url += `?${qs}`
+  }
+
+  const response = await request(url, options)
+    .then((res) => {
+      if (res.statusCode !== 200) {
+        throw new Error('invalid status')
+      }
+
+      return res.body.json()
+    })
+    .catch((e) => {
+      logger.error(`RPC request to ${url} failed by ${e}`)
+    })
 
   if (!response || typeof response.jsonrpc !== 'string') {
     throw new Error('failed to query RPC')
@@ -35,7 +54,7 @@ function base64Decode(data: string) {
 }
 
 interface Reward {
-  amount: string // '183373.654531179990300676ukrw'
+  amount: string // '183373.654531179990300676uluna'
   validator: string // 'terravaloper1nwrksgv2vuadma8ygs8rhwffu2ygk4j24w2mku'
   type: 'proposer_reward' | 'rewards' | 'commission'
 }
@@ -47,36 +66,34 @@ export async function getRewards(height: string): Promise<Reward[]> {
     throw new Error('failed get block results from rpc')
   }
 
-  const events = blockResult.results
-    ? // columbus-1 to 3
-      blockResult.results.begin_block.events
-    : // columbus-4
-      [...(blockResult.begin_block_events || []), ...(blockResult.end_block_events || [])]
+  const events = [...(blockResult.begin_block_events || []), ...(blockResult.end_block_events || [])]
 
   const decodedRewardsAndCommission: Reward[] = compact(
-    (events || []).map((event) => {
-      if (event.type !== 'proposer_reward' && event.type !== 'rewards' && event.type !== 'commission') {
-        return
-      }
+    (events || [])
+      .map((event) => {
+        if (event.type !== 'proposer_reward' && event.type !== 'rewards' && event.type !== 'commission') {
+          return
+        }
 
-      const res = {}
+        const res = {}
 
-      event.attributes.forEach((attr) => {
-        const key = base64Decode(attr.key)
-        const value = base64Decode(attr.value)
-        res[key] = value
+        event.attributes.forEach((attr) => {
+          const key = base64Decode(attr.key)
+          const value = base64Decode(attr.value)
+          res[key] = value
+        })
+
+        res['type'] = event.type
+        return res as Reward
       })
-
-      res['type'] = event.type
-      return res
-    })
+      .flat()
   )
 
   return decodedRewardsAndCommission
 }
 
 export async function getUnconfirmedTxs(
-  params: Record<string, unknown> = { limit: '1000000000000' }
+  params: Record<string, string> = { limit: '1000000000000' }
 ): Promise<string[]> {
   const unconfirmedTxs = await getRequest(`/unconfirmed_txs`, params)
 

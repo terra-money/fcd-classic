@@ -4,6 +4,8 @@ import * as sentry from '@sentry/node'
 import { collectorLogger as logger } from 'lib/logger'
 import RPCWatcher, { RpcResponse } from 'lib/RPCWatcher'
 import * as lcd from 'lib/lcd'
+import { decodeTx } from 'lib/tx'
+import { Tx } from '@classic-terra/terra.js'
 import config from 'config'
 import { saveValidatorDetail } from './staking/validatorDetails'
 import { collectBlock } from './block'
@@ -19,12 +21,12 @@ const NEW_BLOCK_Q = `tm.event='NewBlock'`
 const validatorUpdateSet = new Set<string>()
 const VALIDATOR_REGEX = /terravaloper([a-z0-9]{39})/g
 
-async function detectValidators(txs: Transaction.LcdTx[]) {
+async function detectValidators(txs: Tx[]) {
   // extract validator addresses from string
   const addresses = uniq(
     txs
-      .filter((tx) =>
-        (tx?.value?.msg ?? []).some((msg) => typeof msg.type === 'string' && !msg.type.includes('oracle/'))
+      .filter(
+        (tx) => (tx?.body?.messages ?? []).some((msg) => !msg.toData()['@type'].startsWith('/terra.oracle')) // ignore oracle messages
       )
       .map((tx) => JSON.stringify(tx).match(VALIDATOR_REGEX))
       .flat()
@@ -35,13 +37,13 @@ async function detectValidators(txs: Transaction.LcdTx[]) {
 }
 
 async function collectValidators() {
-  const addrs = Array.from(validatorUpdateSet.values())
-  validatorUpdateSet.clear()
-
-  const extValidators = await lcd.getExtendedValidators('bonded')
+  const extValidators = await lcd.getValidatorsAndConsensus('BOND_STATUS_BONDED')
   const activePrices = await lcd.getActiveOraclePrices()
 
-  await Bluebird.mapSeries(addrs, (addr) => {
+  const validatorAddressesToUpdate = Array.from(validatorUpdateSet.values())
+  validatorUpdateSet.clear()
+
+  await Bluebird.mapSeries(validatorAddressesToUpdate, (addr) => {
     const extVal = extValidators.find((i) => i.lcdValidator.operator_address === addr)
 
     if (extVal) {
@@ -59,11 +61,11 @@ async function processNewBlock(data: RpcResponse) {
   if (marshalTxs) {
     try {
       // decode amino transactions
-      const txs = await Bluebird.map(marshalTxs, lcd.decodeTx)
+      const txs = marshalTxs.map(decodeTx)
 
       detectValidators(txs)
     } catch (err) {
-      sentry.captureException(err)
+      logger.error(`processNewBlock:`, err)
     }
   }
 }

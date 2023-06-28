@@ -1,16 +1,16 @@
 import { find, chain, keyBy } from 'lodash'
 
 import * as lcd from 'lib/lcd'
-import { getDelegations, DelegationInfo } from 'lib/getDelegations'
+import { getDelegations, DelegationInfo } from './getDelegations'
 import { plus, div } from 'lib/math'
 import { sortDenoms } from 'lib/common'
 import memoizeCache from 'lib/memoizeCache'
 
-import { getBalance } from '../bank'
+import { getBalances } from '../bank'
 import { getValidators } from './getValidators'
-import { getUndelegateSchedule } from './helper'
+import { getUndelegateSchedule } from './getUndelegateSchedule'
 
-function getTotalRewardsAdjustedToLuna(rewards: { denom: string; amount: string }[], prices: CoinByDenoms): string {
+function getTotalRewardsAdjustedToLuna(rewards: Coin[], prices: DenomMap): string {
   return rewards.reduce((acc, item) => {
     if (item.denom === 'uluna') {
       return plus(acc, item.amount)
@@ -32,7 +32,7 @@ interface MyDelegation {
 async function getMyDelegation(
   delegation: DelegationInfo,
   validator: ValidatorResponse,
-  prices: CoinByDenoms
+  prices: DenomMap
 ): Promise<MyDelegation> {
   const rewards = await lcd.getRewards(delegation.delegator_address, delegation.validator_address)
   const adjustedRewards = rewards && prices && getTotalRewardsAdjustedToLuna(rewards, prices)
@@ -50,7 +50,7 @@ async function getMyDelegation(
 async function getMyDelegations(
   delegations: DelegationInfo[],
   validatorObj: { [validatorAddress: string]: ValidatorResponse },
-  prices: CoinByDenoms
+  prices: DenomMap
 ): Promise<MyDelegation[]> {
   const myDelegations = await Promise.all(
     delegations.map((item: DelegationInfo): Promise<MyDelegation> => {
@@ -107,7 +107,7 @@ export async function getStakingUncached(address: string): Promise<GetStakingRes
   const [validators, delegations, balance, redelegations, prices, totalRewards] = await Promise.all([
     getValidators(),
     getDelegations(address),
-    getBalance(address),
+    getBalances(address),
     lcd.getRedelegations(address),
     lcd.getActiveOraclePrices(),
     lcd.getTotalRewards(address)
@@ -141,4 +141,4 @@ export async function getStakingUncached(address: string): Promise<GetStakingRes
   }
 }
 
-export default memoizeCache(getStakingUncached, { promise: true, maxAge: 10 * 1000 })
+export const getStakingForAccount = memoizeCache(getStakingUncached, { promise: true, maxAge: 10 * 1000 })

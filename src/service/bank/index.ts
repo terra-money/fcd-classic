@@ -1,1 +1,1 @@
-export { default as getBalance } from './getBalance'
+export * from './getBalances'

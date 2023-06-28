@@ -4,16 +4,21 @@ import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 import { TERRA_ACCOUNT_REGEX, CHAIN_ID_REGEX } from 'lib/constant'
 import Mempool from 'lib/mempool'
-import { getBlock, getTx, getTxList, postTxs } from 'service/transaction'
+import { getBlock, getTx, getTxList } from 'service/transaction'
 
 const Joi = Validator.Joi
 
 @Controller('')
 export default class TransactionController extends KoaController {
+  @Get('/blocks/latest')
+  async getBlockLatest(ctx): Promise<void> {
+    success(ctx, await getBlock(0))
+  }
+
   @Get('/blocks/:height')
   @Validate({
     params: {
-      height: Joi.number().required().description('Block height')
+      height: Joi.number().required().min(1).description('Block height')
     }
   })
   async getBlock(ctx): Promise<void> {
@@ -80,8 +85,7 @@ export default class TransactionController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTx(ctx): Promise<void> {
-    const tx = await getTx(ctx.params.txhash)
-    success(ctx, tx, tx ? 200 : 206)
+    success(ctx, await getTx(ctx.params.txhash))
   }
 
   /**
@@ -163,64 +167,13 @@ export default class TransactionController extends KoaController {
         .regex(/^\d{1,16}$/),
       chainId: Joi.string().default(config.CHAIN_ID).regex(CHAIN_ID_REGEX),
       limit: Joi.number().default(10).valid(10, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset'),
+      offset: Joi.number().description('Offset'),
       compact: Joi.boolean().description('Compact mode')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getTxList(ctx): Promise<void> {
     success(ctx, await getTxList(ctx.query))
-  }
-  /**
-   * @api {post} /txs Broadcast Txs
-   * @apiName postTxs
-   * @apiGroup Transactions
-   *
-   * @apiParam {Object}   tx request tx must be signed
-   * @apiParam {string[]} tx.msg tx message
-   * @apiParam {Object}   tx.fee tx fee
-   * @apiParam {string}   tx.fee.gas tx gas
-   * @apiParam {Object[]}   tx.fee.amount tx gas amount
-   * @apiParam {string}   tx.fee.amount.denom tx gas amount
-   * @apiParam {string}   tx.fee.amount.amount tx gas amount
-   * @apiParam {Object}   tx.signature tx signature
-   * @apiParam {string}   tx.signature.signature tx signature
-   * @apiParam {Object}   tx.signature.pub_key tx signature
-   * @apiParam {string}   tx.signature.pub_key.type Key type
-   * @apiParam {string}   tx.signature.pub_key.value Key value
-   * @apiParam {string}   tx.signature.account_number tx signature
-   * @apiParam {string}   tx.signature.sequence tx sequence of the account
-   * @apiParam {string}   tx.memo Information related to tx
-   * @apiParam {string}   mode broadcast mode
-   *
-   *
-   * @apiSuccess {string} hash Tx hash
-   * @apiSuccess {number} height Block height
-   * @apiSuccess {Object} check_tx tx info
-   * @apiSuccess {number} check_tx.code
-   * @apiSuccess {string} check_tx.data
-   * @apiSuccess {string} check_tx.log
-   * @apiSuccess {number} check_tx.gas_used
-   * @apiSuccess {number} check_tx.gas_wanted
-   * @apiSuccess {string} check_tx.info
-   * @apiSuccess {string[]} check_tx.tags
-   * @apiSuccess {Object} deliver_tx tx info
-   * @apiSuccess {number} deliver_tx.code
-   * @apiSuccess {string} deliver_tx.data
-   * @apiSuccess {string} deliver_tx.log
-   * @apiSuccess {number} deliver_tx.gas_used
-   * @apiSuccess {number} deliver_tx.gas_wanted
-   * @apiSuccess {string} deliver_tx.info
-   * @apiSuccess {string[]} deliver_tx.tags
-   */
-  @Post('/txs')
-  @Validate({
-    type: 'json',
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async postTxs(ctx): Promise<void> {
-    const body = ctx.request.body
-    success(ctx, await postTxs(body))
   }
 
   /**

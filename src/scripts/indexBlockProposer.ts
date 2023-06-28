@@ -1,11 +1,12 @@
 import * as Bluebird from 'bluebird'
 import { getManager } from 'typeorm'
 import { chunk } from 'lodash'
-import * as rp from 'request-promise'
+import { request } from 'undici'
 import { init, BlockEntity } from 'orm'
 import * as token from 'service/treasury/token'
-import { getValidatorOperatorAddressByHexAddress } from 'collector/block'
+import { getValidatorOperatorAddressByConsensusAddress } from 'collector/block'
 import config from 'config'
+import * as lcd from 'lib/lcd'
 
 /**
  * For building columns of BlockEntity
@@ -32,15 +33,12 @@ async function main() {
   // do 1,000 updates at a time
   await Bluebird.mapSeries(chunk(heights, 1000), async (chk) => {
     const options = {
-      json: true,
       headers: {
         'User-Agent': 'terra-fcd'
       }
     }
 
-    const lcdDatas = await Bluebird.map(chk, async (height) => rp(`${config.LCD_URI}/blocks/${height}`, options), {
-      concurrency: 16
-    })
+    const lcdDatas = await Bluebird.map(chk, async (height) => lcd.getBlock(height.toString()), { concurrency: 16 })
     console.log(`height ${chk[0]}`)
 
     await getManager().transaction(async (mgr) => {
@@ -67,11 +65,13 @@ async function main() {
           // const parentHash = l.block.header.last_block_id.hash,
           const addr = l.block.header.proposer_address
 
-          const proposer = await getValidatorOperatorAddressByHexAddress(addr, b.height.toString()).catch((err) => {
-            console.log(`error: ${err.message}, height: ${b.height}`)
-            // return getValidatorOperatorAddressByHexAddress(addr, b.height)
-            throw err
-          })
+          const proposer = await getValidatorOperatorAddressByConsensusAddress(addr, b.height.toString()).catch(
+            (err) => {
+              console.log(`error: ${err.message}, height: ${b.height}`)
+              // return getValidatorOperatorAddressByHexAddress(addr, b.height)
+              throw err
+            }
+          )
 
           return mgr.update(BlockEntity, b.id, { proposer })
         },

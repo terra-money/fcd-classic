@@ -1,8 +1,7 @@
 import 'jest-extended'
 import { SuperTest, Test } from 'supertest'
 import { setupAgent, terminateAPITest } from './lib/agent'
-
-const denoms = ['uusd', 'ukrw', 'usdr', 'umnt', 'uluna']
+import config from 'config'
 
 describe('Market Test', () => {
   let agent: SuperTest<Test>
@@ -17,27 +16,29 @@ describe('Market Test', () => {
   })
 
   test('get swaprate', async () => {
-    for (let i = 0; i < denoms.length; i = i + 1) {
-      const { body } = await agent.get(`/v1/market/swaprate/${denoms[i]}`).expect(200)
+    await Promise.all(
+      config.ACTIVE_DENOMS.map(async (denom) => {
+        const { body } = await agent.get(`/v1/market/swaprate/${denom}`).expect(200)
 
-      expect(body).not.toBeArrayOfSize(0)
-      expect(body).toIncludeAnyMembers([
-        {
-          denom: expect.any(String),
-          swaprate: expect.any(String),
-          oneDayVariation: expect.any(String),
-          oneDayVariationRate: expect.any(String)
-        }
-      ])
-    }
+        expect(body).not.toBeArrayOfSize(0)
+        expect(body).toIncludeAnyMembers([
+          {
+            denom: expect.any(String),
+            swaprate: expect.any(String),
+            oneDayVariation: expect.any(String),
+            oneDayVariationRate: expect.any(String)
+          }
+        ])
+      })
+    )
   })
 
   test('get price invalid denom', async () => {
-    await agent.get(`/v1/market/price?denom=ukre&interval=15m`).expect(400)
+    await agent.get(`/v1/market/price?denom=uusf&interval=15m`).expect(400)
   })
 
   test('get price', async () => {
-    const { body } = await agent.get(`/v1/market/price?denom=ukrw&interval=15m&count=10`).expect(200)
+    const { body } = await agent.get(`/v1/market/price?denom=uusd&interval=1d`).expect(200)
 
     expect(body).toMatchObject({
       lastPrice: expect.any(Number),
@@ -46,7 +47,7 @@ describe('Market Test', () => {
       prices: expect.arrayContaining([
         {
           datetime: expect.any(Number),
-          denom: expect.toBeOneOf(denoms),
+          denom: expect.toBeOneOf(config.ACTIVE_DENOMS),
           price: expect.any(Number)
         }
       ])

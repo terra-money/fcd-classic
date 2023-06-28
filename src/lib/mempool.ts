@@ -1,8 +1,7 @@
 import * as Bluebird from 'bluebird'
 import * as sentry from '@sentry/node'
 import * as rpc from 'lib/rpc'
-import * as lcd from 'lib/lcd'
-import { convertPublicKeyToAddress } from 'lib/common'
+import { decodeTx, getTxHash } from 'lib/tx'
 import { apiLogger as logger } from 'lib/logger'
 import RPCWatcher from 'lib/RPCWatcher'
 import config from 'config'
@@ -54,7 +53,7 @@ class Mempool {
 
       if (marshalTxs) {
         marshalTxs.map((strTx) => {
-          const txhash = lcd.getTxHash(strTx)
+          const txhash = getTxHash(strTx)
           debug(`mempool: removing ${txhash}`)
           this.hashMap.delete(txhash)
         })
@@ -85,7 +84,7 @@ class Mempool {
 
     const newItems = await Bluebird.map(txStrs, async (txStr) => {
       // Convert txStr to txhash and find it from items
-      const txhash = lcd.getTxHash(txStr)
+      const txhash = getTxHash(txStr)
       const existingItem = this.hashMap.get(txhash)
 
       if (existingItem) {
@@ -93,15 +92,15 @@ class Mempool {
       }
 
       // decode encoded text to json string
-      const lcdTx = await lcd.decodeTx(txStr)
+      const tx = decodeTx(txStr)
 
       // Decode address from signatures
-      const addresses = lcdTx.value.signatures.map((sig) => convertPublicKeyToAddress(sig.pub_key.value))
+      const addresses = tx.auth_info.signer_infos.map((info) => info.public_key.address())
 
       const item: MempoolItem = {
         timestamp,
         txhash,
-        tx: lcdTx,
+        tx: tx.toData() as Transaction.LcdTx,
         addresses
       }
 

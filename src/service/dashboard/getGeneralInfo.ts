@@ -10,9 +10,9 @@ interface StakingPoolInfo {
 }
 
 interface GeneralInfoReturn {
-  prices: CoinByDenoms
-  issuances: CoinByDenoms
-  communityPool: CoinByDenoms
+  prices: DenomMap
+  issuances: DenomMap
+  communityPool: DenomMap
   taxCaps: DenomTaxCap[]
   stakingPool: StakingPoolInfo
   taxRate: string // tax rate big int
@@ -37,14 +37,11 @@ async function getLatestPrices(): Promise<DenomMap> {
 }
 
 async function getLatestGenInfo(): Promise<GeneralInfoEntity> {
-  const latestInfo = await getRepository(GeneralInfoEntity).find({
+  return await getRepository(GeneralInfoEntity).findOneOrFail({
     order: {
       datetime: 'DESC'
-    },
-    skip: 0,
-    take: 1
+    }
   })
-  return latestInfo[0]
 }
 
 export default async function getGeneralInfo(): Promise<GeneralInfoReturn> {

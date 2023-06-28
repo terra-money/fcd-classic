@@ -6,8 +6,8 @@ import { init as initORM } from 'orm'
 import config from 'config'
 import createApp from 'createApp'
 import { apiLogger as logger } from 'lib/logger'
-import { initializeSentry } from 'lib/errorReporting'
-import * as token from 'service/treasury/token'
+import { init as initErrorReport } from 'lib/errorReport'
+import * as token from 'service/token'
 import Mempool from 'lib/mempool'
 
 const packageJson = require('../package.json')
@@ -24,7 +24,7 @@ process.on('unhandledRejection', (err) => {
 })
 
 export async function createServer() {
-  initializeSentry()
+  initErrorReport()
 
   await initORM()
   await token.init()

@@ -52,29 +52,31 @@ interface LcdBlockHeader {
   proposer_address: string
 }
 
+type LcdValidatorStatus = 'BOND_STATUS_UNBONDED' | 'BOND_STATUS_UNBONDING' | 'BOND_STATUS_BONDED'
+
 interface LcdValidator {
-  commission: LcdValidatorCommission
+  operator_address: string
   consensus_pubkey: {
-    type: string
-    value: string
+    '@type': string
+    key: string
   }
+  jailed: boolean
+  status: LcdValidatorStatus
+  tokens: string
   delegator_shares: string
   description: LcdValidatorDescription
-  jailed: boolean
-  min_self_delegation: string
-  operator_address: string
-  status: number
-  tokens: string
   unbonding_height: string
   unbonding_time: string
+  commission: LcdValidatorCommission
+  min_self_delegation: string
 }
 
 interface LcdValidatorDescription {
-  details: string
-  identity: string
   moniker: string
+  identity: string
   website: string
   security_contact: string
+  details: string
 }
 
 interface LcdValidatorCommission {
@@ -93,12 +95,12 @@ interface LcdValidatorSets {
 
 interface LcdValidatorConsensus {
   address: string
-  proposer_priority: string
   pub_key: {
-    type: string
-    value: string
+    '@type': string
+    key: string
   }
   voting_power: string
+  proposer_priority: string
 }
 
 interface LcdValidatorSigningInfo {

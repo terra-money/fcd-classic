@@ -1,82 +1,25 @@
-import { get } from 'lodash'
+import { get, compact } from 'lodash'
 import { getRepository, Brackets, WhereExpressionBuilder } from 'typeorm'
 import { TxEntity } from 'orm'
 import { convertAddress, sortDenoms, splitDenomAndAmount } from 'lib/common'
 
-function getClaimFromCol2(tx) {
-  const tags = get(tx, 'data.tags')
-
-  if (!tags) {
-    return []
-  }
-
-  const msgs = get(tx, 'data.tx.value.msg')
-  let tagIndex = 0
-
-  return (
-    msgs &&
-    msgs.map((msg) => {
-      const msgType = get(msg, 'type')
-
-      let type: string
-      let amounts: Coin[]
-
-      if (msgType === 'cosmos-sdk/MsgWithdrawValidatorCommission') {
-        // columbus-1
-        type = 'Commission'
-        amounts = []
-      } else if (msgType === 'cosmos-sdk/MsgWithdrawDelegationReward') {
-        // columbus-1
-        type = 'Reward'
-        amounts = []
-      } else if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
-        // columbus-2
-        type = 'Commission'
-        amounts = get(tags, `[${tagIndex + 1}].value`, '')
-          .split(',')
-          .map(splitDenomAndAmount)
-        tagIndex += 3
-      } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
-        // columbus-2
-        type = 'Reward'
-        amounts = get(tags, `[${tagIndex + 1}].value`, '')
-          .split(',')
-          .map(splitDenomAndAmount)
-        tagIndex += 4
-      } else {
-        return null
-      }
-
-      return {
-        chainId: tx.chainId,
-        tx: tx.data['txhash'],
-        type,
-        amounts: sortDenoms(amounts),
-        timestamp: tx.data['timestamp']
-      }
-    })
-  )
-}
-
 function parseTxEntity(tx: TxEntity) {
-  if (get(tx, 'data.tags')) {
-    return getClaimFromCol2(tx)
-  }
+  const msgs = tx.data.tx.value.msg
 
-  const msgs = get(tx, 'data.tx.value.msg')
+  return msgs.map((msg, i: number) => {
+    const msgType = msg.type
+    const events = tx.data.logs[i].events
 
-  return (
-    msgs &&
-    msgs.map((msg, i: number) => {
-      const msgType = get(msg, 'type')
-      const events = get(tx, `data.logs.${i}.events`)
+    if (!events) {
+      return null
+    }
 
-      let type: string
-      let amounts: Coin[]
+    let type: string
+    let amounts: Coin[]
 
-      if (msgType === 'distribution/MsgWithdrawValidatorCommission') {
+    switch (msgType) {
+      case 'distribution/MsgWithdrawValidatorCommission': {
         type = 'Commission'
-
         const withdrawEvent = events.find((e) => e.type === 'withdraw_commission')
 
         if (!withdrawEvent) {
@@ -84,7 +27,9 @@ function parseTxEntity(tx: TxEntity) {
         }
 
         amounts = get(withdrawEvent, 'attributes.0.value', '').split(',').map(splitDenomAndAmount)
-      } else if (msgType === 'distribution/MsgWithdrawDelegationReward') {
+        break
+      }
+      case 'distribution/MsgWithdrawDelegationReward': {
         type = 'Reward'
         const withdrawEvent = events.find((e) => e.type === 'withdraw_rewards')
 
@@ -93,20 +38,20 @@ function parseTxEntity(tx: TxEntity) {
         }
 
         amounts = get(withdrawEvent, 'attributes.0.value', '').split(',').map(splitDenomAndAmount)
-      } else {
+        break
+      }
+      default:
         return null
-      }
+    }
 
-      return {
-        chainId: tx.chainId,
-        txhash: tx.data['txhash'],
-        tx: tx.data['txhash'], // TODO: remove
-        type,
-        amounts: sortDenoms(amounts),
-        timestamp: tx.data['timestamp']
-      }
-    })
-  )
+    return {
+      chainId: tx.chainId,
+      txhash: tx.data['txhash'],
+      type,
+      amounts: sortDenoms(amounts),
+      timestamp: tx.data['timestamp']
+    }
+  })
 }
 
 interface DelegationClaim {
@@ -119,7 +64,7 @@ interface DelegationClaim {
 }
 
 function getMsgsFromTxs(txs: TxEntity[]): DelegationClaim[] {
-  return txs.map(parseTxEntity).flat().filter(Boolean)
+  return compact(txs.map(parseTxEntity).flat())
 }
 
 interface GetClaimsParam {

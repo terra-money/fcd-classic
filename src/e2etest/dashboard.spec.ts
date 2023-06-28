@@ -21,78 +21,22 @@ describe('Dashboard Test', () => {
   test('Test get dashboard general info', async () => {
     const { body } = await agent.get(`/v1/dashboard`).expect(200)
 
-    expect(body.prices).toMatchObject({
-      ukrw: expect.any(String),
-      usdr: expect.any(String),
-      uusd: expect.any(String)
-    })
-    expect(typeof body.taxRate).toBe('string')
-    expect(body.taxCaps).toBeInstanceOf(Array)
-    expect(body.taxCaps.length).toBeGreaterThan(0)
-
-    expect(body.issuances).toMatchObject({
-      uluna: expect.any(String),
-      ukrw: expect.any(String),
-      usdr: expect.any(String),
-      uusd: expect.any(String),
-      umnt: expect.any(String)
-    })
-
-    expect(body.stakingPool).toBeDefined()
-    expect(body.stakingPool.stakingRatio).toBeDefined()
-    expect(body.stakingPool.bondedTokens).toBeDefined()
-    expect(body.stakingPool.notBondedTokens).toBeDefined()
-
-    expect(body.communityPool).toBeDefined()
-    expect(body.communityPool.uluna).toBeDefined()
-    expect(body.communityPool.ukrw).toBeDefined()
-    expect(body.communityPool.uusd).toBeDefined()
-    expect(body.communityPool.usdr).toBeDefined()
-  })
-
-  test('Test get account growth', async () => {
-    const { body } = await agent.get(`/v1/dashboard/account_growth`).expect(200)
-
-    expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBeGreaterThan(0)
-    expect(body.cumulative[0]).toBeDefined()
-    expect(body.cumulative[0].datetime).toBeDefined()
-    expect(body.cumulative[0].totalAccountCount).toBeDefined()
-    expect(body.cumulative[0].activeAccountCount).toBeDefined()
-
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBeGreaterThan(0)
-    expect(body.periodic[0]).toBeDefined()
-    expect(body.periodic[0].datetime).toBeDefined()
-    expect(body.periodic[0].totalAccountCount).toBeDefined()
-    expect(body.periodic[0].activeAccountCount).toBeDefined()
-  })
-
-  test('Test get account growth count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/account_growth?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(DATA_POINT_COUNT - 1)
-    expect(body.cumulative[0]).toBeDefined()
-    expect(body.cumulative[0].datetime).toBeDefined()
-    expect(body.cumulative[0].totalAccountCount).toBeDefined()
-    expect(body.cumulative[0].activeAccountCount).toBeDefined()
-
-    body.cumulative.forEach((element) => {
-      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
-      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
-    })
-
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(DATA_POINT_COUNT - 1)
-    expect(body.periodic[0]).toBeDefined()
-    expect(body.periodic[0].datetime).toBeDefined()
-    expect(body.periodic[0].totalAccountCount).toBeDefined()
-    expect(body.periodic[0].activeAccountCount).toBeDefined()
-
-    body.periodic.forEach((element) => {
-      expect(element.totalAccountCount).toBeGreaterThanOrEqual(0)
-      expect(element.activeAccountCount).toBeGreaterThanOrEqual(0)
+    expect(body).toMatchObject({
+      prices: expect.any(Object),
+      taxRate: expect.any(String),
+      taxCaps: expect.arrayContaining([
+        {
+          denom: expect.any(String),
+          taxCap: expect.any(String)
+        }
+      ]),
+      issuances: expect.any(Object),
+      stakingPool: {
+        stakingRatio: expect.any(String),
+        bondedTokens: expect.any(String),
+        notBondedTokens: expect.any(String)
+      },
+      communityPool: expect.any(Object)
     })
   })
 
@@ -100,34 +44,16 @@ describe('Dashboard Test', () => {
     const { body } = await agent.get(`/v1/dashboard/tx_volume`).expect(200)
 
     expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(5)
+    expect(body.cumulative.length).toBeGreaterThan(5)
     expect(body.cumulative[0]).toBeDefined()
     expect(body.cumulative[0].denom).toBeDefined()
     expect(body.cumulative[0].data).toBeDefined()
 
     expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(5)
+    expect(body.periodic.length).toBeGreaterThan(5)
     expect(body.periodic[0]).toBeDefined()
     expect(body.periodic[0].denom).toBeDefined()
     expect(body.periodic[0].data).toBeDefined()
-  })
-
-  test('Test get tx volumes with count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/tx_volume?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(5)
-    expect(body.cumulative[0]).toBeDefined()
-    expect(body.cumulative[0].denom).toBeDefined()
-    expect(body.cumulative[0].data).toBeDefined()
-    expect(body.cumulative[0].data.length).toBe(DATA_POINT_COUNT)
-
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(5)
-    expect(body.periodic[0]).toBeDefined()
-    expect(body.periodic[0].denom).toBeDefined()
-    expect(body.periodic[0].data).toBeDefined()
-    expect(body.periodic[0].data.length).toBe(DATA_POINT_COUNT)
   })
 
   test('Test get block rewards', async () => {
@@ -146,23 +72,6 @@ describe('Dashboard Test', () => {
     expect(body.periodic[0].blockReward).toBeDefined()
   })
 
-  test('Test get block rewards with count filter', async () => {
-    const { body } = await agent.get(`/v1/dashboard/block_rewards?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body.cumulative).toBeDefined()
-    expect(body.cumulative.length).toBe(DATA_POINT_COUNT)
-    expect(body.cumulative[0]).toBeDefined()
-    expect(body.cumulative[0].datetime).toBeDefined()
-    expect(body.cumulative[0].blockReward).toBeDefined()
-
-    expect(body).toBeDefined()
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
-    expect(body.periodic[0]).toBeDefined()
-    expect(body.periodic[0].datetime).toBeDefined()
-    expect(body.periodic[0].blockReward).toBeDefined()
-  })
-
   test('Test get seigniorage proceeds', async () => {
     const { body } = await agent.get(`/v1/dashboard/seigniorage_proceeds`).expect(200)
 
@@ -172,10 +81,6 @@ describe('Dashboard Test', () => {
     expect(body[0]).toBeDefined()
     expect(body[0].datetime).toBeDefined()
     expect(body[0].seigniorageProceeds).toBeDefined()
-  })
-
-  test('Test get seigniorage proceeds with invalid count', async () => {
-    await agent.get(`/v1/dashboard/seigniorage_proceeds?count=-1`).expect(400)
   })
 
   test('Test get staking return', async () => {
@@ -202,18 +107,6 @@ describe('Dashboard Test', () => {
     })
   })
 
-  test('Test get staking return with count', async () => {
-    const { body } = await agent.get(`/v1/dashboard/staking_return?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body).toBeInstanceOf(Array)
-    expect(body.length).toBe(DATA_POINT_COUNT)
-
-    expect(body[0]).toBeDefined()
-    expect(body[0].datetime).toBeDefined()
-    expect(body[0].dailyReturn).toBeDefined()
-    expect(body[0].annualizedReturn).toBeDefined()
-  })
-
   test('Test get check annual staking return with moving avg', async () => {
     const { body } = await agent.get(`/v1/dashboard/staking_return`).expect(200)
 
@@ -235,6 +128,24 @@ describe('Dashboard Test', () => {
     }
   })
 
+  test('Test get account growth', async () => {
+    const { body } = await agent.get(`/v1/dashboard/account_growth`).expect(200)
+
+    expect(body.cumulative).toBeDefined()
+    expect(body.cumulative.length).toBeGreaterThan(0)
+    expect(body.cumulative[0]).toBeDefined()
+    expect(body.cumulative[0].datetime).toBeDefined()
+    expect(body.cumulative[0].totalAccountCount).toBeDefined()
+    expect(body.cumulative[0].activeAccountCount).toBeDefined()
+
+    expect(body.periodic).toBeDefined()
+    expect(body.periodic.length).toBeGreaterThan(0)
+    expect(body.periodic[0]).toBeDefined()
+    expect(body.periodic[0].datetime).toBeDefined()
+    expect(body.periodic[0].totalAccountCount).toBeDefined()
+    expect(body.periodic[0].activeAccountCount).toBeDefined()
+  })
+
   test('Test active accounts return', async () => {
     const { body } = await agent.get('/v1/dashboard/active_accounts').expect(200)
 
@@ -243,18 +154,6 @@ describe('Dashboard Test', () => {
     expect(body.total).toBeGreaterThanOrEqual(0)
     expect(body.periodic).toBeDefined()
     expect(body.periodic).toBeInstanceOf(Array)
-    expect(body.cumulative).toBeUndefined()
-  })
-
-  test('Test active accounts return with fixed history days', async () => {
-    const { body } = await agent.get(`/v1/dashboard/active_accounts?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body).toBeInstanceOf(Object)
-    expect(body.total).toBeDefined()
-    expect(body.total).toBeGreaterThanOrEqual(0)
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic).toBeInstanceOf(Array)
-    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
     expect(body.cumulative).toBeUndefined()
   })
 
@@ -268,19 +167,5 @@ describe('Dashboard Test', () => {
     expect(body.periodic).toBeInstanceOf(Array)
 
     expect(body.cumulative).toBeInstanceOf(Array)
-  })
-
-  test('Test registerd accounts return with fixed history days', async () => {
-    const { body } = await agent.get(`/v1/dashboard/registered_accounts?count=${DATA_POINT_COUNT}`).expect(200)
-
-    expect(body).toBeInstanceOf(Object)
-    expect(body.total).toBeDefined()
-    expect(body.total).toBeGreaterThanOrEqual(0)
-    expect(body.periodic).toBeDefined()
-    expect(body.periodic).toBeInstanceOf(Array)
-    expect(body.periodic.length).toBe(DATA_POINT_COUNT)
-
-    expect(body.cumulative).toBeInstanceOf(Array)
-    expect(body.cumulative.length).toBe(DATA_POINT_COUNT)
   })
 })

@@ -1,5 +1,3 @@
-import * as crypto from 'crypto'
-import { default as parseDuration } from 'parse-duration'
 import { bech32 } from 'bech32'
 import { orderBy } from 'lodash'
 import config from 'config'
@@ -64,12 +62,6 @@ export function currencyToDenom(currency): string {
   return DENOM_BY_CURRENCIES.get(lowerCaseCurrency) || lowerCaseCurrency
 }
 
-// TODO: figure out the use of this function
-export function candleInitialTs(timestamp: number, timeframe: string): number {
-  const msc = parseDuration(timeframe) || 1
-  return timestamp - (timestamp % msc) - msc
-}
-
 type Prefix = 'terra' | 'terrapub' | 'terravaloper' | 'terravaloperpub' | 'terravalcons' | 'terravalconspub'
 
 export function convertAddress(prefix: Prefix, address: string): string {
@@ -83,13 +75,6 @@ export function convertAddressToHex(address: string): string {
 
 export function convertHexToAddress(prefix: Prefix, hexstring: string): string {
   return bech32.encode(prefix, bech32.toWords(Buffer.from(hexstring, 'hex')))
-}
-
-export function convertPublicKeyToAddress(pubKey: string): string {
-  const sha256 = crypto.createHash('sha256')
-  const ripemd160 = crypto.createHash('ripemd160')
-  const buf = ripemd160.update(sha256.update(Buffer.from(pubKey, 'base64')).digest()).digest()
-  return bech32.encode('terra', bech32.toWords(buf))
 }
 
 export function isNumeric(data: string): boolean {
@@ -115,10 +100,6 @@ export function splitDenomAndAmount(denomAndAmount: string): Coin {
 
 export function denomObjectToArray(denomObject: DenomTxVolumeObject, sliceCnt: number): DenomTxVolume[] {
   return sortDenoms(Object.keys(denomObject).map((denom) => ({ denom, data: denomObject[denom].slice(sliceCnt) })))
-}
-
-export function isActiveDenom(input: string) {
-  return config.ACTIVE_DENOMS.includes(input)
 }
 
 export function isActiveCurrency(input: string) {

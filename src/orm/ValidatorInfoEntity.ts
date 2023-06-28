@@ -103,4 +103,66 @@ export default class ValidatorInfoEntity {
 
   @Column({ nullable: true, type: 'jsonb' })
   public rewardPool: object
+
+  public createResponse(): ValidatorResponse {
+    const {
+      operatorAddress,
+      tokens,
+      delegatorShares,
+      upTime,
+      status,
+      accountAddress,
+      identity,
+      moniker,
+      website,
+      securityContact,
+      details,
+      profileIcon,
+      votingPower,
+      votingPowerWeight,
+      commissionRate,
+      maxCommissionRate,
+      maxCommissionChangeRate,
+      commissionChangeDate,
+      rewardPool,
+      rewardPoolTotal,
+      selfDelegation,
+      selfDelegationWeight
+    } = this
+
+    return {
+      operatorAddress,
+      tokens,
+      delegatorShares,
+      upTime,
+      status,
+      accountAddress,
+      description: {
+        identity,
+        moniker,
+        website,
+        securityContact,
+        details,
+        profileIcon
+      },
+      votingPower: {
+        amount: votingPower,
+        weight: votingPowerWeight
+      },
+      commissionInfo: {
+        rate: commissionRate,
+        maxRate: maxCommissionRate,
+        maxChangeRate: maxCommissionChangeRate,
+        updateTime: commissionChangeDate.toJSON()
+      },
+      rewardsPool: {
+        total: rewardPoolTotal,
+        denoms: rewardPool
+      },
+      selfDelegation: {
+        amount: selfDelegation,
+        weight: selfDelegationWeight
+      }
+    }
+  }
 }

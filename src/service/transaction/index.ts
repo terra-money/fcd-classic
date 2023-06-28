@@ -1,5 +1,3 @@
 export * from './getBlock'
 export * from './getTx'
 export * from './getTxList'
-export * from './postTxs'
-export * from './helper'

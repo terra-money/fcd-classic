@@ -1,9 +1,5 @@
-import { request } from 'undici'
 import { getContractStore } from 'lib/lcd'
 import { div } from 'lib/math'
-import config from 'config'
-import * as anchor from 'service/treasury/anchor'
-import * as pairsRes from './pairs.dex'
 
 interface Asset {
   symbol: string
@@ -29,8 +25,9 @@ const ASSETS_BY_SYMBOL: {
 export const TOKEN_SYMBOLS: string[] = []
 
 export async function init() {
+  /*
   const tokensRes = await request(`https://assets.terra.money/cw20/tokens.json`)
-    .then((res) => res.body.json())
+    .then(res => res.body.json())
     .catch(() => ({}))
 
   if (!config.TOKEN_NETWORK) {
@@ -63,6 +60,7 @@ export async function init() {
     ASSETS_BY_SYMBOL[key] = whitelist[address]
     TOKEN_SYMBOLS.push(key)
   })
+  */
 }
 
 export function findAssetByPair(address: string): Asset | undefined {
@@ -82,16 +80,11 @@ export function isToken(symbol: string) {
 }
 
 export async function getCirculatingSupply(symbol: string): Promise<string> {
-  if (symbol.toLowerCase() === 'anc') {
-    return anchor.getCirculatingSupply()
-  }
-
   return getTotalSupply(symbol)
 }
 
 export async function getTotalSupply(symbol: string): Promise<string> {
   const lowerCasedSymbol = symbol.toLowerCase()
-
   const asset = ASSETS_BY_SYMBOL[lowerCasedSymbol]
 
   if (!asset) {

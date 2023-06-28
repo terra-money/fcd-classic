@@ -141,7 +141,7 @@ export async function getTxFromAccount(param: GetTxListParam): Promise<GetTxsRes
   const order: 'ASC' | 'DESC' = param.order && param.order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'
 
   if (param.offset) {
-    subQuery += ` AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset}`
+    subQuery += `AND tx_id ${order === 'ASC' ? '>' : '<'} ${param.offset} `
   }
 
   subQuery += `ORDER BY tx_id ${order} LIMIT ${Math.max(0, param.limit + 1)}`

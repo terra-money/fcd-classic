@@ -6,12 +6,10 @@ import { ErrorCodes } from 'lib/error'
 import { TERRA_OPERATOR_ADD_REGEX, TERRA_ACCOUNT_REGEX, MOVING_AVG_WINDOW_IN_DAYS } from 'lib/constant'
 import { daysBeforeTs } from 'lib/time'
 import {
-  getStaking,
+  getStakingForAccount,
   getValidators,
   getValidatorDetail,
-  getDelegationTxs,
   getClaims,
-  getPaginatedDelegators,
   getValidatorReturn,
   getTotalStakingReturn
 } from 'service/staking'
@@ -88,80 +86,6 @@ export default class StakingController extends KoaController {
   }
 
   /**
-   * @api {get} /staking/validators/:operatorAddr/delegations Get validators delegations
-   * @apiName getValidatorDelegations
-   * @apiGroup Staking
-   *
-   * @apiParam {string} operatorAddr validators operator address
-   * @apiParam {number} [page=1] Page number
-   * @apiParam {number} [limit=5] Page size
-   *
-   * @apiSuccess {number} page
-   * @apiSuccess {number} limit
-   * @apiSuccess {Object[]} events Delegation event list
-   * @apiSuccess {string} events.chainId
-   * @apiSuccess {string} events.txhash
-   * @apiSuccess {string} events.type Event type
-   * @apiSuccess {Object[]} events.amount
-   * @apiSuccess {string} events.amount.denom
-   * @apiSuccess {string} events.amount.amount
-   * @apiSuccess {string} events.timestamp
-   *
-   */
-  @Get('/validators/:operatorAddr/delegations')
-  @Validate({
-    params: {
-      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
-    },
-    query: {
-      limit: Joi.number().default(5).valid(5, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async getDelegationEvents(ctx): Promise<void> {
-    success(
-      ctx,
-      await getDelegationTxs({
-        ...ctx.params,
-        ...ctx.request.query
-      })
-    )
-  }
-
-  /**
-   * @api {get} /staking/validators/:operatorAddr/delegators Get validators delegators
-   * @apiName getValidatorDelegators
-   * @apiGroup Staking
-   *
-   * @apiParam {string} operatorAddr validators operator address
-   * @apiParam {number} [page=1] Page number
-   * @apiParam {number} [limit=5] Page size
-   *
-   * @apiSuccess {number} page
-   * @apiSuccess {number} limit
-   * @apiSuccess {Object[]} delegator Delegator list
-   * @apiSuccess {string} delegator.address Delegator address
-   * @apiSuccess {string} delegator.amount Amount of luna delegated
-   * @apiSuccess {string} delegator.weight
-   *
-   */
-  @Get('/validators/:operatorAddr/delegators')
-  @Validate({
-    params: {
-      operatorAddr: Joi.string().required().regex(TERRA_OPERATOR_ADD_REGEX).description('Operator address')
-    },
-    query: {
-      page: Joi.number().default(1).min(1).max(10).description('Page number'),
-      limit: Joi.number().default(5).valid(5, 5000).description('Items per page')
-    },
-    failure: ErrorCodes.INVALID_REQUEST_ERROR
-  })
-  async delegators(ctx): Promise<void> {
-    success(ctx, await getPaginatedDelegators(ctx.params.operatorAddr, ctx.request.query.page, ctx.request.query.limit))
-  }
-
-  /**
    * @api {get} /staking/validators/:operatorAddr/claims Get validators claims
    * @apiName getValidatorClaims
    * @apiGroup Staking
@@ -188,7 +112,7 @@ export default class StakingController extends KoaController {
     },
     query: {
       limit: Joi.number().default(5).valid(5, 100).description('Items per page'),
-      offset: Joi.alternatives(Joi.number(), Joi.string()).description('Offset')
+      offset: Joi.number().description('Offset')
     },
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
@@ -304,7 +228,7 @@ export default class StakingController extends KoaController {
    * @apiSuccess {string} validators.myDelegation The amount of user delegation to this validator
    * @apiSuccess {string} validators.myUndelegation Undelegation information of user in progress in this validator
    */
-  @Get('/:account')
+  @Get('/account/:account')
   @Validate({
     params: {
       account: Joi.string().required().regex(TERRA_ACCOUNT_REGEX).description('User account')
@@ -312,7 +236,7 @@ export default class StakingController extends KoaController {
     failure: ErrorCodes.INVALID_REQUEST_ERROR
   })
   async getStakingForAccount(ctx): Promise<void> {
-    success(ctx, await getStaking(ctx.params.account))
+    success(ctx, await getStakingForAccount(ctx.params.account))
   }
 
   /**
@@ -349,47 +273,5 @@ export default class StakingController extends KoaController {
   async getStakingReturnOfValidator(ctx): Promise<void> {
     const result = await getValidatorReturn(ctx.params.operatorAddr)
     success(ctx, result[ctx.params.operatorAddr] ? result[ctx.params.operatorAddr].stakingReturn : '0')
-  }
-
-  /**
-   * @api {get} /staking Get all validators and staking info
-   * @apiName getStaking
-   * @apiGroup Staking
-   *
-   * @apiSuccess {Object[]} validators
-   * @apiSuccess {string} validators.operatorAddress
-   * @apiSuccess {string} validators.consensusPubkey
-   * @apiSuccess {Object} validators.description
-   * @apiSuccess {string} validators.description.moniker
-   * @apiSuccess {string} validators.description.identity
-   * @apiSuccess {string} validators.description.website
-   * @apiSuccess {string} validators.description.details
-   * @apiSuccess {string} validators.description.profileIcon
-   * @apiSuccess {string} validators.tokens
-   * @apiSuccess {string} validators.delegatorShares
-   * @apiSuccess {Object} validators.votingPower
-   * @apiSuccess {string} validators.votingPower.amount
-   * @apiSuccess {string} validators.votingPower.weight
-   * @apiSuccess {Object} validators.commissionInfo
-   * @apiSuccess {string} validators.commissionInfo.rate
-   * @apiSuccess {string} validators.commissionInfo.maxRate
-   * @apiSuccess {string} validators.commissionInfo.maxChangeRate
-   * @apiSuccess {string} validators.commissionInfo.updateTime
-   * @apiSuccess {number} validators.upTime
-   * @apiSuccess {string} validators.status
-   * @apiSuccess {Object} validators.rewardsPool
-   * @apiSuccess {string} validators.rewardsPool.total
-   * @apiSuccess {Object[]} validators.rewardsPool.denoms
-   * @apiSuccess {string} validators.rewardsPool.denoms.denom
-   * @apiSuccess {string} validators.rewardsPool.denoms.amount
-   * @apiSuccess {string} validators.stakingReturn
-   * @apiSuccess {string} validators.myDelegation The amount of user delegation to this validator
-   * @apiSuccess {string} validators.myUndelegation Undelegation information of user in progress in this validator
-   */
-  @Get('/')
-  async getStakingForAll(ctx): Promise<void> {
-    success(ctx, {
-      validators: await getValidators()
-    })
   }
 }

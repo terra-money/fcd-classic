@@ -200,23 +200,17 @@ export async function generateLcdTransactionToTxEntity(
   return txEntity
 }
 
-async function generateTxEntities(txHashes: string[], height: string, block: BlockEntity): Promise<TxEntity[]> {
+async function generateTxEntities(txHashes: string[], block: BlockEntity): Promise<TxEntity[]> {
   // pulling all txs from hash
-  const taxInfo = await getTaxRateAndCap(height)
+  const taxInfo = await getTaxRateAndCap(block.height.toString())
 
   // txs with the same tx hash may appear more than once in the same block duration
-  // TODO: do this without using Set
-  const txHashesUnique = [...new Set(txHashes)]
-  return Bluebird.map(txHashesUnique, (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
+  const txHashesUnique = new Set(txHashes)
+  return Bluebird.map([...txHashesUnique], (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
 }
 
-export async function collectTxs(
-  mgr: EntityManager,
-  txHashes: string[],
-  height: string,
-  block: BlockEntity
-): Promise<TxEntity[]> {
-  const txEntities = await generateTxEntities(txHashes, height, block)
+export async function collectTxs(mgr: EntityManager, txHashes: string[], block: BlockEntity): Promise<TxEntity[]> {
+  const txEntities = await generateTxEntities(txHashes, block)
 
   // Skip transactions that have already been successful
   const existingTxs = await mgr.find(TxEntity, { where: { hash: In(txEntities.map((t) => t.hash.toLowerCase())) } })
@@ -255,7 +249,6 @@ export async function collectTxs(
   // chunkify array up to 5,000 elements to avoid SQL parameter overflow
   await Bluebird.mapSeries(chunk(accountTxs, 5000), (chunk) => mgr.save(chunk))
 
-  logger.info(`SaveTxs - txs: ${txEntities.length}, accountTxs: ${accountTxs.length}`)
-
+  logger.info(`collectTxs: ${txEntities.length}, accountTxs: ${accountTxs.length}`)
   return txEntities
 }

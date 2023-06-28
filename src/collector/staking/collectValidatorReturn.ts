@@ -3,10 +3,11 @@ import { getRepository } from 'typeorm'
 
 import { ValidatorReturnInfoEntity, BlockEntity } from 'orm'
 
-import { ExtendedValidator, getExtendedValidators } from 'lib/lcd'
+import { ExtendedValidator, getValidatorsAndConsensus } from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
 import { ONE_DAY_IN_MS } from 'lib/constant'
-import { getAvgVotingPower, getAvgPrice } from 'service/staking'
+import { getAvgVotingPower } from 'service/staking'
+import { getAvgPrice } from 'service/market/getAvgPrice'
 import { normalizeRewardAndCommissionToLuna, getValidatorRewardAndCommissionSum } from './rewardAndCommissionSum'
 
 async function getExistingValidatorsMap(timestamp: Date): Promise<{
@@ -74,36 +75,28 @@ export async function generateValidatorReturns(
 export async function collectValidatorReturn() {
   logger.info('Validator return collector started.')
 
-  const latestBlock = await getRepository(BlockEntity)
-    .createQueryBuilder('block')
-    .orderBy('block.id', 'DESC')
-    .limit(1)
-    .getOne()
+  const latestBlock = await getRepository(BlockEntity).findOne({ order: { id: 'DESC' } })
 
   if (latestBlock === undefined) {
-    logger.error('No block data found in db')
+    logger.error('No block data found in DB')
     return
   }
 
   const latestBlockDateTime = startOfDay(latestBlock.timestamp)
   const latestBlockTs = latestBlockDateTime.getTime()
-  logger.info(`Latest block time ${latestBlockDateTime.toString()}`)
+  logger.info(`Latest collected block time ${latestBlockDateTime.toString()}`)
 
-  const to = startOfDay(Date.now())
-  let toTs = to.getTime()
-  const threeDayInMs = ONE_DAY_IN_MS * 3
-  const fromTs = toTs - threeDayInMs
+  const toTs = startOfDay(Date.now()).getTime()
+  const fromTs = toTs - ONE_DAY_IN_MS * 3
 
-  if (fromTs > latestBlockTs) {
-    logger.info('Missing current block data')
+  if (latestBlockTs < toTs) {
+    logger.error(`Required to have blocks until ${new Date(toTs)}`)
     return
   }
 
-  const validatorsList = await getExtendedValidators()
+  const validatorsList = await getValidatorsAndConsensus()
   logger.info(`Got a list of ${validatorsList.length} validators`)
-  logger.info(`Pre-calculator started for validators from date ${to.toString()}`)
-  // used -10 for just to make sure it doesn't calculate for today
-  toTs -= 10
+  logger.info(`Pre-calculator started for validators from date ${latestBlockDateTime}`)
 
   const validatorReturnRepo = getRepository(ValidatorReturnInfoEntity)
 
