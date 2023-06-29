@@ -3,6 +3,7 @@ import { getRepository, LessThanOrEqual } from 'typeorm'
 import { PriceEntity } from 'orm'
 import { div } from 'lib/math'
 import config from '../../config'
+import { BOND_DENOM } from 'lib/constant'
 
 const MIN_DURATION = 60000
 
@@ -20,17 +21,14 @@ export function getQueryDatetimes(interval: string, count: number): Date[] {
 
 export async function getOnedayBefore(): Promise<DenomMap> {
   const now = new Date()
-  const activeDenomsLength = config.ACTIVE_DENOMS.length - 1 /* -1 because luna */
   const oneDayBefore = getTargetDatetime(now, '1d') - MIN_DURATION
   const denomPrices = await getRepository(PriceEntity).find({
     where: {
-      datetime: LessThanOrEqual(new Date(getTargetDatetime(new Date(oneDayBefore), '1m')))
+      datetime: new Date(getTargetDatetime(new Date(oneDayBefore), '1m'))
     },
     order: {
       datetime: 'DESC'
-    },
-    skip: 0,
-    take: activeDenomsLength
+    }
   })
 
   return denomPrices.reduce((acc, curr) => {
@@ -40,7 +38,7 @@ export async function getOnedayBefore(): Promise<DenomMap> {
 }
 
 export function getSwapRate(prices: DenomMap, base: string): DenomMap {
-  if (base === 'uluna') {
+  if (base === BOND_DENOM) {
     return prices
   }
 

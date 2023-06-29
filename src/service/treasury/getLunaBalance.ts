@@ -1,5 +1,6 @@
 import * as lcd from 'lib/lcd'
 import BigNumber from 'bignumber.js'
+import { BOND_DENOM } from 'lib/constant'
 
 async function getLunaBalance(address: string): Promise<string> {
   const [balance, delegations, unbondings] = await Promise.all([
@@ -8,8 +9,8 @@ async function getLunaBalance(address: string): Promise<string> {
     lcd.getUnbondingDelegations(address)
   ])
 
-  const coin = balance.find((c) => c.denom === 'uluna')
-  const bankAmount = new BigNumber(coin?.amount || 0)
+  const lunaCoin = balance.find((c) => c.denom === BOND_DENOM)
+  const bankAmount = new BigNumber(lunaCoin?.amount || 0)
   const delegationsAmount = delegations.reduce((prev, curr) => prev.plus(curr.balance.amount), new BigNumber(0))
   const unbodingsAmount = unbondings.reduce(
     (prev, curr) => curr.entries.reduce((pe, ce) => pe.plus(ce.balance), prev),

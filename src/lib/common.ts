@@ -1,6 +1,7 @@
 import { bech32 } from 'bech32'
 import { orderBy } from 'lodash'
 import config from 'config'
+import { BOND_DENOM } from './constant'
 
 export enum TimeIntervals {
   ONE_MIN = '1m',
@@ -9,14 +10,6 @@ export enum TimeIntervals {
   THIRTY_MIN = '30m',
   ONE_HOUR = '1h',
   ONE_DAY = '1d'
-}
-
-export enum ActiveDenomsEnum {
-  UKRW = 'ukrw',
-  UMNT = 'umnt',
-  USDR = 'usdr',
-  UUSD = 'uusd',
-  ULUNA = 'uluna'
 }
 
 const CURRENCY_BY_DENOMS = new Map([
@@ -81,7 +74,7 @@ export function isNumeric(data: string): boolean {
   return !isNaN(Number(data))
 }
 
-const DENOM_ORDER = ['uluna', 'ukrw', 'usdr', 'uusd']
+const DENOM_ORDER = [BOND_DENOM, 'ukrw', 'usdr', 'uusd']
 
 export function sortDenoms<T>(coins: (T & { denom: string })[]): T[] {
   return orderBy<T & { denom: string }>(

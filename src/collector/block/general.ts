@@ -4,6 +4,7 @@ import { div } from 'lib/math'
 import * as lcd from 'lib/lcd'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
 import { collectorLogger as logger } from 'lib/logger'
+import { BOND_DENOM } from 'lib/constant'
 
 export async function collectGeneral(mgr: EntityManager, timestamp: number, strHeight: string) {
   const [
@@ -31,7 +32,7 @@ export async function collectGeneral(mgr: EntityManager, timestamp: number, strH
       .then((taxCaps) => taxCaps.map((taxCap): DenomTaxCap => ({ denom: taxCap.denom, taxCap: taxCap.tax_cap }))),
     Promise.all([lcd.getStakingPool(strHeight), lcd.getAllActiveIssuance(strHeight)]).then((results) => {
       const [{ bonded_tokens: bondedTokens, not_bonded_tokens: notBondedTokens }, issuances] = results
-      return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances['uluna']) }
+      return { bondedTokens, notBondedTokens, issuances, stakingRatio: div(bondedTokens, issuances[BOND_DENOM]) }
     })
   ])
   const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))

@@ -1,3 +1,4 @@
+import { BOND_DENOM } from 'lib/constant'
 import * as lcd from 'lib/lcd'
 import { plus, div } from 'lib/math'
 
@@ -13,7 +14,7 @@ export async function getTaxProceeds(): Promise<GetTaxProceedsReturn> {
   const taxProceedsReducer = (acc: TaxProceed[], { denom, amount }: Coin): TaxProceed[] => {
     const denomPrice = (lcdPricesObj && lcdPricesObj[denom]) || NaN
 
-    if (denom === 'uluna') {
+    if (denom === BOND_DENOM) {
       total = plus(total, amount)
       return acc.concat({
         denom,

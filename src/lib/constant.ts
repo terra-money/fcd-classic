@@ -8,3 +8,4 @@ export const MOVING_AVG_WINDOW_IN_DAYS = 10
 export const DAYS_IN_YEAR = 365
 export const ONE_DAY_IN_MS = 60000 * 60 * 24
 export const LOCAL_TERRA_CHAIN_ID = 'localterra'
+export const BOND_DENOM = 'uluna'

@@ -1,14 +1,15 @@
 import * as Bluebird from 'bluebird'
 import { EntityManager, In } from 'typeorm'
-import { get, min, compact, chunk, mapValues, keyBy } from 'lodash'
+import { get, compact, chunk, mapValues, keyBy } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
-import { times, minus, plus } from 'lib/math'
+import { times, minus, plus, min, getIntegerPortion } from 'lib/math'
 
 import { generateAccountTxs } from './accountTx'
+import { BOND_DENOM } from 'lib/constant'
 
 type TaxCapAndRate = {
   taxRate: string
@@ -18,7 +19,7 @@ type TaxCapAndRate = {
 }
 
 async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
-  const taxCaps: { [denom: string]: string } = mapValues(keyBy(await lcd.getTaxCaps(), 'denom'), 'tax_cap')
+  const taxCaps = mapValues(keyBy(await lcd.getTaxCaps(), 'denom'), 'tax_cap')
   const taxRate = await lcd.getTaxRate(height)
 
   return {
@@ -27,7 +28,7 @@ async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
   }
 }
 
-export function getTax(msg, taxRate, taxCaps): Coin[] {
+export function getTax(msg: Transaction.AminoMesssage, { taxRate, taxCaps }: TaxCapAndRate): Coin[] {
   if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
     return []
   }
@@ -36,13 +37,15 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
     const amount = get(msg, 'value.amount')
     return compact(
       amount.map((item) => {
-        if (item.denom === 'uluna') {
+        if (item.denom === BOND_DENOM) {
           return
         }
-        const taxCap = taxCaps && taxCaps[item.denom] ? taxCaps[item.denom] : '1000000'
+
+        const taxCap = taxCaps[item.denom] || '1000000'
+
         return {
           denom: item.denom,
-          amount: min([Math.floor(Number(times(item.amount, taxRate))), Number(taxCap)])
+          amount: min([getIntegerPortion(times(item.amount, taxRate)), taxCap])
         }
       })
     )
@@ -52,18 +55,14 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
     const inputs = get(msg, 'value.inputs')
     const amountObj = inputs.reduce((acc, input) => {
       input.coins.reduce((accInner, coin: Coin) => {
-        if (coin.denom === 'uluna') {
+        if (coin.denom === BOND_DENOM) {
           return accInner
         }
 
-        const taxCap = taxCaps && taxCaps[coin.denom] ? taxCaps[coin.denom] : '1000000'
-        const tax = min([Math.floor(Number(times(coin.amount, taxRate))), taxCap])
+        const taxCap = taxCaps[coin.denom] || '1000000'
+        const tax = min([getIntegerPortion(times(coin.amount, taxRate)), taxCap])
 
-        if (accInner[coin.denom]) {
-          accInner[coin.denom] = plus(accInner[coin.denom], tax)
-        } else {
-          accInner[coin.denom] = tax
-        }
+        accInner[coin.denom] = plus(accInner[coin.denom], tax)
         return accInner
       }, acc)
       return acc
@@ -83,9 +82,6 @@ export function getTax(msg, taxRate, taxCaps): Coin[] {
 function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate) {
   if (!lcdTx.tx) return
 
-  // get tax rate and tax caps
-  const { taxRate, taxCaps } = taxInfo
-
   const fees = lcdTx.tx.value.fee.amount
   const feeObj = fees.reduce((acc, fee) => {
     acc[fee.denom] = fee.amount
@@ -97,7 +93,7 @@ function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRa
 
   // gas = fee - tax
   const gasObj = msgs.reduce((acc, msg) => {
-    const msgTaxes = getTax(msg, taxRate, taxCaps)
+    const msgTaxes = getTax(msg, taxInfo)
     const taxPerMsg: string[] = []
     for (let i = 0; i < msgTaxes.length; i = i + 1) {
       const denom = msgTaxes[i].denom
@@ -130,11 +126,13 @@ function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRa
     }
   })
 
-  lcdTx.logs.forEach((log, i) => {
-    log.log = {
-      tax: taxArr[i].join(',')
-    }
-  })
+  if (taxArr.length) {
+    lcdTx.logs.forEach((log, i) => {
+      log.log = {
+        tax: taxArr[i].join(',')
+      }
+    })
+  }
 }
 
 // columbus-1 msgType -> columbus-2 msgType

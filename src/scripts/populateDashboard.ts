@@ -21,6 +21,25 @@ async function getDashboard(datetime: Date): Promise<DashboardEntity | undefined
 async function populateDashboard() {
   await initORM()
 
+  const txVolumes = await getTxVolumeByDay()
+  for (const dateKey of Object.keys(txVolumes)) {
+    const date = startOfDay(parseISO(dateKey))
+    const dashboard = await getDashboard(date)
+    if (dashboard) {
+      console.log('updating tx volume of', dateKey)
+      await getRepository(DashboardEntity).update(dashboard.id, {
+        txVolume: txVolumes[dateKey]
+      })
+    } else {
+      console.log('new tx volume of', dateKey)
+      await getRepository(DashboardEntity).save({
+        timestamp: date,
+        chainId: config.CHAIN_ID,
+        txVolume: txVolumes[dateKey]
+      })
+    }
+  }
+
   const accountGrowth = await getAccountCountByDay()
   for (const dateKey of Object.keys(accountGrowth)) {
     const date = startOfDay(parseISO(dateKey))
@@ -57,25 +76,6 @@ async function populateDashboard() {
         timestamp: date,
         chainId: config.CHAIN_ID,
         taxReward: taxRewards[dateKey]
-      })
-    }
-  }
-
-  const txVolumes = await getTxVolumeByDay()
-  for (const dateKey of Object.keys(txVolumes)) {
-    const date = startOfDay(parseISO(dateKey))
-    const dashboard = await getDashboard(date)
-    if (dashboard) {
-      console.log('updating tx volume of', dateKey)
-      await getRepository(DashboardEntity).update(dashboard.id, {
-        txVolume: txVolumes[dateKey]
-      })
-    } else {
-      console.log('new tx volume of', dateKey)
-      await getRepository(DashboardEntity).save({
-        timestamp: date,
-        chainId: config.CHAIN_ID,
-        txVolume: txVolumes[dateKey]
       })
     }
   }

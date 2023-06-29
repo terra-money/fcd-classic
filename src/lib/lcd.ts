@@ -3,6 +3,7 @@ import config from 'config'
 import { pick, pickBy } from 'lodash'
 import { plus, times, div, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
+import { BOND_DENOM } from './constant'
 
 const agent = new Agent({
   connect: {
@@ -206,7 +207,7 @@ export async function getValidatorConsensus(strHeight?: string): Promise<LcdVali
   return result.flat()
 }
 
-// ExtendedValidator includes all LcdValidator, VotingPower and Uptime
+// ExtendedValidator includes validator with extra informations
 export interface ExtendedValidator {
   lcdValidator: LcdValidator
   lcdConsensus?: LcdValidatorConsensus
@@ -458,6 +459,10 @@ export async function getTaxCap(denom: string, strHeight?: string): Promise<stri
   return (await get(`/terra/treasury/v1beta1/tax_caps/${denom}`, { height: calculateHeightParam(strHeight) })).tax_cap
 }
 
-export async function getTaxCaps(strHeight?: string): Promise<{ denom: string; tax_cap: string }[]> {
+export async function getTreasuryParams(strHeight?: string): Promise<LcdTreasuryParams> {
+  return (await get('/terra/treasury/v1beta1/params', { height: calculateHeightParam(strHeight) })).params
+}
+
+export async function getTaxCaps(strHeight?: string): Promise<LcdTaxCap[]> {
   return (await get('/terra/treasury/v1beta1/tax_caps', { height: calculateHeightParam(strHeight) })).tax_caps || []
 }

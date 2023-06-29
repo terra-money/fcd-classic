@@ -10,6 +10,7 @@ import memoizeCache from 'lib/memoizeCache'
 
 import { getBalances } from 'service/bank'
 import { getUndelegateSchedule } from './getUndelegateSchedule'
+import { BOND_DENOM } from 'lib/constant'
 
 interface RewardsByDenom {
   denom: string
@@ -67,7 +68,12 @@ export async function getValidatorDetailUncached(
 
       let total = '0'
       const denoms = rewards.map(({ denom, amount }) => {
-        const adjustedAmount = denom === 'uluna' ? amount : priceObj[denom] ? div(amount, priceObj[denom]) : 0
+        let adjustedAmount = '0'
+        if (denom === BOND_DENOM) {
+          adjustedAmount = amount
+        } else if (priceObj[denom]) {
+          adjustedAmount = div(amount, priceObj[denom])
+        }
         total = plus(total, adjustedAmount)
         return { denom, amount, adjustedAmount } as RewardsByDenom
       })
@@ -79,7 +85,7 @@ export async function getValidatorDetailUncached(
     }
 
     const myBalance = await getBalances(account)
-    const ulunaBalance = filter(myBalance.balance, { denom: 'uluna' })[0]
+    const ulunaBalance = filter(myBalance.balance, { denom: BOND_DENOM })[0]
 
     result.myDelegatable = ulunaBalance && ulunaBalance.delegatable
 

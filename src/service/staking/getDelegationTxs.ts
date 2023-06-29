@@ -2,6 +2,7 @@ import { getRepository, Brackets, WhereExpressionBuilder } from 'typeorm'
 import { get, compact } from 'lodash'
 import { TxEntity } from 'orm'
 import { isSuccessfulTx } from 'lib/tx'
+import { BOND_DENOM } from 'lib/constant'
 
 interface DelegationTxsParam {
   operatorAddr: string // operator address
@@ -169,7 +170,7 @@ function extractEvents(
           }
 
           const amount = {
-            denom: 'uluna',
+            denom: BOND_DENOM,
             amount: amt
           }
           return { id, chainId, height, txhash, type, amount, timestamp }

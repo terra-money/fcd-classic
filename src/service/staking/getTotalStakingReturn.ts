@@ -4,6 +4,7 @@ import { div, plus, times } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 import memoizeCache from 'lib/memoizeCache'
 import { getAvgPrice } from 'service/market/getAvgPrice'
+import { BOND_DENOM } from 'lib/constant'
 
 export async function getTotalStakingReturnUncached(fromTs: number, toTs: number): Promise<string> {
   const toStr = getQueryDateTime(toTs)
@@ -37,7 +38,7 @@ WHERE datetime >= '${fromStr}'
       return acc
     }
 
-    const rewardSum = reward.denom === 'uluna' ? reward.reward_sum : div(reward.reward_sum, avgPrice[reward.denom])
+    const rewardSum = reward.denom === BOND_DENOM ? reward.reward_sum : div(reward.reward_sum, avgPrice[reward.denom])
 
     return plus(acc, rewardSum)
   }, '0')

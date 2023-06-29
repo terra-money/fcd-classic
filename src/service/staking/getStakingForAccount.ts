@@ -9,10 +9,11 @@ import memoizeCache from 'lib/memoizeCache'
 import { getBalances } from '../bank'
 import { getValidators } from './getValidators'
 import { getUndelegateSchedule } from './getUndelegateSchedule'
+import { BOND_DENOM } from 'lib/constant'
 
 function getTotalRewardsAdjustedToLuna(rewards: Coin[], prices: DenomMap): string {
   return rewards.reduce((acc, item) => {
-    if (item.denom === 'uluna') {
+    if (item.denom === BOND_DENOM) {
       return plus(acc, item.amount)
     }
 
@@ -118,7 +119,7 @@ export async function getStakingUncached(address: string): Promise<GetStakingRes
   const delegationTotal = delegations.reduce((acc, curr) => plus(acc, curr.amount), '0')
   const myUndelegations = balance.unbondings ? getUndelegateSchedule(balance.unbondings, validatorObj) : []
 
-  const lunaBalance = find(balance.balance, { denom: 'uluna' })
+  const lunaBalance = find(balance.balance, { denom: BOND_DENOM })
   const delegatable = lunaBalance ? lunaBalance.delegatable : '0'
 
   // rewards

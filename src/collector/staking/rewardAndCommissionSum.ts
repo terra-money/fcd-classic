@@ -4,6 +4,7 @@ import config from 'config'
 
 import { getQueryDateTime } from 'lib/time'
 import { plus, div } from 'lib/math'
+import { BOND_DENOM } from 'lib/constant'
 
 const REWARD_SUM = `reward_sum`
 const COMMISSION_SUM = `commission_sum`
@@ -62,12 +63,12 @@ export function normalizeRewardAndCommissionToLuna(
 } {
   const { reward, commission } = rewardAndCommission
   const rewardsInLuna = Object.keys(reward).reduce((sum: string, denom: string) => {
-    const total = plus(sum, denom === 'uluna' ? reward[denom] : div(reward[denom], avgPriceObj[denom]))
+    const total = plus(sum, denom === BOND_DENOM ? reward[denom] : div(reward[denom], avgPriceObj[denom]))
     return total
   }, '0')
 
   const commissionInLuna = Object.keys(commission).reduce((sum: string, denom: string) => {
-    const total = plus(sum, denom === 'uluna' ? commission[denom] : div(commission[denom], avgPriceObj[denom]))
+    const total = plus(sum, denom === BOND_DENOM ? commission[denom] : div(commission[denom], avgPriceObj[denom]))
     return total
   }, '0')
 

@@ -4,6 +4,7 @@ import { getDateFromDateTime } from 'lib/time'
 import { getPriceHistory } from 'service/dashboard'
 import { getPriceObjKey } from './helpers'
 import { getRewardsSumByDateDenom } from './rewardsInfo'
+import { BOND_DENOM } from 'lib/constant'
 
 // key: date in format yyyy-MM-dd
 // value: big int string format
@@ -18,7 +19,7 @@ export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardB
 
   // TODO: rewards array will get very large over time. calculation can be done by daily, and use that for reducing
   const rewardObj: RewardByDateMap = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna' && item.denom !== 'ukrw') {
+    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== BOND_DENOM && item.denom !== 'ukrw') {
       return acc
     }
 
@@ -27,7 +28,7 @@ export async function getBlockRewardsByDay(daysBefore?: number): Promise<RewardB
     const reward =
       item.denom === 'ukrw'
         ? item.tax_sum
-        : item.denom === 'uluna'
+        : item.denom === BOND_DENOM
         ? times(item.tax_sum, priceObj[getPriceObjKey(item.date, 'ukrw')])
         : div(
             times(item.tax_sum, priceObj[getPriceObjKey(item.date, 'ukrw')]),

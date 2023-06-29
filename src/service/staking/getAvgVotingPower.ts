@@ -2,7 +2,7 @@ import { get } from 'lodash'
 import { plus, minus, times } from 'lib/math'
 import config from 'config'
 import { getDelegationTxs } from './getDelegationTxs'
-import { ONE_DAY_IN_MS } from 'lib/constant'
+import { BOND_DENOM, ONE_DAY_IN_MS } from 'lib/constant'
 import memoizeCache from 'lib/memoizeCache'
 
 export async function getAvgVotingPowerUncached(
@@ -43,7 +43,7 @@ export async function getAvgVotingPowerUncached(
     txhash: '',
     height: '', // TODO: remove
     type: 'Delegate',
-    amount: { denom: 'uluna', amount: '0' },
+    amount: { denom: BOND_DENOM, amount: '0' },
     timestamp: new Date(fromTs).toISOString()
   })
 

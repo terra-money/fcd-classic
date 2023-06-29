@@ -4,15 +4,16 @@ import { PriceEntity } from 'orm'
 
 import { times, div } from 'lib/math'
 import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
+import { BOND_DENOM } from 'lib/constant'
 
 export function getUSDValue(denom: string, amount: string, prices: { [denom: string]: string }): string {
   let usdValue = '0'
-  if ((denom === 'uluna' || prices[denom]) && prices['uusd']) {
+  if ((denom === BOND_DENOM || prices[denom]) && prices['uusd']) {
     switch (denom) {
       case 'uusd':
         usdValue = amount
         break
-      case 'uluna':
+      case BOND_DENOM:
         usdValue = times(prices['uusd'], amount)
         break
       default:

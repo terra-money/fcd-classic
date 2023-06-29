@@ -1,3 +1,4 @@
+import { BOND_DENOM } from 'lib/constant'
 import { plus, minus, times, div, sum, min } from 'lib/math'
 
 /* utils */
@@ -53,7 +54,7 @@ const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTim
     }
 
     /* determinant */
-    const isLuna = denom === 'uluna'
+    const isLuna = denom === BOND_DENOM
     const isVested = isLuna || denom === 'usdr'
 
     /* terms */
@@ -79,7 +80,7 @@ const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTim
     // const total = sum([amount, delegatedVesting, delegatedFree])
     const available = min([amount, sum([amount, delegatedVesting, -vesting])])
 
-    const delegatable = denom === 'uluna' ? amount : '0'
+    const delegatable = denom === BOND_DENOM ? amount : '0'
 
     return acc.concat({
       denom,

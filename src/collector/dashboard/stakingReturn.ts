@@ -10,6 +10,7 @@ import { GeneralInfoEntity } from 'orm'
 import { convertDbTimestampToDate, getPriceObjKey, getLatestDateOfGeneralInfo } from './helpers'
 import { getRewardsSumByDateDenom } from './rewardsInfo'
 import { getPriceHistory } from 'service/dashboard'
+import { BOND_DENOM } from 'lib/constant'
 
 interface DailyReturnInfo {
   tax: string
@@ -28,7 +29,7 @@ async function getAvgBondedTokensByDate(daysBefore?: number): Promise<{
   [date: string]: string
 }> {
   const latestDate = await getLatestDateOfGeneralInfo()
-  const issuance = (await lcd.getTotalSupply()).find((e) => e.denom === 'uluna')?.amount || '0'
+  const issuance = (await lcd.getTotalSupply()).find((e) => e.denom === BOND_DENOM)?.amount || '0'
   const stakingQb = getRepository(GeneralInfoEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
@@ -60,22 +61,26 @@ async function getRewardsInLunaByDate(daysBefore?: number): Promise<{
   const rewardObj: {
     [date: string]: DailyReturnInfo
   } = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== 'uluna') {
+    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== BOND_DENOM) {
       return acc
     }
 
     const tax =
-      item.denom === 'uluna' ? item.tax_sum : div(item.tax_sum, priceObj[getPriceObjKey(item.date, item.denom)])
+      item.denom === BOND_DENOM ? item.tax_sum : div(item.tax_sum, priceObj[getPriceObjKey(item.date, item.denom)])
     const gas =
-      item.denom === 'uluna' ? item.gas_sum : div(item.gas_sum, priceObj[getPriceObjKey(item.date, item.denom)])
+      item.denom === BOND_DENOM ? item.gas_sum : div(item.gas_sum, priceObj[getPriceObjKey(item.date, item.denom)])
     const oracle =
-      item.denom === 'uluna' ? item.oracle_sum : div(item.oracle_sum, priceObj[getPriceObjKey(item.date, item.denom)])
+      item.denom === BOND_DENOM
+        ? item.oracle_sum
+        : div(item.oracle_sum, priceObj[getPriceObjKey(item.date, item.denom)])
     const commission =
-      item.denom === 'uluna'
+      item.denom === BOND_DENOM
         ? item.commission_sum
         : div(item.commission_sum, priceObj[getPriceObjKey(item.date, item.denom)])
     const reward =
-      item.denom === 'uluna' ? item.reward_sum : div(item.reward_sum, priceObj[getPriceObjKey(item.date, item.denom)])
+      item.denom === BOND_DENOM
+        ? item.reward_sum
+        : div(item.reward_sum, priceObj[getPriceObjKey(item.date, item.denom)])
 
     const prev = acc[item.date] || {}
 

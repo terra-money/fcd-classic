@@ -9,6 +9,7 @@ import config from 'config'
 import { getTotalSupply } from './totalSupply'
 import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from './token'
 import getLunaBalance from './getLunaBalance'
+import { BOND_DENOM } from 'lib/constant'
 
 const getLunaBalanceMemoized = memoizeCache(getLunaBalance, { promise: true, maxAge: 5 * 60 * 1000 /* 5 minutes */ })
 
@@ -38,7 +39,7 @@ export async function getCirculatingSupply(input: string): Promise<string> {
   }
 
   // Special conditions for Luna
-  if (denom === 'uluna') {
+  if (denom === BOND_DENOM) {
     // Remove Luna in community pool
     if (communityPool) {
       circulatingSupply = minus(circulatingSupply, communityPool.find((c) => c.denom === denom)?.amount || '0')

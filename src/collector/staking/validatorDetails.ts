@@ -6,7 +6,7 @@ import { ValidatorInfoEntity, ValidatorStatus } from 'orm'
 import * as lcd from 'lib/lcd'
 import { convertAddress, sortDenoms } from 'lib/common'
 import { div, plus } from 'lib/math'
-import { SLASHING_PERIOD } from 'lib/constant'
+import { BOND_DENOM, SLASHING_PERIOD } from 'lib/constant'
 import getAvatar from 'lib/keybase'
 import { collectorLogger as logger } from 'lib/logger'
 
@@ -58,7 +58,7 @@ export async function saveValidatorDetail(extendedValidator: lcd.ExtendedValidat
   const rewardPool = lcdRewardPool
     ? lcdRewardPool.map(({ denom, amount }: Coin) => {
         const adjustedAmount: string =
-          denom === 'uluna' ? amount : activePrices[denom] ? div(amount, activePrices[denom]) : '0'
+          denom === BOND_DENOM ? amount : activePrices[denom] ? div(amount, activePrices[denom]) : '0'
         rewardPoolTotal = plus(rewardPoolTotal, adjustedAmount)
         return { denom, amount, adjustedAmount }
       })

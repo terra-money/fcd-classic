@@ -1,3 +1,5 @@
+import { BOND_DENOM } from 'lib/constant'
+
 const {
   SERVER_PORT,
   LCD_URI,
@@ -60,7 +62,7 @@ const config = {
   // Keybase for fetching validator avatar image
   KEYBASE_URL_PREFIX: `https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=`,
   // Chain parameters
-  ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : ['uluna', 'usdr', 'ukrw', 'uusd', 'ueur'],
+  ACTIVE_DENOMS: ACTIVE_DENOMS ? (JSON.parse(ACTIVE_DENOMS) as string[]) : [BOND_DENOM, 'usdr', 'ukrw', 'uusd', 'ueur'],
   ACTIVE_CURRENCY: ACTIVE_CURRENCY
     ? (JSON.parse(ACTIVE_CURRENCY) as string[])
     : ['luna', 'sdr', 'sdt', 'krw', 'krt', 'usd', 'ust', 'eur', 'eut'],
