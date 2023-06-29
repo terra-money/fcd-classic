@@ -1,210 +1,57 @@
 import * as Bluebird from 'bluebird'
 import { EntityManager, In } from 'typeorm'
-import { get, compact, chunk, mapValues, keyBy } from 'lodash'
+import { compact, chunk } from 'lodash'
 
 import { BlockEntity, TxEntity, AccountTxEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
-import { times, minus, plus, min, getIntegerPortion } from 'lib/math'
-
 import { generateAccountTxs } from './accountTx'
-import { BOND_DENOM } from 'lib/constant'
 
-type TaxCapAndRate = {
-  taxRate: string
-  taxCaps: {
-    [denom: string]: string
-  }
-}
-
-async function getTaxRateAndCap(height?: string): Promise<TaxCapAndRate> {
-  const taxCaps = mapValues(keyBy(await lcd.getTaxCaps(), 'denom'), 'tax_cap')
-  const taxRate = await lcd.getTaxRate(height)
-
-  return {
-    taxRate,
-    taxCaps
-  }
-}
-
-export function getTax(msg: Transaction.AminoMesssage, { taxRate, taxCaps }: TaxCapAndRate): Coin[] {
-  if (msg.type !== 'bank/MsgSend' && msg.type !== 'bank/MsgMultiSend') {
-    return []
+//Recursively iterating thru the keys of the tx object to find unicode characters that would otherwise mess up db update.
+//If unicode is found in the string, then the value is base64 encoded.
+//Recursion is not implemented well in js, so in case of deeply nested objects, this might fail with RangeError: Maximum call stack size exceeded
+//Tx objects are hopefully not that deep, but just in case they are https://replit.com/@mkotsollaris/javascript-iterate-for-loop?v=1#index.js or something along those lines.
+//Going with simple recursion due time constaints.
+function sanitizeTx(tx: Transaction.LcdTransaction): Transaction.LcdTransaction {
+  function hasUnicode(s) {
+    // eslint-disable-next-line no-control-regex
+    return /[^\u0000-\u007f]/.test(s)
   }
 
-  if (msg.type === 'bank/MsgSend') {
-    const amount = get(msg, 'value.amount')
-    return compact(
-      amount.map((item) => {
-        if (item.denom === BOND_DENOM) {
-          return
+  const iterateTx = (obj) => {
+    Object.keys(obj).forEach((key) => {
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        iterateTx(obj[key])
+      } else {
+        if (hasUnicode(obj[key])) {
+          const b = Buffer.from(obj[key])
+          obj[key] = b.toString('base64')
         }
-
-        const taxCap = taxCaps[item.denom] || '1000000'
-
-        return {
-          denom: item.denom,
-          amount: min([getIntegerPortion(times(item.amount, taxRate)), taxCap])
-        }
-      })
-    )
-  }
-
-  if (msg.type === 'bank/MsgMultiSend') {
-    const inputs = get(msg, 'value.inputs')
-    const amountObj = inputs.reduce((acc, input) => {
-      input.coins.reduce((accInner, coin: Coin) => {
-        if (coin.denom === BOND_DENOM) {
-          return accInner
-        }
-
-        const taxCap = taxCaps[coin.denom] || '1000000'
-        const tax = min([getIntegerPortion(times(coin.amount, taxRate)), taxCap])
-
-        accInner[coin.denom] = plus(accInner[coin.denom], tax)
-        return accInner
-      }, acc)
-      return acc
-    }, {})
-
-    return Object.keys(amountObj).map((key) => {
-      return {
-        denom: key,
-        amount: amountObj[key]
       }
     })
   }
-
-  return []
+  iterateTx(tx)
+  return tx
 }
 
-function assignGasAndTax(lcdTx: Transaction.LcdTransaction, taxInfo: TaxCapAndRate) {
-  if (!lcdTx.tx) return
-
-  const fees = lcdTx.tx.value.fee.amount
-  const feeObj = fees.reduce((acc, fee) => {
-    acc[fee.denom] = fee.amount
-    return acc
-  }, {})
-
-  const msgs = lcdTx.tx.value.msg
-  const taxArr: string[][] = []
-
-  // gas = fee - tax
-  const gasObj = msgs.reduce((acc, msg) => {
-    const msgTaxes = getTax(msg, taxInfo)
-    const taxPerMsg: string[] = []
-    for (let i = 0; i < msgTaxes.length; i = i + 1) {
-      const denom = msgTaxes[i].denom
-      const amount = msgTaxes[i].amount
-
-      if (feeObj[denom]) {
-        feeObj[denom] = minus(feeObj[denom], amount)
-      }
-
-      if (feeObj[denom] === '0') {
-        delete feeObj[denom]
-      }
-
-      taxPerMsg.push(`${amount}${denom}`)
-    }
-    taxArr.push(taxPerMsg)
-    return acc
-  }, feeObj)
-
-  // failed tx
-  if (!lcdTx.logs || lcdTx.logs.length !== taxArr.length) {
-    return
-  }
-
-  // replace fee to gas
-  lcdTx.tx.value.fee.amount = Object.keys(gasObj).map((denom) => {
-    return {
-      denom,
-      amount: gasObj[denom]
-    }
-  })
-
-  if (taxArr.length) {
-    lcdTx.logs.forEach((log, i) => {
-      log.log = {
-        tax: taxArr[i].join(',')
-      }
-    })
-  }
-}
-
-// columbus-1 msgType -> columbus-2 msgType
-function syncMsgType(tx: object): object {
-  const txStr = JSON.stringify(tx)
-
-  const replaced = txStr
-    .replace(/cosmos-sdk\/MsgSend/g, 'pay/MsgSend')
-    .replace(/cosmos-sdk\/MsgMultiSend/g, 'pay/MsgMultiSend')
-    .replace(/cosmos-sdk\/MsgCreateValidator/g, 'staking/MsgCreateValidator')
-    .replace(/cosmos-sdk\/MsgEditValidator/g, 'staking/MsgEditValidator')
-    .replace(/cosmos-sdk\/MsgDelegate/g, 'staking/MsgDelegate')
-    .replace(/cosmos-sdk\/MsgUndelegate/g, 'staking/MsgUndelegate')
-    .replace(/cosmos-sdk\/MsgBeginRedelegate/g, 'staking/MsgBeginRedelegate')
-    .replace(/cosmos-sdk\/MsgWithdrawDelegationReward/g, 'distribution/MsgWithdrawDelegationReward')
-    .replace(/cosmos-sdk\/MsgWithdrawValidatorCommission/g, 'distribution/MsgWithdrawValidatorCommission')
-    .replace(/cosmos-sdk\/MsgModifyWithdrawAddress/g, 'distribution/MsgModifyWithdrawAddress')
-    .replace(/cosmos-sdk\/MsgUnjail/g, 'slashing/MsgUnjail')
-
-  return JSON.parse(replaced)
-}
-
-export async function generateLcdTransactionToTxEntity(
-  txhash: string,
-  block: BlockEntity,
-  taxInfo: TaxCapAndRate
-): Promise<TxEntity> {
+export async function generateLcdTransactionToTxEntity(txhash: string, block: BlockEntity): Promise<TxEntity> {
   // Get the tx from LCD server
-  const tx = await lcd.getTx(txhash)
-  let modifiedDoc: Transaction.LcdTransaction
-
-  try {
-    // JSONB에서 \u0000을 넣으려 할때 에러가 나서 처리해줌
-    const txStr = JSON.stringify(tx)
-    modifiedDoc = JSON.parse(txStr.replace(/\\\\\\\\u0000|\\\\u0000|\\u0000/g, ''))
-
-    if (block.chainId === 'columbus-1') {
-      modifiedDoc = syncMsgType(modifiedDoc) as Transaction.LcdTransaction
-    }
-
-    if (modifiedDoc.logs && Array.isArray(modifiedDoc.logs)) {
-      modifiedDoc.logs = modifiedDoc.logs.map((item) => {
-        if (item.log && typeof item.log === 'string') {
-          item.log = JSON.parse(item.log)
-        }
-
-        return item
-      })
-    }
-
-    assignGasAndTax(modifiedDoc, taxInfo)
-  } catch (err) {
-    logger.error(err)
-    throw err
-  }
+  const lcdTx = await lcd.getTx(txhash)
 
   const txEntity = new TxEntity()
   txEntity.chainId = block.chainId
-  txEntity.hash = modifiedDoc.txhash.toLowerCase()
-  txEntity.data = modifiedDoc
-  txEntity.timestamp = new Date(modifiedDoc.timestamp)
+  txEntity.hash = lcdTx.txhash.toLowerCase()
+  txEntity.data = sanitizeTx(lcdTx)
+  txEntity.timestamp = new Date(lcdTx.timestamp)
   txEntity.block = block
   return txEntity
 }
 
 async function generateTxEntities(txHashes: string[], block: BlockEntity): Promise<TxEntity[]> {
-  // pulling all txs from hash
-  const taxInfo = await getTaxRateAndCap(block.height.toString())
-
   // txs with the same tx hash may appear more than once in the same block duration
   const txHashesUnique = new Set(txHashes)
-  return Bluebird.map([...txHashesUnique], (txHash) => generateLcdTransactionToTxEntity(txHash, block, taxInfo))
+  return Bluebird.map([...txHashesUnique], (txHash) => generateLcdTransactionToTxEntity(txHash, block))
 }
 
 export async function collectTxs(mgr: EntityManager, txHashes: string[], block: BlockEntity): Promise<TxEntity[]> {

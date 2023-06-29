@@ -3,7 +3,6 @@ import config from 'config'
 import { pick, pickBy } from 'lodash'
 import { plus, times, div, getIntegerPortion } from 'lib/math'
 import { ErrorTypes, APIError } from './error'
-import { BOND_DENOM } from './constant'
 
 const agent = new Agent({
   connect: {
@@ -88,6 +87,8 @@ function calculateHeightParam(strHeight?: string): string | undefined {
 export function convertProtoType(protoType: string): string {
   // '/terra.oracle.v1beta1.MsgAggregateExchangeRatePrevote' ->
   // [ 'terra', 'oracle', 'v1beta1', 'MsgAggregateExchangeRatePrevote' ]
+  // '/cosmwasm.wasm.v1.MsgExecuteContract ->
+  // [ 'cosmwasm', 'wasm', 'v1', 'MsgExecuteContract' ]
   const tokens = protoType.match(/([a-zA-Z0-9]+)/g)
 
   if (!tokens) {
@@ -96,24 +97,17 @@ export function convertProtoType(protoType: string): string {
 
   let type: string
 
-  if (tokens[0] === 'terra' || tokens[0] === 'cosmos') {
+  if (tokens[0] === 'terra' || tokens[0] === 'cosmos' || tokens[0] === 'cosmwasm') {
     type = `${tokens[1]}/${tokens[tokens.length - 1]}`
   } else {
+    // ibc.applications.transfer.v1.MsgTransfer
     type = `${tokens[0]}/${tokens[tokens.length - 1]}`
   }
-
-  type = type
-    .replace('distribution/MsgSetWithdrawAddress', 'distribution/MsgModifyWithdrawAddress')
-    .replace('distribution/MsgWithdrawDelegatorReward', 'distribution/MsgWithdrawDelegationReward')
-    .replace('authz/MsgGrant', 'msgauth/MsgGrantAuthorization')
-    .replace('authz/MsgRevoke', 'msgauth/MsgRevokeAuthorization')
-    .replace('authz/MsgExec', 'msgauth/MsgExecAuthorized')
-    .replace('ibc/MsgTransfer', 'cosmos-sdk/MsgTransfer')
 
   return type
 }
 
-export async function getTx(hash: string): Promise<Transaction.LcdTransaction | undefined> {
+export async function getTx(hash: string): Promise<Transaction.LcdTransaction> {
   const res = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
 
   if (!res || !res.tx_response) {
