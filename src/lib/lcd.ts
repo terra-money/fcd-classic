@@ -1,34 +1,15 @@
-import { request, Agent } from 'undici'
 import config from 'config'
 import { pick, pickBy } from 'lodash'
 import { plus, times, div, getIntegerPortion } from 'lib/math'
+import { request } from 'lib/request'
 import { ErrorTypes, APIError } from './error'
-
-const agent = new Agent({
-  connect: {
-    rejectUnauthorized: false
-  }
-})
 
 const NOT_FOUND_REGEX = /(?:not found|no dele|not exist|failed to find|unknown prop|empty bytes|No price reg)/i
 
-async function get(path: string, params?: Record<string, unknown>): Promise<any> {
-  const options = {
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'terra-fcd'
-    },
-    dispatcher: agent
-  }
+async function fetch(path: string, params?: Record<string, unknown>): Promise<any> {
+  const url = `${config.LCD_URI}${path}`
 
-  let url = `${config.LCD_URI}${path}`
-  params && Object.keys(params).forEach((key) => params[key] === undefined && delete params[key])
-  const qs = new URLSearchParams(params as any).toString()
-  if (qs.length) {
-    url += `?${qs}`
-  }
-
-  const res = await request(url, options).then(async (res) => {
+  const res = await request(url, params).then(async (res) => {
     const json = await res.body.json()
 
     if (res.statusCode >= 400 && json.message && NOT_FOUND_REGEX.test(json.message)) {
@@ -58,8 +39,11 @@ async function get(path: string, params?: Record<string, unknown>): Promise<any>
 }
 
 // NOTE: height parameter depends on node's configuration
-// The default is: PruneDefault defines a pruning strategy where the last 100 heights are kept
-// in addition to every 100th and where to-be pruned heights are pruned at every 10th height.
+// https://github.com/classic-terra/cosmos-sdk/blob/39362c4539b0a911bfa467fa782d01112d6379a4/store/types/pruning.go#L14-L20
+// PruneDefault defines a pruning strategy where the last 362880 heights are
+// kept in addition to every 100th and where to-be pruned heights are pruned
+// at every 10th height. The last 362880 heights are kept assuming the typical
+// block time is 5s and typical unbonding period is 21 days.
 function calculateHeightParam(strHeight?: string): string | undefined {
   const numHeight = Number(strHeight)
 
@@ -70,7 +54,7 @@ function calculateHeightParam(strHeight?: string): string | undefined {
   if (
     latestHeight &&
     (latestHeight < config.INITIAL_HEIGHT + config.PRUNING_KEEP_EVERY || // Pruning not happened yet
-      latestHeight - numHeight < config.PRUNING_KEEP_EVERY) // Last 100 heights are guarenteed
+      latestHeight - numHeight < config.PRUNING_KEEP_RECENT) // Last PRUNING_KEEP_RECENT heights are guarenteed
   ) {
     return strHeight
   }
@@ -108,7 +92,7 @@ export function convertProtoType(protoType: string): string {
 }
 
 export async function getTx(hash: string): Promise<Transaction.LcdTransaction> {
-  const res = await get(`/cosmos/tx/v1beta1/txs/${hash}`)
+  const res = await fetch(`/cosmos/tx/v1beta1/txs/${hash}`)
 
   if (!res || !res.tx_response) {
     throw new APIError(ErrorTypes.NOT_FOUND_ERROR, '', `transaction not found on node (hash: ${hash})`)
@@ -178,7 +162,7 @@ export async function getValidatorConsensus(strHeight?: string): Promise<LcdVali
   }: {
     validators: LcdValidatorConsensus[]
     pagination: Pagination
-  } = await get(`/cosmos/base/tendermint/v1beta1/validatorsets/${height || 'latest'}`)
+  } = await fetch(`/cosmos/base/tendermint/v1beta1/validatorsets/${height || 'latest'}`)
 
   const result = [validators]
   let total = parseInt(pagination.total) - 100
@@ -189,7 +173,7 @@ export async function getValidatorConsensus(strHeight?: string): Promise<LcdVali
       validators
     }: {
       validators: LcdValidatorConsensus[]
-    } = await get(`/cosmos/base/tendermint/v1beta1/validatorsets/${height || 'latest'}`, {
+    } = await fetch(`/cosmos/base/tendermint/v1beta1/validatorsets/${height || 'latest'}`, {
       'pagination.offset': offset
     })
 
@@ -234,14 +218,14 @@ export async function getValidatorsAndConsensus(
 }
 
 export function getBlock(height: string): Promise<LcdBlock> {
-  return get(`/cosmos/base/tendermint/v1beta1/blocks/${height}`)
+  return fetch(`/cosmos/base/tendermint/v1beta1/blocks/${height}`)
 }
 
 // Store latestHeight for later use
 let latestHeight = 0
 
 export function getLatestBlock(): Promise<LcdBlock> {
-  return get(`/cosmos/base/tendermint/v1beta1/blocks/latest`).then((latestBlock) => {
+  return fetch(`/cosmos/base/tendermint/v1beta1/blocks/latest`).then((latestBlock) => {
     if (latestBlock?.block) {
       latestHeight = Number(latestBlock.block.header.height)
     }
@@ -254,16 +238,16 @@ export function getLatestBlock(): Promise<LcdBlock> {
 // Auth & Bank
 ///////////////////////////////////////////////
 export async function getAccount(address: string): Promise<AllAccount | undefined> {
-  return (await get(`/cosmos/auth/v1beta1/accounts/${address}`))?.account
+  return (await fetch(`/cosmos/auth/v1beta1/accounts/${address}`))?.account
 }
 
 export async function getBalance(address: string): Promise<Coin[]> {
-  return (await get(`/cosmos/bank/v1beta1/balances/${address}`)).balances
+  return (await fetch(`/cosmos/bank/v1beta1/balances/${address}`)).balances
 }
 
 export async function getTotalSupply(strHeight?: string): Promise<Coin[]> {
   return (
-    await get('/cosmos/bank/v1beta1/supply', { height: calculateHeightParam(strHeight), 'pagination.limit': 100000 })
+    await fetch('/cosmos/bank/v1beta1/supply', { height: calculateHeightParam(strHeight), 'pagination.limit': 100000 })
   ).supply
 }
 
@@ -278,7 +262,7 @@ export async function getAllActiveIssuance(strHeight?: string): Promise<{ [denom
 // Staking
 ///////////////////////////////////////////////
 export async function getDelegations(delegator: string): Promise<LcdStakingDelegation[]> {
-  const res = await get(`/cosmos/staking/v1beta1/delegations/${delegator}`)
+  const res = await fetch(`/cosmos/staking/v1beta1/delegations/${delegator}`)
   return res?.delegation_responses || []
 }
 
@@ -287,7 +271,7 @@ export async function getValidatorDelegations(
   limit = 100,
   next = ''
 ): Promise<LcdStakingDelegation[]> {
-  const res = await get(`/cosmos/staking/v1beta1/validators/${validator}/delegations`, {
+  const res = await fetch(`/cosmos/staking/v1beta1/validators/${validator}/delegations`, {
     'pagination.limit': limit,
     'pagination.next_key': next
   })
@@ -298,12 +282,12 @@ export async function getDelegationForValidator(
   delegator: string,
   validator: string
 ): Promise<LcdStakingDelegation | undefined> {
-  const res = await get(`/cosmos/staking/v1beta1/validators/${validator}/delegations/${delegator}`)
+  const res = await fetch(`/cosmos/staking/v1beta1/validators/${validator}/delegations/${delegator}`)
   return res?.delegation_response
 }
 
 export async function getUnbondingDelegations(address: string): Promise<LcdStakingUnbonding[]> {
-  const res = await get(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`)
+  const res = await fetch(`/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`)
   return res?.unbonding_responses || []
 }
 
@@ -311,31 +295,32 @@ export async function getValidators(status?: LcdValidatorStatus, strHeight?: str
   const height = calculateHeightParam(strHeight)
 
   if (status) {
-    return (await get(`/cosmos/staking/v1beta1/validators`, { status, height, 'pagination.limit': 200 })).validators
+    return (await fetch(`/cosmos/staking/v1beta1/validators`, { status, height, 'pagination.limit': 100000 }))
+      .validators
   }
 
   const url = `/cosmos/staking/v1beta1/validators`
 
   const [bonded, unbonded, unbonding] = await Promise.all([
-    get(url, { status: 'BOND_STATUS_BONDED', height, 'pagination.limit': 200 }),
-    get(url, { status: 'BOND_STATUS_UNBONDING', height }),
-    get(url, { status: 'BOND_STATUS_UNBONDED', height })
+    fetch(url, { status: 'BOND_STATUS_BONDED', height, 'pagination.limit': 100000 }),
+    fetch(url, { status: 'BOND_STATUS_UNBONDING', height, 'pagination.limit': 100000 }),
+    fetch(url, { status: 'BOND_STATUS_UNBONDED', height, 'pagination.limit': 100000 })
   ])
 
   return [bonded.validators, unbonded.validators, unbonding.validators].flat()
 }
 
 export async function getValidator(operatorAddr: string): Promise<LcdValidator | undefined> {
-  const res = await get(`/cosmos/staking/v1beta1/validators/${operatorAddr}`)
+  const res = await fetch(`/cosmos/staking/v1beta1/validators/${operatorAddr}`)
   return res?.validator
 }
 
 export async function getStakingPool(strHeight?: string): Promise<LcdStakingPool> {
-  return (await get(`/cosmos/staking/v1beta1/pool`, { height: calculateHeightParam(strHeight) })).pool
+  return (await fetch(`/cosmos/staking/v1beta1/pool`, { height: calculateHeightParam(strHeight) })).pool
 }
 
 export async function getRedelegations(delegator: string): Promise<LCDStakingRelegation[]> {
-  return (await get(`/cosmos/staking/v1beta1/delegators/${delegator}/redelegations`)).redelegation_responses
+  return (await fetch(`/cosmos/staking/v1beta1/delegators/${delegator}/redelegations`)).redelegation_responses
 }
 
 ///////////////////////////////////////////////
@@ -353,31 +338,32 @@ function rewardFilter(reward) {
 }
 
 export async function getTotalRewards(delegatorAddress: string): Promise<Coin[]> {
-  const rewards = await get(`/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`)
+  const rewards = await fetch(`/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`)
   return (rewards.total || []).map(rewardMapper).filter(rewardFilter)
 }
 
 export async function getRewards(delegatorAddress: string, validatorOperAddress: string): Promise<Coin[]> {
   const rewards =
-    (await get(`/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards/${validatorOperAddress}`))
+    (await fetch(`/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards/${validatorOperAddress}`))
       ?.rewards || []
   return rewards.map(rewardMapper).filter(rewardFilter)
 }
 
 export async function getCommissions(validatorAddress: string): Promise<Coin[]> {
   return (
-    (await get(`/cosmos/distribution/v1beta1/validators/${validatorAddress}/commission`)).commission.commission || []
+    (await fetch(`/cosmos/distribution/v1beta1/validators/${validatorAddress}/commission`)).commission.commission || []
   )
 }
 
 export async function getValidatorRewards(validatorAddress: string): Promise<Coin[]> {
   return (
-    (await get(`/cosmos/distribution/v1beta1/validators/${validatorAddress}/outstanding_rewards`)).rewards.rewards || []
+    (await fetch(`/cosmos/distribution/v1beta1/validators/${validatorAddress}/outstanding_rewards`)).rewards.rewards ||
+    []
   )
 }
 
 export async function getCommunityPool(strHeight?: string): Promise<Coin[] | null> {
-  return (await get(`/cosmos/distribution/v1beta1/community_pool`, { height: calculateHeightParam(strHeight) })).pool
+  return (await fetch(`/cosmos/distribution/v1beta1/community_pool`, { height: calculateHeightParam(strHeight) })).pool
 }
 
 ///////////////////////////////////////////////
@@ -390,7 +376,7 @@ export async function getContractStore(
 ): Promise<Record<string, unknown>> {
   const base64 = Buffer.from(JSON.stringify(data), 'base64').toString()
 
-  return get(`/cosmwasm/wasm/v1/contract/${contractAddress}/smart/${base64}}`, {
+  return fetch(`/cosmwasm/wasm/v1/contract/${contractAddress}/smart/${base64}}`, {
     height: calculateHeightParam(strHeight)
   })
 }
@@ -399,7 +385,7 @@ export async function getContractStore(
 // Market
 ///////////////////////////////////////////////
 export async function getSwapResult(params: { offer_coin: string; ask_denom: string }): Promise<Coin | undefined> {
-  return (await get(`/terra/market/v1beta1/swap`, params)).return_coin
+  return (await fetch(`/terra/market/v1beta1/swap`, params)).return_coin
 }
 
 ///////////////////////////////////////////////
@@ -407,13 +393,13 @@ export async function getSwapResult(params: { offer_coin: string; ask_denom: str
 ///////////////////////////////////////////////
 export async function getOraclePrices(strHeight?: string): Promise<Coin[]> {
   return (
-    (await get(`/terra/oracle/v1beta1/denoms/exchange_rates`, { height: calculateHeightParam(strHeight) }))
+    (await fetch(`/terra/oracle/v1beta1/denoms/exchange_rates`, { height: calculateHeightParam(strHeight) }))
       .exchange_rates || []
   )
 }
 
 export async function getOracleActives(): Promise<string[]> {
-  return (await get(`/terra/oracle/v1beta1/denoms/actives`)).actives
+  return (await fetch(`/terra/oracle/v1beta1/denoms/actives`)).actives
 }
 
 export async function getActiveOraclePrices(strHeight?: string): Promise<DenomMap> {
@@ -428,7 +414,7 @@ export async function getActiveOraclePrices(strHeight?: string): Promise<DenomMa
 
 // non-existent addresses will always return "0"
 export async function getMissedOracleVotes(operatorAddr: string): Promise<string> {
-  return (await get(`/terra/oracle/v1beta1/validators/${operatorAddr}/miss`)).miss_counter
+  return (await fetch(`/terra/oracle/v1beta1/validators/${operatorAddr}/miss`)).miss_counter
 }
 
 ///////////////////////////////////////////////
@@ -436,27 +422,39 @@ export async function getMissedOracleVotes(operatorAddr: string): Promise<string
 ///////////////////////////////////////////////
 export async function getTaxProceeds(strHeight?: string): Promise<Coin[]> {
   return (
-    (await get(`/terra/treasury/v1beta1/tax_proceeds`, { height: calculateHeightParam(strHeight) })).tax_proceeds || []
+    (await fetch(`/terra/treasury/v1beta1/tax_proceeds`, { height: calculateHeightParam(strHeight) })).tax_proceeds ||
+    []
   )
 }
 
 export async function getSeigniorageProceeds(strHeight?: string): Promise<string> {
-  return (await get(`/terra/treasury/v1beta1/seigniorage_proceeds`, { height: calculateHeightParam(strHeight) }))
+  return (await fetch(`/terra/treasury/v1beta1/seigniorage_proceeds`, { height: calculateHeightParam(strHeight) }))
     .seigniorage_proceeds
 }
 
 export async function getTaxRate(strHeight?: string): Promise<string> {
-  return (await get(`/terra/treasury/v1beta1/tax_rate`, { height: calculateHeightParam(strHeight) })).tax_rate
+  return (await fetch(`/terra/treasury/v1beta1/tax_rate`, { height: calculateHeightParam(strHeight) })).tax_rate
 }
 
 export async function getTaxCap(denom: string, strHeight?: string): Promise<string> {
-  return (await get(`/terra/treasury/v1beta1/tax_caps/${denom}`, { height: calculateHeightParam(strHeight) })).tax_cap
+  return (await fetch(`/terra/treasury/v1beta1/tax_caps/${denom}`, { height: calculateHeightParam(strHeight) })).tax_cap
 }
 
 export async function getTreasuryParams(strHeight?: string): Promise<LcdTreasuryParams> {
-  return (await get('/terra/treasury/v1beta1/params', { height: calculateHeightParam(strHeight) })).params
+  return (await fetch('/terra/treasury/v1beta1/params', { height: calculateHeightParam(strHeight) })).params
 }
 
 export async function getTaxCaps(strHeight?: string): Promise<LcdTaxCap[]> {
-  return (await get('/terra/treasury/v1beta1/tax_caps', { height: calculateHeightParam(strHeight) })).tax_caps || []
+  return (await fetch('/terra/treasury/v1beta1/tax_caps', { height: calculateHeightParam(strHeight) })).tax_caps || []
+}
+
+export async function getTaxExemptionList(strHeight?: string): Promise<string[]> {
+  return (
+    (
+      await fetch('/terra/treasury/v1beta1/burn_tax_exemption_list', {
+        height: calculateHeightParam(strHeight),
+        'pagination.limit': 100000
+      })
+    ).addresses || []
+  )
 }

@@ -74,13 +74,15 @@ let blockUpdated = true
 
 async function collectBlocks() {
   if (!blockUpdated) {
-    setTimeout(collectBlocks, 50)
+    setTimeout(collectBlocks, 10)
     return
   }
 
-  blockUpdated = false
-  await collectBlock().catch(sentry.captureException)
-  setTimeout(collectBlocks, 50)
+  await collectBlock()
+    .then((done) => (blockUpdated = !done))
+    .catch(sentry.captureException)
+
+  setTimeout(collectBlocks, 10)
 }
 
 export async function startWatcher() {

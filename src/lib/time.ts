@@ -13,11 +13,10 @@ export function getQueryDateTime(timestamp: number | Date): string {
   return format(timestamp, 'yyyy-MM-dd HH:mm:ss')
 }
 
-export function getQueryDateRangeFrom(daysBefore: number) {
-  const today = startOfToday()
+export function getQueryDateRangeFrom(to: Date, daysBefore: number) {
   return {
-    from: format(subDays(today, daysBefore).getTime() || 0, 'yyyy-MM-dd'),
-    to: format(today, 'yyyy-MM-dd')
+    from: format(subDays(to, daysBefore).getTime() || 0, 'yyyy-MM-dd'),
+    to: format(to, 'yyyy-MM-dd')
   }
 }
 

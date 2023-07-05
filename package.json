@@ -13,8 +13,7 @@
     "node": ">=16"
   },
   "scripts": {
-    "prettier": "prettier --write './src/**/*.ts'",
-    "lint": "npx --no-install lint-staged",
+    "lint": "prettier --write src && eslint --fix src",
     "test": "jest",
     "dev": "better-npm-run api-dev",
     "start": "better-npm-run api-prod",

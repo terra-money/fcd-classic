@@ -1,5 +1,5 @@
 import * as sentry from '@sentry/node'
-import { getMinutes } from 'date-fns'
+import { getDay, getMinutes } from 'date-fns'
 import { getRepository, getManager, DeepPartial, EntityManager } from 'typeorm'
 import * as Bluebird from 'bluebird'
 import { bech32 } from 'bech32'
@@ -18,6 +18,8 @@ import { collectReward } from './reward'
 import { collectNetwork } from './network'
 import { collectPrice } from './price'
 import { collectGeneral } from './general'
+import { collectDashboard } from 'collector/dashboard'
+import { collectValidatorReturn } from 'collector/staking'
 
 const validatorCache = new Map()
 
@@ -28,18 +30,27 @@ export async function getValidatorOperatorAddressByConsensusAddress(b64: string,
     return operatorAddress
   }
 
-  const valsAndCons = await lcd.getValidatorsAndConsensus('BOND_STATUS_BONDED', height)
+  const statusOrder: LcdValidatorStatus[] = ['BOND_STATUS_BONDED', 'BOND_STATUS_UNBONDING', 'BOND_STATUS_UNBONDED']
 
-  valsAndCons.forEach((v) => {
-    if (v.lcdConsensus && v.lcdConsensus.address) {
-      const b64i = Buffer.from(bech32.fromWords(bech32.decode(v.lcdConsensus.address).words)).toString('base64')
-
-      validatorCache.set(b64i, v.lcdValidator.operator_address)
+  await Bluebird.each(statusOrder, async (status) => {
+    // early exit
+    if (validatorCache.has(b64)) {
+      return
     }
+
+    const valsAndCons = await lcd.getValidatorsAndConsensus(status, height)
+
+    valsAndCons.forEach((v) => {
+      if (v.lcdConsensus && v.lcdConsensus.address) {
+        const b64i = Buffer.from(bech32.fromWords(bech32.decode(v.lcdConsensus.address).words)).toString('base64')
+
+        validatorCache.set(b64i, v.lcdValidator.operator_address)
+      }
+    })
   })
 
   if (!validatorCache.has(b64)) {
-    throw new Error(`cannot find ${b64} address at height ${height}`)
+    throw new Error(`cannot find validator address ${b64} at height ${height}`)
   }
 
   return validatorCache.get(b64)
@@ -95,35 +106,34 @@ const validatorRewardReducer = (acc: DenomMapByValidator, item: Coin & { validat
 }
 
 export async function getBlockReward(height: string): Promise<DeepPartial<BlockRewardEntity>> {
-  const decodedRewardsAndCommission = await rpc.getRewards(height)
+  const decodedRewardsAndCommission = await rpc.fetchRewards(height)
 
   const totalReward = {}
   const totalCommission = {}
   const rewardPerVal = {}
   const commissionPerVal = {}
 
-  decodedRewardsAndCommission &&
-    decodedRewardsAndCommission.forEach((item) => {
-      if (!item.amount) {
-        return
-      }
+  decodedRewardsAndCommission.forEach((item) => {
+    if (!item.amount) {
+      return
+    }
 
-      if (item.type === 'rewards') {
-        const rewards = item.amount
-          .split(',')
-          .map((amount) => ({ ...splitDenomAndAmount(amount), validator: item.validator }))
+    if (item.type === 'rewards') {
+      const rewards = item.amount
+        .split(',')
+        .map((amount) => ({ ...splitDenomAndAmount(amount), validator: item.validator }))
 
-        rewards.reduce(totalRewardReducer, totalReward)
-        rewards.reduce(validatorRewardReducer, rewardPerVal)
-      } else if (item.type === 'commission') {
-        const commissions = item.amount
-          .split(',')
-          .map((amount) => ({ ...splitDenomAndAmount(amount), validator: item.validator }))
+      rewards.reduce(totalRewardReducer, totalReward)
+      rewards.reduce(validatorRewardReducer, rewardPerVal)
+    } else if (item.type === 'commission') {
+      const commissions = item.amount
+        .split(',')
+        .map((amount) => ({ ...splitDenomAndAmount(amount), validator: item.validator }))
 
-        commissions.reduce(totalRewardReducer, totalCommission)
-        commissions.reduce(validatorRewardReducer, commissionPerVal)
-      }
-    })
+      commissions.reduce(totalRewardReducer, totalCommission)
+      commissions.reduce(validatorRewardReducer, commissionPerVal)
+    }
+  })
 
   const blockReward: DeepPartial<BlockRewardEntity> = {
     reward: totalReward,
@@ -139,6 +149,7 @@ export async function saveBlockInformation(
   latestIndexedBlock: BlockEntity | undefined
 ): Promise<BlockEntity | undefined> {
   const height: string = lcdBlock.block.header.height
+  let newDayBlockTimestamp = 0
   logger.info(`collectBlock: begin transaction for block ${height}`)
 
   const result: BlockEntity | undefined = await getManager()
@@ -159,19 +170,33 @@ export async function saveBlockInformation(
 
       // new block timestamp
       if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
-        const newBlockTimeStamp = new Date(newBlockEntity.timestamp).getTime()
+        const newBlockTimestamp = newBlockEntity.timestamp.getTime()
 
-        await collectReward(mgr, newBlockTimeStamp, height)
+        await collectReward(mgr, newBlockTimestamp, height)
         // await collectSwap(mgr, newBlockTimeStamp)
-        await collectNetwork(mgr, newBlockTimeStamp, height)
-        await collectPrice(mgr, newBlockTimeStamp, height)
-        await collectGeneral(mgr, newBlockTimeStamp, height)
+        await collectNetwork(mgr, newBlockTimestamp, height)
+        await collectPrice(mgr, newBlockTimestamp, height)
+        await collectGeneral(mgr, newBlockTimestamp, height)
+
+        if (getDay(latestIndexedBlock.timestamp) !== getDay(newBlockEntity.timestamp)) {
+          newDayBlockTimestamp = newBlockTimestamp
+        }
       }
 
       return newBlockEntity
     })
     .then((block: BlockEntity) => {
       logger.info('collectBlock: transaction finished')
+
+      // start dashboard and validator return collector at every midnight
+      if (newDayBlockTimestamp) {
+        // setTimeout for isolating process
+        setTimeout(async () => {
+          await collectDashboard(newDayBlockTimestamp)
+          await collectValidatorReturn(newDayBlockTimestamp)
+        }, 0)
+      }
+
       return block
     })
     .catch((err) => {
@@ -186,10 +211,12 @@ export async function saveBlockInformation(
       sentry.captureException(err)
       return undefined
     })
+
   return result
 }
 
-export async function collectBlock(): Promise<void> {
+// returns true when blocks are up-to-date
+export async function collectBlock(): Promise<boolean> {
   let latestHeight
 
   // Wait until it gets proper block
@@ -212,16 +239,24 @@ export async function collectBlock(): Promise<void> {
     const lcdBlock = await lcd.getBlock(nextSyncHeight.toString())
 
     if (!lcdBlock) {
-      break
+      return true
     }
 
     latestIndexedBlock = await saveBlockInformation(lcdBlock, latestIndexedBlock)
 
     // Exit the loop after transaction error whether there's more blocks or not
     if (!latestIndexedBlock) {
-      break
+      return true
     }
 
     nextSyncHeight = nextSyncHeight + 1
+
+    // To prevent issues such as OOM, the loop is forcibly terminated every 100th
+    // iteration to avoid running for too long.
+    if (nextSyncHeight % 100 === 0) {
+      break
+    }
   }
+
+  return nextSyncHeight > latestHeight
 }

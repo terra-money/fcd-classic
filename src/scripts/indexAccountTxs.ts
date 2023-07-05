@@ -3,7 +3,7 @@ import { getManager } from 'typeorm'
 import { init, TxEntity, AccountTxEntity } from 'orm'
 import { countBy, chunk, uniqBy } from 'lodash'
 import { generateAccountTxs } from 'collector/block'
-import * as token from 'service/treasury/token'
+import * as token from 'service/token'
 
 async function main() {
   const conns = await init()

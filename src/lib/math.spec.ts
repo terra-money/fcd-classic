@@ -101,44 +101,40 @@ describe('math', () => {
     expect(isInteger(0)).toBe(true)
   })
 
-  test('sum(undefined)', () => {
-    expect(sum(undefined)).toBe('0')
+  test('sum()', () => {
+    expect(sum()).toBe('0')
   })
 
   test(`sum('string')`, () => {
-    expect(() => sum('' as any)).toThrow()
+    expect(sum('str')).toBe('0')
   })
 
-  test('sum([])', () => {
-    expect(sum([])).toBe('0')
+  test('sum()', () => {
+    expect(sum()).toBe('0')
   })
 
-  test('sum([NaN,1,2,3])', () => {
-    expect(sum([NaN, 1, 2, 3])).toBe('6')
+  test('sum(NaN,1,2,3)', () => {
+    expect(sum(NaN, 1, 2, 3)).toBe('6')
   })
 
-  test('sum([10,20,30,3.14]', () => {
-    expect(sum([10, 20, 30, 3.14])).toBe('63.14')
+  test('sum(10,20,30,3.14)', () => {
+    expect(sum(10, 20, 30, 3.14)).toBe('63.14')
   })
 
-  test('min(undefined)', () => {
-    expect(min(undefined)).toBe('0')
+  test(`min()`, () => {
+    expect(min()).toBe('0')
   })
 
   test(`min('')`, () => {
-    expect(() => min('' as any)).toThrow()
+    expect(min('')).toBe('0')
   })
 
-  test('min([])', () => {
-    expect(min([])).toBe('0')
+  test('min(NaN,1,2,3)', () => {
+    expect(min(NaN, 1, 2, 3)).toBe('1')
   })
 
-  test('min([NaN,1,2,3])', () => {
-    expect(min([NaN, 1, 2, 3])).toBe('1')
-  })
-
-  test('min([10,20,30,3.14]', () => {
-    expect(min([10, 20, 30, 3.14])).toBe('3.14')
+  test('min(10,20,30,3.14)', () => {
+    expect(min(10, 20, 30, 3.14)).toBe('3.14')
   })
 
   test(`getIntegerPortion('')`, () => {

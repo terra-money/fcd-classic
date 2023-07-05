@@ -1,9 +1,8 @@
 import * as Bluebird from 'bluebird'
 import { getManager } from 'typeorm'
 import { chunk } from 'lodash'
-import { request } from 'undici'
 import { init, BlockEntity } from 'orm'
-import * as token from 'service/treasury/token'
+import * as token from 'service/token'
 import { getValidatorOperatorAddressByConsensusAddress } from 'collector/block'
 import config from 'config'
 import * as lcd from 'lib/lcd'
@@ -32,12 +31,6 @@ async function main() {
 
   // do 1,000 updates at a time
   await Bluebird.mapSeries(chunk(heights, 1000), async (chk) => {
-    const options = {
-      headers: {
-        'User-Agent': 'terra-fcd'
-      }
-    }
-
     const lcdDatas = await Bluebird.map(chk, async (height) => lcd.getBlock(height.toString()), { concurrency: 16 })
     console.log(`height ${chk[0]}`)
 

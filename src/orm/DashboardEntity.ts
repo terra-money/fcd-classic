@@ -16,16 +16,16 @@ export default class DashboardEntity {
   txVolume: DenomMap
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
-  reward: string // Unit = Luna
+  reward: string // Unit = uluna
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
-  airdrop: string // Unit = Luna
+  airdrop: string // Unit = uluna
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
   avgStaking: string
 
   @Column('decimal', { precision: 40, scale: 10, default: '0' })
-  taxReward: string // Unit = KRT
+  taxReward: string // Unit = ukrw
 
   @Column({ default: 0 })
   activeAccount: number

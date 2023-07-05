@@ -6,10 +6,11 @@ export TYPEORM_USERNAME=terra
 export TYPEORM_PASSWORD=terra
 export TYPEORM_DATABASE=terra_fcd
 export TYPEORM_PORT=5432
-export TYPEORM_SYNCHRONIZE=false
 export TYPEORM_LOGGING=false
 export TYPEORM_ENTITIES=src/orm/*Entity.ts
+export TYPEORM_SYNCHRONIZE=false
 export TYPEORM_MIGRATIONS=src/orm/migration/*.ts
+export TYPEORM_MIGRATIONS_RUN=true
 
 export SERVER_PORT=3060
 export CHAIN_ID=localterra

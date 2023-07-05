@@ -1,13 +1,10 @@
-import { getRepository } from 'typeorm'
+import { EntityManager } from 'typeorm'
 import { subDays } from 'date-fns'
-
-import * as lcd from 'lib/lcd'
-import { times, div, plus } from 'lib/math'
-import { getDateFromDateTime } from 'lib/time'
+import { times, div, plus, getIntegerPortion } from 'lib/math'
 
 import { GeneralInfoEntity } from 'orm'
 
-import { convertDbTimestampToDate, getPriceObjKey, getLatestDateOfGeneralInfo } from './helpers'
+import { convertDbTimestampToDate, getPriceObjKey } from './helpers'
 import { getRewardsSumByDateDenom } from './rewardsInfo'
 import { getPriceHistory } from 'service/dashboard'
 import { BOND_DENOM } from 'lib/constant'
@@ -25,62 +22,65 @@ interface DailyStakingInfo {
   avgStaking: string // bigint
 }
 
-async function getAvgBondedTokensByDate(daysBefore?: number): Promise<{
+async function getAvgBondedTokensByDate(
+  mgr: EntityManager,
+  to: Date,
+  daysBefore?: number
+): Promise<{
   [date: string]: string
 }> {
-  const latestDate = await getLatestDateOfGeneralInfo()
-  const issuance = (await lcd.getTotalSupply()).find((e) => e.denom === BOND_DENOM)?.amount || '0'
-  const stakingQb = getRepository(GeneralInfoEntity)
+  const stakingQb = mgr
+    .getRepository(GeneralInfoEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
     .addSelect('AVG(staking_ratio)', 'avg_staking_ratio')
     .addSelect('AVG(bonded_tokens)', 'avg_bonded_tokens')
+    .addSelect(`AVG((issuances ->> 'uluna')::numeric)`, 'issuance')
     .groupBy('date')
     .orderBy('date', 'DESC')
-    .where('datetime < :today', { today: latestDate })
+    .where('datetime < :to', { to })
 
   if (daysBefore) {
-    stakingQb.andWhere('datetime >= :from', { from: subDays(latestDate, daysBefore) })
+    stakingQb.andWhere('datetime >= :from', { from: subDays(to, daysBefore) })
   }
 
-  const bondedTokens = await stakingQb.getRawMany()
+  const bondedTokens: {
+    date: string
+    avg_staking_ratio: string
+    avg_bonded_tokens: string
+    issuance: string
+  }[] = await stakingQb.getRawMany()
 
-  const bondedTokensObj = bondedTokens.reduce((acc, item) => {
-    acc[item.date] = item.avg_bonded_tokens ? item.avg_bonded_tokens : times(issuance, item.avg_staking_ratio)
+  return bondedTokens.reduce((acc, item) => {
+    acc[item.date] = getIntegerPortion(times(item.issuance, item.avg_staking_ratio))
     return acc
   }, {})
-  return bondedTokensObj
 }
 
-async function getRewardsInLunaByDate(daysBefore?: number): Promise<{
+async function getRewardsInLunaByDate(
+  mgr: EntityManager,
+  to: Date,
+  daysBefore?: number
+): Promise<{
   [date: string]: DailyReturnInfo
 }> {
-  const rewards = await getRewardsSumByDateDenom(daysBefore)
-  const priceObj = await getPriceHistory(daysBefore)
+  const rewards = await getRewardsSumByDateDenom(mgr, to, daysBefore)
+  const priceObj = await getPriceHistory(mgr, to, daysBefore)
 
   const rewardObj: {
     [date: string]: DailyReturnInfo
   } = rewards.reduce((acc, item) => {
-    if (!priceObj[getPriceObjKey(item.date, item.denom)] && item.denom !== BOND_DENOM) {
+    const key = getPriceObjKey(item.date, item.denom)
+
+    if (!priceObj[key] && item.denom !== BOND_DENOM) {
       return acc
     }
 
-    const tax =
-      item.denom === BOND_DENOM ? item.tax_sum : div(item.tax_sum, priceObj[getPriceObjKey(item.date, item.denom)])
-    const gas =
-      item.denom === BOND_DENOM ? item.gas_sum : div(item.gas_sum, priceObj[getPriceObjKey(item.date, item.denom)])
-    const oracle =
-      item.denom === BOND_DENOM
-        ? item.oracle_sum
-        : div(item.oracle_sum, priceObj[getPriceObjKey(item.date, item.denom)])
-    const commission =
-      item.denom === BOND_DENOM
-        ? item.commission_sum
-        : div(item.commission_sum, priceObj[getPriceObjKey(item.date, item.denom)])
-    const reward =
-      item.denom === BOND_DENOM
-        ? item.reward_sum
-        : div(item.reward_sum, priceObj[getPriceObjKey(item.date, item.denom)])
+    const tax = item.denom === BOND_DENOM ? item.tax_sum : div(item.tax_sum, priceObj[key])
+    const gas = item.denom === BOND_DENOM ? item.gas_sum : div(item.gas_sum, priceObj[key])
+    const oracle = item.denom === BOND_DENOM ? item.oracle_sum : div(item.oracle_sum, priceObj[key])
+    const commission = item.denom === BOND_DENOM ? item.commission_sum : div(item.commission_sum, priceObj[key])
+    const reward = item.denom === BOND_DENOM ? item.reward_sum : div(item.reward_sum, priceObj[key])
 
     const prev = acc[item.date] || {}
 
@@ -94,28 +94,33 @@ async function getRewardsInLunaByDate(daysBefore?: number): Promise<{
 
     return acc
   }, {})
+
+  for (const info of Object.values(rewardObj)) {
+    info.tax = getIntegerPortion(info.tax)
+    info.gas = getIntegerPortion(info.gas)
+    info.oracle = getIntegerPortion(info.oracle)
+    info.commission = getIntegerPortion(info.commission)
+    info.reward = getIntegerPortion(info.reward)
+  }
+
   return rewardObj
 }
 
-export async function getStakingReturnByDay(daysBefore?: number): Promise<{ [date: string]: DailyStakingInfo }> {
-  const bondedTokensObj = await getAvgBondedTokensByDate(daysBefore)
-  const rewardObj = await getRewardsInLunaByDate(daysBefore)
+export async function getStakingReturnByDay(
+  mgr: EntityManager,
+  to: Date,
+  daysBefore?: number
+): Promise<{ [date: string]: DailyStakingInfo }> {
+  const avgStakingObj = await getAvgBondedTokensByDate(mgr, to, daysBefore)
+  const rewardObj = await getRewardsInLunaByDate(mgr, to, daysBefore)
 
   const stakingReturns = Object.keys(rewardObj).reduce((acc, date) => {
-    const staked = bondedTokensObj[date]
+    const avgStaking = avgStakingObj[date]
+    const reward = rewardObj[date].reward
 
-    if (staked === '0') {
-      return acc
-    }
-
-    const rewardSum =
-      rewardObj[date].reward === '0' && rewardObj[date].commission === '0'
-        ? plus(plus(rewardObj[date].tax, rewardObj[date].gas), rewardObj[date].oracle)
-        : rewardObj[date].reward
-    // TODO: Need to add a failsafe for not found staked
-    acc[getDateFromDateTime(new Date(date))] = {
-      reward: rewardSum,
-      avgStaking: staked
+    acc[date] = {
+      reward,
+      avgStaking
     }
     return acc
   }, {})

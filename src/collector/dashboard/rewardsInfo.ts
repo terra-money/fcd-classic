@@ -1,9 +1,9 @@
-import { getRepository } from 'typeorm'
+import { EntityManager } from 'typeorm'
 import { subDays } from 'date-fns'
 
 import { RewardEntity } from 'orm'
 
-import { getLatestDateOfReward, convertDbTimestampToDate } from './helpers'
+import { convertDbTimestampToDate } from './helpers'
 
 interface RewardsByDateReturn {
   date: string
@@ -15,9 +15,13 @@ interface RewardsByDateReturn {
   commission_sum: string
 }
 
-export async function getRewardsSumByDateDenom(daysBefore?: number): Promise<RewardsByDateReturn[]> {
-  const latestDate = await getLatestDateOfReward()
-  const rewardQb = getRepository(RewardEntity)
+export async function getRewardsSumByDateDenom(
+  mgr: EntityManager,
+  to: Date,
+  daysBefore?: number
+): Promise<RewardsByDateReturn[]> {
+  const rewardQb = mgr
+    .getRepository(RewardEntity)
     .createQueryBuilder()
     .select(convertDbTimestampToDate('datetime'), 'date')
     .addSelect('denom', 'denom')
@@ -29,10 +33,10 @@ export async function getRewardsSumByDateDenom(daysBefore?: number): Promise<Rew
     .groupBy('date')
     .addGroupBy('denom')
     .orderBy('date', 'ASC')
-    .where('datetime < :today', { today: latestDate })
+    .where('datetime < :to', { to })
 
   if (daysBefore) {
-    rewardQb.andWhere('datetime >= :from', { from: subDays(latestDate, daysBefore) })
+    rewardQb.andWhere('datetime >= :from', { from: subDays(to, daysBefore) })
   }
 
   const rewards: RewardsByDateReturn[] = await rewardQb.getRawMany()

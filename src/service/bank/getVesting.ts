@@ -12,7 +12,7 @@ const getVesting = (account: NormalizedAccount, latestBlockTimestamp: number): V
     const schedules = scheduleMap[denom] || []
     const scheduleMappper = (schedule: ConvertedSchedule): VestingSchedule => {
       const freedRate = div(
-        minus(min([schedule.endTime, latestBlockTimestamp]), schedule.startTime),
+        minus(min(schedule.endTime, latestBlockTimestamp), schedule.startTime),
         minus(schedule.endTime, schedule.startTime)
       )
       return {

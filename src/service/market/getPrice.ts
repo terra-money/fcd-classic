@@ -2,7 +2,7 @@ import { getRepository, getConnection } from 'typeorm'
 import { PriceEntity } from 'orm'
 import { default as parseDuration } from 'parse-duration'
 
-import { getOnedayBefore } from './helper'
+import { getLastDayPrices } from './helper'
 import { minus, div } from 'lib/math'
 import { getQueryDateTime } from 'lib/time'
 
@@ -26,8 +26,9 @@ interface GetPriceReturn {
   prices: PriceDataByDate[] // list of price points
 }
 
-function getMinimumTimestampOfSearchScope(params: GetPriceParams): number {
-  const now = Date.now()
+async function getMinimumTimestampOfSearchScope(params: GetPriceParams): Promise<number> {
+  const latestPrice = await getRepository(PriceEntity).findOneOrFail({ order: { datetime: 'DESC' } })
+  const now = latestPrice.datetime.getTime()
   const interval = Math.max(MIN_DURATION, parseDuration(params.interval) || MIN_DURATION)
   const latestTimestamp = now - (now % interval)
   const minTimestamp = latestTimestamp - interval * (50 + 2) // extra 2 for not to end up less segment than count
@@ -36,7 +37,7 @@ function getMinimumTimestampOfSearchScope(params: GetPriceParams): number {
 
 async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
   const { denom, interval } = params
-  const minTimestamp = getMinimumTimestampOfSearchScope(params)
+  const minTimestamp = await getMinimumTimestampOfSearchScope(params)
   const truncType = interval.endsWith('d') ? 'day' : 'hour'
 
   const rawQuery = `SELECT DATE_TRUNC($1, datetime) AS time,
@@ -62,7 +63,7 @@ async function getAvgPriceForDayOrHourInterval(params: GetPriceParams): Promise<
 
 async function getAvgPriceForMinutesInterval(params: GetPriceParams): Promise<PriceDataByDate[]> {
   const { denom, interval } = params
-  const minTimestamp = getMinimumTimestampOfSearchScope(params)
+  const minTimestamp = await getMinimumTimestampOfSearchScope(params)
   const minuteInterval = parseInt(interval, 10)
 
   const rawQuery = `SELECT DATE_TRUNC('hour', datetime) AS time,
@@ -101,9 +102,8 @@ export default async function getPrice(params: GetPriceParams): Promise<GetPrice
     order: { datetime: 'DESC' }
   })
 
-  const denomOneDayBeforePrices = await getOnedayBefore()
-  const oneDayVariation =
-    lastPrice && denomOneDayBeforePrices[denom] ? minus(lastPrice.price, denomOneDayBeforePrices[denom]) : undefined
+  const lastDayPrices = await getLastDayPrices()
+  const oneDayVariation = lastPrice && lastDayPrices[denom] ? minus(lastPrice.price, lastDayPrices[denom]) : undefined
 
   const oneDayVariationRate = lastPrice && oneDayVariation ? div(oneDayVariation, lastPrice.price) : undefined
 

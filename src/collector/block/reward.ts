@@ -2,80 +2,77 @@ import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
 import { get, mergeWith } from 'lodash'
 
-import config from 'config'
 import { TxEntity, RewardEntity, BlockEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
-import { plus, minus } from 'lib/math'
-import { isNumeric, splitDenomAndAmount } from 'lib/common'
+import { plus } from 'lib/math'
+import { splitDenomAndAmount } from 'lib/common'
 import { getDateRangeOfLastMinute, getQueryDateTime, getStartOfPreviousMinuteTs } from 'lib/time'
 
-import { getUSDValue, getAllActivePrices, addDatetimeFilterToQuery } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery } from './helper'
 
 function extractGasFee(tx: TxEntity): DenomMap {
-  const amount = get(tx, 'data.tx.value.fee.amount')
-
-  return (amount || []).reduce((acc, item) => {
-    acc[item.denom] = acc[item.denom] ? plus(acc[item.denom], item.amount) : item.amount
+  return tx.data.tx.value.fee.amount.reduce((acc, item) => {
+    acc[item.denom] = plus(acc[item.denom], item.amount)
     return acc
-  }, {})
+  }, {} as DenomMap)
 }
 
-type ExtraFee = {
-  swapfee?: DenomMap
-  tax?: DenomMap
+function extractTax(tx: TxEntity): DenomMap {
+  return tx.data.logs.reduce((acc, item) => {
+    const taxes = typeof item.log === 'object' ? item.log.tax : null
+
+    if (taxes) {
+      taxes.split(',').forEach((tax) => {
+        const { amount, denom } = splitDenomAndAmount(tax)
+        acc[denom] = plus(acc[denom], amount)
+      })
+    }
+
+    return acc
+  }, {} as DenomMap)
 }
 
-function extractExtraFee(tx): ExtraFee {
-  const logs = get(tx, 'data.logs')
-  return logs
-    ? logs.reduce(
-        (acc, item) => {
-          const taxes = get(item, 'log.tax')
-          const swapfee = get(item, 'log.swap_fee')
-          if (taxes) {
-            taxes.split(',').forEach((tax) => {
-              const { amount, denom } = splitDenomAndAmount(tax)
-              acc.tax[denom] = plus(acc.tax[denom], amount)
-            })
+function extractSwapFee(tx: TxEntity): DenomMap {
+  return tx.data.logs.reduce((acc, item) => {
+    item.events &&
+      item.events.forEach((event) => {
+        if (event.type === 'swap') {
+          const swapFeeAttribute = event.attributes.find((attr) => attr.key === 'swap_fee')
+
+          if (swapFeeAttribute) {
+            const { amount, denom } = splitDenomAndAmount(swapFeeAttribute.value)
+            acc[denom] = plus(acc[denom], amount)
           }
-          if (swapfee) {
-            const { amount, denom } = splitDenomAndAmount(swapfee)
-
-            if (isNumeric(amount)) {
-              acc.swapfee[denom] = plus(acc.swapfee[denom], amount)
-            }
-          }
-          return acc
-        },
-        { swapfee: {}, tax: {} }
-      )
-    : {}
+        }
+      })
+    return acc
+  }, {} as DenomMap)
 }
 
-async function getFees(timestamp: number): Promise<{
-  swapfee: DenomMap
-  tax: DenomMap
+async function queryFees(timestamp: number): Promise<{
   gas: DenomMap
+  tax: DenomMap
+  swapfee: DenomMap
 }> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx').select(`tx.data`)
+  const qb = getRepository(TxEntity).createQueryBuilder('tx').select(['tx.hash', 'tx.data'])
   addDatetimeFilterToQuery(timestamp, qb)
-
-  // .leftJoinAndSelect("tx.block", "block")
-  // .where("tx.block_id is not null");
 
   const txs = await qb.getMany()
   const rewardMerger = (obj, src) => mergeWith(obj, src, (o, s) => plus(o, s))
 
-  return txs.reduce(
-    (acc, tx) => {
-      const gas = extractGasFee(tx)
-      const swapFeeAndTax = extractExtraFee(tx)
-      return mergeWith(acc, { ...swapFeeAndTax, gas }, rewardMerger)
-    },
-    { swapfee: {}, tax: {}, gas: {} }
-  )
+  return txs
+    .filter((tx) => !tx.data.code)
+    .reduce(
+      (acc, tx) => {
+        const gas = extractGasFee(tx)
+        const tax = extractTax(tx)
+        const swapfee = extractSwapFee(tx)
+        return mergeWith(acc, { gas, tax, swapfee }, rewardMerger)
+      },
+      { gas: {}, tax: {}, swapfee: {} }
+    )
 }
 
 interface Rewards {
@@ -98,17 +95,6 @@ export async function getRewards(timestamp: number): Promise<Rewards> {
     return result
   }
 
-  const lastBlock = await getRepository(BlockEntity).findOne({
-    chainId: config.CHAIN_ID,
-    height: blocks[blocks.length - 1].height + 1
-  })
-
-  if (lastBlock) {
-    blocks.push(lastBlock)
-  }
-
-  blocks.shift()
-
   const rewardMerger = (obj, src) => mergeWith(obj, src, (o, s) => plus(o, s))
 
   return blocks.reduce((acc, block) => {
@@ -121,26 +107,33 @@ export async function getRewards(timestamp: number): Promise<Rewards> {
 export async function collectReward(mgr: EntityManager, timestamp: number, strHeight: string) {
   const { reward: rewardSum, commission } = await getRewards(timestamp)
   const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-  const [issuances, rewards, activePrices] = await Promise.all([
+  const [issuances, fees, activePrices] = await Promise.all([
     lcd.getAllActiveIssuance(strHeight),
-    getFees(timestamp),
-    getAllActivePrices(datetime.getTime())
+    queryFees(timestamp),
+    lcd.getActiveOraclePrices(strHeight)
   ])
 
+  if (Object.keys(activePrices).length === 0) {
+    throw new Error(`no active prices`)
+  }
+
   await Bluebird.map(Object.keys(issuances), async (denom) => {
+    // early exit for denoms without reward
+    if (!rewardSum[denom]) {
+      return
+    }
+
     const reward = new RewardEntity()
     reward.denom = denom
     reward.datetime = datetime
-    reward.tax = get(rewards, `tax.${denom}`, '0.0')
+    reward.tax = get(fees, `tax.${denom}`, '0')
     reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
-    reward.gas = get(rewards, `gas.${denom}`, '0.0')
+    reward.gas = get(fees, `gas.${denom}`, '0')
     reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
+    reward.oracle = get(fees, `swapfee.${denom}`, '0')
+    reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
     reward.sum = rewardSum[denom]
     reward.commission = commission[denom]
-
-    const oracle = minus(minus(reward.sum, reward.tax), reward.gas)
-    reward.oracle = Number(oracle) < 0 ? '0' : oracle
-    reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
 
     const existing = await mgr.findOne(RewardEntity, { denom, datetime })
 

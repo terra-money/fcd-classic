@@ -5,7 +5,7 @@ import { init, DashboardEntity } from 'orm'
 import { startOfDay } from 'date-fns'
 import * as lcd from 'lib/lcd'
 import { plus } from 'lib/math'
-import { init as initToken, getToken } from 'service/treasury/token'
+import { init as initToken, getToken } from 'service/token'
 import config from 'config'
 
 const DIST_INTERVAL = 100000

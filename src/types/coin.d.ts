@@ -1,12 +1,14 @@
 type Coins = Coin[] | null
 
-interface Coin {
+type Coin = {
   amount: string
   denom: string
 }
 
-interface DenomMap {
+type DenomMap = {
   [denom: string]: string
 }
 
-type DenomMapByValidator = { [validator: string]: DenomMap }
+type DenomMapByValidator = {
+  [validator: string]: DenomMap
+}

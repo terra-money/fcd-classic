@@ -57,7 +57,6 @@ function parseTxEntity(tx: TxEntity) {
 interface DelegationClaim {
   chainId: string
   txhash: string
-  tx: string // tx hash of claim, TODO: remove
   type: string // tx types like reward, commission
   amounts: Coin[] // amounts in with their denoms
   timestamp: string // tx timestamp

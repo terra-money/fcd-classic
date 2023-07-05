@@ -5,7 +5,8 @@ import config from 'config'
 import { success } from 'lib/response'
 import { ErrorCodes } from 'lib/error'
 
-import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply, TOKEN_SYMBOLS } from 'service/treasury'
+import { getTaxProceeds, getTotalSupply, getRichList, getCirculatingSupply } from 'service/treasury'
+import { TOKEN_SYMBOLS } from 'service/token'
 
 const Joi = Validator.Joi
 

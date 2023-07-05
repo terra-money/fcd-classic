@@ -27,7 +27,7 @@ describe('time', () => {
   test('getQueryDateRangeFrom(1)', () => {
     const today = startOfToday()
 
-    expect(getQueryDateRangeFrom(1)).toMatchObject({
+    expect(getQueryDateRangeFrom(today, 1)).toMatchObject({
       to: format(today, 'yyyy-MM-dd'),
       from: format(subDays(today, 1), 'yyyy-MM-dd')
     })

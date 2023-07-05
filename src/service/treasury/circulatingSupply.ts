@@ -7,7 +7,7 @@ import memoizeCache from 'lib/memoizeCache'
 import * as lcd from 'lib/lcd'
 import config from 'config'
 import { getTotalSupply } from './totalSupply'
-import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from './token'
+import { isToken, getCirculatingSupply as getTokenCirculatingSupply } from 'service/token'
 import getLunaBalance from './getLunaBalance'
 import { BOND_DENOM } from 'lib/constant'
 

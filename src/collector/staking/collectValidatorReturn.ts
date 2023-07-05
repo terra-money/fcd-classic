@@ -37,7 +37,7 @@ export async function generateValidatorReturnEntities(
   const priceObj = await getAvgPrice(fromTs, fromTs + ONE_DAY_IN_MS)
   const valMap = await getExistingValidatorsMap(timestamp)
 
-  for (const extValidator of extValidators) {
+  for (const [index, extValidator] of extValidators.entries()) {
     const { lcdValidator: validator, votingPower } = extValidator
 
     if (!updateExisting && valMap[validator.operator_address]) {
@@ -56,7 +56,7 @@ export async function generateValidatorReturnEntities(
       logger.info(
         `collectValidatorReturn: reward ${validator.description.moniker}, total ${getIntegerPortion(
           div(reward, 1000000)
-        )}, commission ${getIntegerPortion(div(commission, 1000000))}`
+        )}, commission ${getIntegerPortion(div(commission, 1000000))}, progress (${index + 1}/${extValidators.length})`
       )
 
       const valRetEntity = valMap[validator.operator_address] || new ValidatorReturnInfoEntity()
@@ -74,35 +74,14 @@ export async function generateValidatorReturnEntities(
   return retEntity
 }
 
-export async function collectValidatorReturn() {
-  const latestBlock = await getRepository(BlockEntity).findOne({ order: { id: 'DESC' } })
+export async function collectValidatorReturn(timestamp?: number) {
+  const latestBlock = await getRepository(BlockEntity).findOneOrFail({ order: { timestamp: 'DESC' } })
+  const toTs = startOfDay(timestamp || latestBlock.timestamp).getTime()
+  const fromTs = toTs - ONE_DAY_IN_MS
 
-  if (latestBlock === undefined) {
-    logger.error('collectValidatorReturn: No block data found in DB')
-    return
-  }
+  const validatorsList = await getValidatorsAndConsensus()
+  logger.info(`collectValidatorReturn: ${validatorsList.length} validators at ${new Date(toTs).toString()}`)
 
-  const latestBlockDateTime = startOfDay(latestBlock.timestamp)
-  const latestBlockTs = latestBlockDateTime.getTime()
-
-  const toTs = startOfDay(Date.now()).getTime()
-  const fromTs = toTs - ONE_DAY_IN_MS * 3
-
-  if (latestBlockTs < toTs) {
-    logger.error(`collectValidatorReturn: Required to have blocks until ${new Date(toTs)}`)
-    return
-  }
-
-  const validatorsList = await getValidatorsAndConsensus('BOND_STATUS_BONDED')
-  logger.info(`collectValidatorReturn: ${validatorsList.length} validators at ${latestBlockDateTime.toString()}`)
-
-  const validatorReturnRepo = getRepository(ValidatorReturnInfoEntity)
-
-  for (let tsIt = fromTs; tsIt < toTs && tsIt < latestBlockTs; tsIt = tsIt + ONE_DAY_IN_MS) {
-    const dailyEntityList = await generateValidatorReturnEntities(tsIt, validatorsList)
-
-    await validatorReturnRepo.save(dailyEntityList)
-  }
-
-  logger.info('collectValidatorReturn: completed')
+  const dailyEntityList = await generateValidatorReturnEntities(fromTs, validatorsList)
+  await getRepository(ValidatorReturnInfoEntity).save(dailyEntityList)
 }

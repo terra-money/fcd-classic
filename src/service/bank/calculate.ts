@@ -49,7 +49,7 @@ const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTim
   const reducer = (acc: Balance[], { amount, denom }: Coin) => {
     /* helpers */
     const reduceFreedRate = (acc: string, s: ConvertedSchedule): string => {
-      const freedRate = div(minus(min([s.endTime, latestBlockTimestamp]), s.startTime), minus(s.endTime, s.startTime))
+      const freedRate = div(minus(min(s.endTime, latestBlockTimestamp), s.startTime), minus(s.endTime, s.startTime))
       return plus(acc, Number(freedRate) > 0 ? times(freedRate, s.ratio) : 0)
     }
 
@@ -78,7 +78,7 @@ const calculate = (account: NormalizedAccount, unbondings: any[], latestBlockTim
 
     /* required */
     // const total = sum([amount, delegatedVesting, delegatedFree])
-    const available = min([amount, sum([amount, delegatedVesting, -vesting])])
+    const available = min(amount, sum(amount, delegatedVesting, -vesting))
 
     const delegatable = denom === BOND_DENOM ? amount : '0'
 

@@ -12,12 +12,8 @@ export const isFinite = (n: BigNumber.Value): boolean => new BigNumber(n).isFini
 
 export const isInteger = (n: BigNumber.Value): boolean => new BigNumber(n).isInteger()
 
-export const sum = (array?: BigNumber.Value[]): string => {
-  if (array !== undefined && !Array.isArray(array)) {
-    throw new TypeError('not an array')
-  }
-
-  const normalized = (array || []).filter(isFinite)
+export const sum = (...n: BigNumber.Value[]): string => {
+  const normalized = n.filter(isFinite)
 
   if (!normalized.length) {
     normalized[0] = 0
@@ -26,18 +22,14 @@ export const sum = (array?: BigNumber.Value[]): string => {
   return BigNumber.sum(...normalized).toString()
 }
 
-export const min = (array?: BigNumber.Value[]): string => {
-  if (array !== undefined && !Array.isArray(array)) {
-    throw new TypeError('not an array')
-  }
-
-  const normalized = (array || []).filter(isFinite)
+export const min = (...n: BigNumber.Value[]): string => {
+  const normalized = n.filter(isFinite)
 
   if (!normalized.length) {
     normalized[0] = 0
   }
 
-  return BigNumber.min.apply(null, normalized).toString()
+  return BigNumber.min(...normalized).toString()
 }
 
-export const getIntegerPortion = (input: string): string => new BigNumber(input).toFixed(0)
+export const getIntegerPortion = (input: string): string => new BigNumber(input).toFixed(0, BigNumber.ROUND_DOWN)

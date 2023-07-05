@@ -1,5 +1,5 @@
-import { startOfToday, subDays, addDays } from 'date-fns'
-import { getRepository } from 'typeorm'
+import { subDays, addDays, startOfDay } from 'date-fns'
+import { getManager } from 'typeorm'
 
 import { getDateFromDateTime } from 'lib/time'
 import { collectorLogger as logger } from 'lib/logger'
@@ -12,56 +12,48 @@ import { getAccountCountByDay } from './accountGrowth'
 import { getBlockRewardsByDay } from './blockReward'
 import { getTxVolumeByDay } from './txVolume'
 
-const PREVIOUS_DAYS_TO_CALCULATE = 3
+const PREVIOUS_DAYS_TO_CALCULATE = 1
 
-export async function collectDashboard(updateExisting = false) {
-  logger.info('Dashboard collector started...')
-
-  const to = startOfToday()
+export async function collectDashboard(timestamp: number) {
+  const mgr = getManager()
+  const to = startOfDay(timestamp)
   const from = subDays(to, PREVIOUS_DAYS_TO_CALCULATE)
 
   const [accountGrowth, taxRewards, stakingReturn, transactionVol] = await Promise.all([
-    getAccountCountByDay(PREVIOUS_DAYS_TO_CALCULATE),
-    getBlockRewardsByDay(PREVIOUS_DAYS_TO_CALCULATE),
-    getStakingReturnByDay(PREVIOUS_DAYS_TO_CALCULATE),
-    getTxVolumeByDay(PREVIOUS_DAYS_TO_CALCULATE)
+    getAccountCountByDay(mgr, to, PREVIOUS_DAYS_TO_CALCULATE),
+    getBlockRewardsByDay(mgr, to, PREVIOUS_DAYS_TO_CALCULATE),
+    getStakingReturnByDay(mgr, to, PREVIOUS_DAYS_TO_CALCULATE),
+    getTxVolumeByDay(mgr, to, PREVIOUS_DAYS_TO_CALCULATE)
   ])
 
-  for (let dayIt = from; dayIt < to; dayIt = addDays(dayIt, 1)) {
-    let dashboard = await getRepository(DashboardEntity).findOne({
+  for (let dayIt = from; dayIt.getTime() < to.getTime(); dayIt = addDays(dayIt, 1)) {
+    let dashboard = await mgr.findOne(DashboardEntity, {
       chainId: config.CHAIN_ID,
       timestamp: dayIt
     })
 
-    if (dashboard) {
-      if (!updateExisting) {
-        logger.info(`Dashboard exists: ${dayIt.toISOString()}`)
-        continue
-      }
-    } else {
+    if (!dashboard) {
       dashboard = new DashboardEntity()
     }
 
     const dateKey = getDateFromDateTime(dayIt)
-
     dashboard.timestamp = dayIt
     dashboard.chainId = config.CHAIN_ID
-    dashboard.txVolume = transactionVol[dateKey]
+    dashboard.txVolume = transactionVol[dateKey] || {}
     dashboard.reward = stakingReturn[dateKey]?.reward
     dashboard.avgStaking = stakingReturn[dateKey]?.avgStaking
     dashboard.taxReward = taxRewards[dateKey]
     dashboard.activeAccount = accountGrowth[dateKey]?.activeAccount
     dashboard.totalAccount = accountGrowth[dateKey]?.totalAccount
 
-    await getRepository(DashboardEntity)
-      .save(dashboard)
+    await mgr
+      .save(DashboardEntity, dashboard)
       .then(() => {
-        logger.info(`Dashboard saved: ${dayIt.toISOString()}`)
+        logger.info(`collectDashboard: success ${dayIt}`)
       })
       .catch((error) => {
-        logger.error(`Dashboard save failed: ${dayIt.toISOString()} ${error.message}`)
+        logger.error(`collectDashboard: failed ${dayIt}`)
+        throw error
       })
   }
-
-  logger.info('Dashboard collector finished')
 }

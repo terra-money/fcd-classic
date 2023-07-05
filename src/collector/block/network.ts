@@ -1,5 +1,5 @@
 import * as Bluebird from 'bluebird'
-import { get, mergeWith } from 'lodash'
+import { flattenDeep } from 'lodash'
 import { TxEntity, NetworkEntity } from 'orm'
 import { getRepository, EntityManager } from 'typeorm'
 
@@ -9,86 +9,85 @@ import { plus } from 'lib/math'
 import { getStartOfPreviousMinuteTs } from 'lib/time'
 import { isSuccessfulTx } from 'lib/tx'
 
-import { getUSDValue, addDatetimeFilterToQuery, getAllActivePrices } from './helper'
+import { getUSDValue, addDatetimeFilterToQuery } from './helper'
 
-async function getVolumeFromSend(timestamp: number): Promise<{ [denom: string]: string }> {
-  const qb = getRepository(TxEntity).createQueryBuilder('tx')
-  qb.andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "bank/MsgSend"}]'`)
-  addDatetimeFilterToQuery(timestamp, qb)
-  const txs = await qb.getMany()
+function getVolumeCoins(lcdTx: Transaction.LcdTransaction, msg: Transaction.AminoMesssage): Coin[] {
+  let coins: Coin[] = []
 
-  const volumeByCurrency = {}
+  switch (msg.type) {
+    case 'bank/MsgSend': {
+      coins = msg.value.amount
+      break
+    }
+    case 'bank/MsgMultiSend': {
+      coins = msg.value.inputs.map((input) => input.coins)
+      break
+    }
+    case 'market/MsgSwapSend': {
+      coins = [msg.value.offer_coin]
+      break
+    }
+    case 'wasm/MsgInstantiateContract': {
+      coins = msg.value.init_coins || msg.value.funds
+      break
+    }
+    case 'wasm/MsgInstantiateContract2': {
+      coins = msg.value.funds
+      break
+    }
+    case 'wasm/MsgExecuteContract': {
+      coins = msg.value.coins || msg.value.funds
+      break
+    }
+    case 'msgauth/MsgExecAuthorized':
+    case 'authz/MsgExec': {
+      coins = flattenDeep(msg.value.msgs.map(getVolumeCoins))
+      break
+    }
+  }
 
-  txs.forEach((tx: TxEntity) => {
-    const lcdTx = tx.data as Transaction.LcdTransaction
-    const msgs = lcdTx.tx.value.msg
-    const logs = lcdTx.logs
+  if (!Array.isArray(coins)) {
+    throw new Error(`cannot find coin field in msg: ${msg.type}, height: ${lcdTx.height}, txhash: ${lcdTx.txhash}`)
+  }
 
-    isSuccessfulTx(lcdTx) &&
-      msgs &&
-      logs &&
-      msgs.forEach((msg, i) => {
-        if (!logs[i]) {
-          return
-        }
-
-        const amount = get(msg, 'value.amount')
-        const msgType = get(msg, 'type')
-        if (msgType !== 'bank/MsgSend') {
-          // we only need to check send msg
-          return
-        }
-        Array.isArray(amount) &&
-          amount.forEach((item) => {
-            volumeByCurrency[item.denom] = volumeByCurrency[item.denom]
-              ? plus(volumeByCurrency[item.denom], item.amount)
-              : item.amount
-          })
-      })
-  })
-  return volumeByCurrency
+  return coins
 }
 
-async function getVolumeFromMultiSend(timestamp: number): Promise<{ [denom: string]: string }> {
+const txMsgs = [
+  'bank/MsgSend',
+  'bank/MsgMultiSend',
+  'market/MsgSwapSend',
+  'wasm/MsgExecuteContract',
+  'wasm/MsgInstantiateContract',
+  'wasm/MsgInstantiateContract2',
+  'msgauth/MsgExecAuthorized',
+  'authz/MsgExec'
+]
+
+async function queryTxVolume(timestamp: number): Promise<DenomMap> {
   const qb = getRepository(TxEntity).createQueryBuilder('tx')
-  qb.andWhere(`data->'tx'->'value'->'msg'@>'[{ "type": "bank/MsgMultiSend"}]'`)
+  const jsonbMsgTypeCondition = txMsgs.map((msg) => `@ == "${msg}"`).join(' || ')
+  qb.andWhere(`data->'tx'->'value'->'msg' @? '$[*].type ? (${jsonbMsgTypeCondition})'`)
   addDatetimeFilterToQuery(timestamp, qb)
   const txs = await qb.getMany()
 
-  const volumeByCurrency = {}
-
-  txs.forEach((tx: TxEntity) => {
+  return txs.reduce((volume, tx) => {
     const lcdTx = tx.data as Transaction.LcdTransaction
-    const msgs = lcdTx.tx.value.msg
-    const logs = lcdTx.logs
 
-    isSuccessfulTx(lcdTx) &&
-      msgs &&
-      logs &&
-      msgs.forEach((msg, i) => {
-        if (!logs[i]) {
-          return
-        }
+    if (!isSuccessfulTx(lcdTx)) {
+      return volume
+    }
 
-        const inputs = get(msg, 'value.inputs')
-        const msgType = get(msg, 'type')
-        if (msgType !== 'bank/MsgMultiSend') {
-          // only need to check bank MsgMultiSend
-          return
-        }
-        Array.isArray(inputs) &&
-          inputs.forEach((input) => {
-            Array.isArray(input.coins) &&
-              input.coins.forEach((coin) => {
-                volumeByCurrency[coin.denom] = volumeByCurrency[coin.denom]
-                  ? plus(volumeByCurrency[coin.denom], coin.amount)
-                  : coin.amount
-              })
-          })
+    lcdTx.tx.value.msg.forEach((msg) => {
+      const coins = getVolumeCoins(lcdTx, msg)
+
+      coins.forEach((item) => {
+        volume[item.denom] = plus(volume[item.denom], item.amount)
       })
-  })
+    })
 
-  return volumeByCurrency
+    return volume
+  }, {} as DenomMap)
 }
 
 export function getMarketCap(issuances, prices): { [denom: string]: string } {
@@ -97,34 +96,30 @@ export function getMarketCap(issuances, prices): { [denom: string]: string } {
   }, {})
 }
 
-export async function getTxVol(timestamp: number) {
-  const volumeFromSendReq = getVolumeFromSend(timestamp)
-  const volumeFromMultiSendReq = getVolumeFromMultiSend(timestamp)
-
-  const [volumeFromSend, volumeFromMultiSend] = await Promise.all([volumeFromSendReq, volumeFromMultiSendReq])
-
-  return mergeWith(volumeFromSend, volumeFromMultiSend, plus)
-}
-
 export async function collectNetwork(mgr: EntityManager, timestamp: number, strHeight: string) {
   const ts = getStartOfPreviousMinuteTs(timestamp)
   const [activeIssuances, activePrices, volumeObj] = await Promise.all([
     lcd.getAllActiveIssuance(strHeight),
-    getAllActivePrices(ts),
-    getTxVol(timestamp)
+    lcd.getActiveOraclePrices(strHeight),
+    queryTxVolume(timestamp)
   ])
 
   const marketCapObj = getMarketCap(activeIssuances, activePrices)
   const datetime = new Date(ts)
 
   await Bluebird.map(Object.keys(activeIssuances), async (denom) => {
+    // early exit
+    if (!volumeObj[denom]) {
+      return
+    }
+
     const network = new NetworkEntity()
 
     network.denom = denom
     network.datetime = datetime
     network.supply = activeIssuances[denom]
     network.marketCap = marketCapObj[denom]
-    network.txvolume = volumeObj[denom] ? volumeObj[denom] : '0'
+    network.txvolume = volumeObj[denom] || '0'
 
     const existing = await mgr.findOne(NetworkEntity, { denom, datetime })
 

@@ -15,6 +15,7 @@ const {
   EXCLUDED_ROUTES,
   MIN_GAS_PRICES,
   PRUNING_KEEP_EVERY,
+  PRUNING_KEEP_RECENT,
   BANK_WALLETS,
   ANCHOR_BANK_WALLETS,
   ANCHOR_TOKEN_ADDRESS,
@@ -76,6 +77,7 @@ const config = {
         ukrw: '178.05'
       } as DenomMap),
   PRUNING_KEEP_EVERY: parseInt(PRUNING_KEEP_EVERY || '100', 10) || 100,
+  PRUNING_KEEP_RECENT: parseInt(PRUNING_KEEP_RECENT || '362880', 10) || 362880,
   // We can ORACLE_SLASH_WINDOW from {lcd}/oracle/parameters, but do this way because it's rare to be changed
   ORACLE_SLASH_WINDOW: parseInt(ORACLE_SLASH_WINDOW || '100800') || 100800
 }
