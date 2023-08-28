@@ -29,7 +29,7 @@ const ASSETS_BY_SYMBOL: {
 export const TOKEN_SYMBOLS: string[] = []
 
 export async function init() {
-  const tokensRes = await request(`https://assets.terra.money/cw20/tokens.json`)
+  const tokensRes = await request(`https://assets.terraclassic.community/cw20/tokens.json`)
     .then((res) => res.body.json())
     .catch(() => ({}))
 
