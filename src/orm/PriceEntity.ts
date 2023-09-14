@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, Index, getRepository } from 'typeorm'
 
 @Entity('price')
 export default class PriceEntity {
@@ -15,4 +15,20 @@ export default class PriceEntity {
 
   @Column({ type: 'float' })
   price: number
+
+  static async queryLatestPrices(): Promise<DenomMap> {
+    const prices = await getRepository(PriceEntity).find({
+      order: {
+        datetime: 'DESC'
+      },
+      take: 100
+    })
+
+    return prices.reduce((priceMap: DenomMap, entity: PriceEntity) => {
+      if (!priceMap[entity.denom]) {
+        priceMap[entity.denom] = entity.price.toString()
+      }
+      return priceMap
+    }, {} as DenomMap)
+  }
 }

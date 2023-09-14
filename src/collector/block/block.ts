@@ -172,10 +172,11 @@ export async function saveBlockInformation(
       if (latestIndexedBlock && getMinutes(latestIndexedBlock.timestamp) !== getMinutes(newBlockEntity.timestamp)) {
         const newBlockTimestamp = newBlockEntity.timestamp.getTime()
 
+        // NOTE: collectPrice must be called first
+        await collectPrice(mgr, newBlockTimestamp, height)
         await collectReward(mgr, newBlockTimestamp, height)
         // await collectSwap(mgr, newBlockTimeStamp)
         await collectNetwork(mgr, newBlockTimestamp, height)
-        await collectPrice(mgr, newBlockTimestamp, height)
         await collectGeneral(mgr, newBlockTimestamp, height)
 
         if (getDay(latestIndexedBlock.timestamp) !== getDay(newBlockEntity.timestamp)) {

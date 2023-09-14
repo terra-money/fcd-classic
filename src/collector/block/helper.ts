@@ -3,7 +3,7 @@ import { times, div } from 'lib/math'
 import { getDateRangeOfLastMinute, getQueryDateTime } from 'lib/time'
 import { BOND_DENOM } from 'lib/constant'
 
-export function getUSDValue(denom: string, amount: string, prices: { [denom: string]: string }): string {
+export function getUSDValue(denom: string, amount: string, prices: DenomMap): string {
   let usdValue = '0'
   if ((denom === BOND_DENOM || prices[denom]) && prices['uusd']) {
     switch (denom) {

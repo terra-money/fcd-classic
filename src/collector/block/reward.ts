@@ -2,7 +2,7 @@ import * as Bluebird from 'bluebird'
 import { getRepository, EntityManager } from 'typeorm'
 import { get, mergeWith } from 'lodash'
 
-import { TxEntity, RewardEntity, BlockEntity } from 'orm'
+import { TxEntity, RewardEntity, BlockEntity, PriceEntity } from 'orm'
 
 import * as lcd from 'lib/lcd'
 import { collectorLogger as logger } from 'lib/logger'
@@ -107,15 +107,11 @@ export async function getRewards(timestamp: number): Promise<Rewards> {
 export async function collectReward(mgr: EntityManager, timestamp: number, strHeight: string) {
   const { reward: rewardSum, commission } = await getRewards(timestamp)
   const datetime = new Date(getStartOfPreviousMinuteTs(timestamp))
-  const [issuances, fees, activePrices] = await Promise.all([
+  const [issuances, fees, latestPrices] = await Promise.all([
     lcd.getAllActiveIssuance(strHeight),
     queryFees(timestamp),
-    lcd.getActiveOraclePrices(strHeight)
+    PriceEntity.queryLatestPrices()
   ])
-
-  if (Object.keys(activePrices).length === 0) {
-    throw new Error(`no active prices`)
-  }
 
   await Bluebird.map(Object.keys(issuances), async (denom) => {
     // early exit for denoms without reward
@@ -127,11 +123,11 @@ export async function collectReward(mgr: EntityManager, timestamp: number, strHe
     reward.denom = denom
     reward.datetime = datetime
     reward.tax = get(fees, `tax.${denom}`, '0')
-    reward.taxUsd = getUSDValue(denom, reward.tax, activePrices)
+    reward.taxUsd = getUSDValue(denom, reward.tax, latestPrices)
     reward.gas = get(fees, `gas.${denom}`, '0')
-    reward.gasUsd = getUSDValue(denom, reward.gas, activePrices)
+    reward.gasUsd = getUSDValue(denom, reward.gas, latestPrices)
     reward.oracle = get(fees, `swapfee.${denom}`, '0')
-    reward.oracleUsd = getUSDValue(denom, reward.oracle, activePrices)
+    reward.oracleUsd = getUSDValue(denom, reward.oracle, latestPrices)
     reward.sum = rewardSum[denom]
     reward.commission = commission[denom]
 

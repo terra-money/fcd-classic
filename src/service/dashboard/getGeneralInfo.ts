@@ -1,6 +1,4 @@
-import { getRepository, MoreThanOrEqual } from 'typeorm'
-import { subMinutes } from 'date-fns'
-
+import { getRepository } from 'typeorm'
 import { PriceEntity, GeneralInfoEntity } from 'orm'
 
 interface StakingPoolInfo {
@@ -18,24 +16,6 @@ interface GeneralInfoReturn {
   taxRate: string // tax rate big int
 }
 
-async function getLatestPrices(): Promise<DenomMap> {
-  const prices = await getRepository(PriceEntity).find({
-    where: {
-      datetime: MoreThanOrEqual(subMinutes(new Date(), 5))
-    },
-    order: {
-      datetime: 'DESC'
-    }
-  })
-
-  return prices.reduce((priceMap: DenomMap, price: PriceEntity) => {
-    if (!priceMap[price.denom]) {
-      priceMap[price.denom] = price.price.toString()
-    }
-    return priceMap
-  }, {} as DenomMap)
-}
-
 async function getLatestGenInfo(): Promise<GeneralInfoEntity> {
   return await getRepository(GeneralInfoEntity).findOneOrFail({
     order: {
@@ -45,7 +25,7 @@ async function getLatestGenInfo(): Promise<GeneralInfoEntity> {
 }
 
 export default async function getGeneralInfo(): Promise<GeneralInfoReturn> {
-  const prices = await getLatestPrices()
+  const prices = await PriceEntity.queryLatestPrices()
   const latestInfo = await getLatestGenInfo()
   const { taxRate, issuances, communityPool, bondedTokens, notBondedTokens, stakingRatio, taxCaps } = latestInfo
 
